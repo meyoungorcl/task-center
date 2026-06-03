@@ -1,0 +1,2565 @@
+page 12 (
+    name: Task Details
+    alias: TASK-DETAILS
+    title: Task Details
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+    javaScript {
+        functionAndGlobalVarDeclaration:
+            ```javascript-browser
+            apex.jQuery(() => {
+                const sizeEditUpdateDialog = () => {
+                    const region = apex.jQuery("#edit-update-dialog, #R9990001200000201").first();
+                    const dialog = region.closest(".ui-dialog");
+                    if (dialog.length) {
+                        dialog.css({
+                            width: "min(960px, calc(100vw - 2rem))",
+                            maxWidth: "calc(100vw - 2rem)"
+                        });
+                        region.css("width", "100%");
+                        dialog.position({ my: "center", at: "center", of: window });
+                    }
+                };
+
+                if ($v("P12_EDIT_UPDATE_ID")) {
+                    const dialog = apex.jQuery("#edit-update-dialog, #R9990001200000201").first();
+                    if (dialog.length) {
+                        apex.theme.openRegion(dialog.attr("id"));
+                        dialog.attr("aria-modal", "true");
+                        setTimeout(sizeEditUpdateDialog, 0);
+                    }
+                }
+
+                apex.jQuery(window).on("resize", () => {
+                    if ($v("P12_EDIT_UPDATE_ID")) {
+                        sizeEditUpdateDialog();
+                    }
+                });
+            });
+            ```
+    }
+
+    region task-detail-column (
+        name: Task Detail Column
+        type: staticContent
+        layout {
+            sequence: 10
+            slot: body
+            columnSpan: 7
+        }
+        appearance {
+            template: @/blank-with-attributes
+            templateOptions: #DEFAULT#
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    region audit (
+        name: Audit
+        type: staticContent
+        layout {
+            sequence: 30
+            parentRegion: @task-detail-column
+            slot: subRegions
+        }
+        appearance {
+            template: @/collapsible
+            templateOptions: [
+                #DEFAULT#
+                js-useLocalStorage
+                is-collapsed
+                t-Region--scrollBody
+            ]
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    region activity (
+        name: Activity
+        type: staticContent
+        layout {
+            sequence: 20
+            slot: body
+            startNewRow: false
+            columnSpan: 5
+        }
+        appearance {
+            template: @/blank-with-attributes
+            templateOptions: #DEFAULT#
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    region breadcrumb (
+        name: Breadcrumb
+        type: breadcrumb
+        source {
+            breadcrumb: @breadcrumb
+        }
+        layout {
+            sequence: 10
+            slot: breadcrumbBar
+        }
+        appearance {
+            template: @/title-bar
+            templateOptions: [
+                #DEFAULT#
+                t-BreadcrumbRegion--useBreadcrumbTitle
+            ]
+        }
+        componentAppearance {
+            breadcrumbTemplate: @/breadcrumb
+            templateOptions: #DEFAULT#
+        }
+    )
+
+    region change-log (
+        name: Change Log
+        type: themeTemplateComponent/comments
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select change_id,
+                       apex_string.get_initials(nvl(changed_by, 'System')) as user_initials,
+                       'u-color-' || ora_hash(nvl(changed_by, 'System'), 45) as user_css_class,
+                       nvl(changed_by, 'System') as user_name,
+                       initcap(replace(change_action, '_', ' ')) || ': ' ||
+                           coalesce(change_note, field_name || ' changed', new_value) as comment_text,
+                       changed_at as comment_date
+                  from tsk_change_log
+                 where task_id = :P12_TASK_ID
+                 order by changed_at desc
+                ```
+            pageItemsToSubmit: P12_TASK_ID
+        }
+        layout {
+            sequence: 20
+            parentRegion: @task-detail-column
+            slot: subRegions
+        }
+        appearance {
+            template: @/collapsible
+            templateOptions: [
+                #DEFAULT#
+                js-useLocalStorage
+                is-collapsed
+                t-Region--scrollBody
+            ]
+            renderComponents: belowContent
+        }
+        componentAppearance {
+            display: report
+        }
+        settings {
+            commentText: COMMENT_TEXT
+            userName: USER_NAME
+            date: COMMENT_DATE
+            displayAvatar: false
+            style: chatSpeechBubbles
+            applyThemeColors: false
+        }
+        messages {
+            whenNoDataFound: No changes
+            noDataFoundIcon: fa-comments-o fa-lg
+        }
+
+        column CHANGE_ID (
+            layout {
+                sequence: 10
+            }
+            source {
+                databaseColumn: CHANGE_ID
+                dataType: number
+            }
+        )
+
+        column COMMENT_DATE (
+            layout {
+                sequence: 60
+            }
+            source {
+                databaseColumn: COMMENT_DATE
+                dataType: date
+            }
+            accessibility {
+                valueIdentifiesRow: true
+            }
+            appearance {
+                formatMask: SINCE
+            }
+        )
+
+        column COMMENT_TEXT (
+            layout {
+                sequence: 50
+            }
+            source {
+                databaseColumn: COMMENT_TEXT
+                dataType: varchar2
+            }
+        )
+
+        column USER_CSS_CLASS (
+            layout {
+                sequence: 30
+            }
+            source {
+                databaseColumn: USER_CSS_CLASS
+                dataType: varchar2
+            }
+        )
+
+        column USER_INITIALS (
+            layout {
+                sequence: 20
+            }
+            source {
+                databaseColumn: USER_INITIALS
+                dataType: varchar2
+            }
+        )
+
+        column USER_NAME (
+            layout {
+                sequence: 40
+            }
+            source {
+                databaseColumn: USER_NAME
+                dataType: varchar2
+            }
+            accessibility {
+                valueIdentifiesRow: true
+            }
+        )
+
+    )
+
+    region task-details (
+        name: Task Details
+        type: form
+        source {
+            location: localDatabase
+            tableName: TSK_TASKS
+        }
+        layout {
+            sequence: 10
+            parentRegion: @task-detail-column
+            slot: subRegions
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        edit {
+            enabled: true
+            allowedOperations: [
+                update
+                delete
+            ]
+        }
+    )
+
+    region task-files (
+        name: Files
+        type: staticContent
+        layout {
+            sequence: 40
+            parentRegion: @activity
+            slot: subRegions
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    region task-files-list (
+        name: Attached Files
+        type: classicReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select file_id,
+                       nvl(file_display_name, file_name) as file_display_name,
+                       file_description,
+                       file_name,
+                       mime_type,
+                       file_size,
+                       uploaded_by,
+                       uploaded_at,
+                       apex_page.get_url(
+                           p_page => 12,
+                           p_request => 'DOWNLOAD_FILE',
+                           p_items => 'P12_TASK_ID,P12_FILE_ID',
+                           p_values => :P12_TASK_ID || ',' || file_id
+                       ) as download_url,
+                       apex_page.get_url(
+                           p_page => 12,
+                           p_request => 'DELETE_FILE',
+                           p_items => 'P12_TASK_ID,P12_FILE_ID',
+                           p_values => :P12_TASK_ID || ',' || file_id
+                       ) as delete_url
+                  from tsk_task_files
+                 where task_id = :P12_TASK_ID
+                 order by uploaded_at desc, file_name
+                ```
+            pageItemsToSubmit: P12_TASK_ID
+        }
+        layout {
+            sequence: 20
+            parentRegion: @task-files
+            slot: subRegions
+        }
+        appearance {
+            template: @/blank-with-attributes
+            templateOptions: #DEFAULT#
+        }
+        componentAppearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Report--inline
+                t-Report--rowHighlight
+            ]
+        }
+        messages {
+            whenNoDataFound: No files attached
+        }
+
+        column DELETE_URL (
+            reportColumnQueryId: 10
+            derivedColumn: N
+            heading {
+                heading: " "
+            }
+            layout {
+                sequence: 100
+            }
+            columnFormatting {
+                htmlExpression:
+                    ```html
+                    <a href="#DELETE_URL#" title="Delete file" aria-label="Delete file" onclick="return confirm('Delete this file?');">
+                      <span class="fa fa-trash-o u-danger-text" aria-hidden="true"></span>
+                    </a>
+                    ```
+            }
+        )
+
+        column DOWNLOAD_URL (
+            reportColumnQueryId: 9
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 90
+            }
+        )
+
+        column FILE_DESCRIPTION (
+            reportColumnQueryId: 3
+            derivedColumn: N
+            heading {
+                heading: Description
+            }
+            layout {
+                sequence: 40
+            }
+        )
+
+        column FILE_DISPLAY_NAME (
+            reportColumnQueryId: 2
+            derivedColumn: N
+            heading {
+                heading: File
+            }
+            layout {
+                sequence: 30
+            }
+            columnFormatting {
+                htmlExpression: <a href="#DOWNLOAD_URL#" title="Download #FILE_NAME#"><span class="fa fa-download" aria-hidden="true"></span> #FILE_DISPLAY_NAME#</a>
+            }
+        )
+
+        column FILE_ID (
+            reportColumnQueryId: 1
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 10
+            }
+        )
+
+        column FILE_NAME (
+            reportColumnQueryId: 4
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 20
+            }
+        )
+
+        column FILE_SIZE (
+            reportColumnQueryId: 6
+            derivedColumn: N
+            heading {
+                heading: Size
+                alignment: end
+            }
+            layout {
+                sequence: 60
+                columnAlignment: end
+            }
+        )
+
+        column MIME_TYPE (
+            reportColumnQueryId: 5
+            derivedColumn: N
+            heading {
+                heading: Type
+            }
+            layout {
+                sequence: 50
+            }
+        )
+
+        column UPLOADED_AT (
+            reportColumnQueryId: 8
+            derivedColumn: N
+            heading {
+                heading: Uploaded
+            }
+            layout {
+                sequence: 80
+            }
+            appearance {
+                formatMask: SINCE
+            }
+        )
+
+        column UPLOADED_BY (
+            reportColumnQueryId: 7
+            derivedColumn: N
+            heading {
+                heading: Uploaded By
+            }
+            layout {
+                sequence: 70
+            }
+        )
+
+    )
+
+    region update-entry (
+        name: Updates / Comments
+        type: staticContent
+        layout {
+            sequence: 20
+            parentRegion: @activity
+            slot: subRegions
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    region edit-update-dialog (
+        name: Edit Update
+        type: staticContent
+        layout {
+            sequence: 25
+            parentRegion: @activity
+            slot: subRegions
+        }
+        appearance {
+            template: @/inline-dialog
+            templateOptions: [
+                #DEFAULT#
+                js-dialog-autoheight
+            ]
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    region updates (
+        name: Recent Updates
+        type: classicReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select null as update_card,
+                       tu.update_id,
+                       apex_string.get_initials(nvl(u.display_name, tu.created_by)) as user_initials,
+                       'u-color-' || ora_hash(nvl(u.display_name, tu.created_by), 45) as user_css_class,
+                       nvl(u.display_name, tu.created_by) as user_name,
+                       case
+                           when regexp_like(
+                                    dbms_lob.substr(tu.update_text, 4000, 1),
+                                    '<(p|ul|ol|li|div|span|br|strong|em|s|h[1-6])([[:space:]>])',
+                                    'i'
+                                )
+                           then dbms_lob.substr(tu.update_text, 4000, 1)
+                           else dbms_lob.substr(
+                                    apex_markdown.to_html(to_clob(dbms_lob.substr(tu.update_text, 4000, 1))),
+                                    4000,
+                                    1
+                                )
+                       end as comment_text,
+                       tu.updated_at as comment_date,
+                       apex_page.get_url(
+                           p_page => 12,
+                           p_request => 'EDIT_UPDATE',
+                           p_items => 'P12_TASK_ID,P12_EDIT_UPDATE_ID',
+                           p_values => :P12_TASK_ID || ',' || tu.update_id
+                       ) as edit_url,
+                       apex_page.get_url(
+                           p_page => 12,
+                           p_request => 'DELETE_UPDATE',
+                           p_items => 'P12_TASK_ID,P12_DELETE_UPDATE_ID',
+                           p_values => :P12_TASK_ID || ',' || tu.update_id
+                       ) as delete_url
+                  from tsk_task_updates tu
+                  left join tsk_team_members tm
+                    on tm.team_member_id = tu.team_member_id
+                  left join tsk_users u
+                    on u.user_id = tm.user_id
+                 where tu.task_id = :P12_TASK_ID
+                 order by tu.updated_at desc nulls last,
+                          tu.update_id desc
+                ```
+            pageItemsToSubmit: P12_TASK_ID
+        }
+        layout {
+            sequence: 30
+            parentRegion: @activity
+            slot: subRegions
+        }
+        appearance {
+            template: @/collapsible
+            templateOptions: [
+                #DEFAULT#
+                js-useLocalStorage
+                t-Region--scrollBody
+            ]
+            renderComponents: belowContent
+        }
+        componentAppearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Report--inline
+                t-Report--stretch
+            ]
+        }
+        messages {
+            whenNoDataFound: No updates
+        }
+        heading {
+            type: none
+        }
+
+        column UPDATE_CARD (
+            reportColumnQueryId: 1
+            derivedColumn: N
+            heading {
+                heading: " "
+            }
+            layout {
+                sequence: 10
+            }
+            columnFormatting {
+                htmlExpression:
+                    ```html
+                    <div style="border:1px solid var(--ut-component-border-color);border-radius:8px;padding:12px;margin-bottom:10px;background:var(--ut-component-background-color)">
+                      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px">
+                        <div style="font-weight:700">#USER_NAME#</div>
+                        <div style="white-space:nowrap;color:var(--ut-component-text-muted-color);font-size:.82rem">#COMMENT_DATE#</div>
+                      </div>
+                      <div style="color:var(--ut-component-text-default-color)">#COMMENT_TEXT!RAW#</div>
+                      <div style="margin-top:8px;display:flex;gap:8px;justify-content:flex-end">
+                        <a href="#EDIT_URL#" class="t-Button t-Button--noLabel t-Button--icon t-Button--tiny" title="Edit update" aria-label="Edit update" aria-haspopup="dialog"><span class="fa fa-edit" aria-hidden="true"></span></a>
+                        <a href="#DELETE_URL#" class="t-Button t-Button--noLabel t-Button--icon t-Button--tiny" title="Delete update" aria-label="Delete update" onclick="return confirm('Delete this update?');"><span class="fa fa-trash-o u-danger-text" aria-hidden="true"></span></a>
+                      </div>
+                    </div>
+                    ```
+            }
+        )
+
+        column COMMENT_DATE (
+            reportColumnQueryId: 7
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 70
+            }
+            source {
+                databaseColumn: COMMENT_DATE
+                dataType: date
+            }
+            appearance {
+                formatMask: SINCE
+            }
+        )
+
+        column COMMENT_TEXT (
+            reportColumnQueryId: 6
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 60
+            }
+            source {
+                databaseColumn: COMMENT_TEXT
+                dataType: varchar2
+            }
+        )
+
+        column DELETE_URL (
+            reportColumnQueryId: 9
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 90
+            }
+        )
+
+        column EDIT_URL (
+            reportColumnQueryId: 8
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 80
+            }
+        )
+
+        column UPDATE_ID (
+            reportColumnQueryId: 2
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 20
+            }
+        )
+
+        column USER_CSS_CLASS (
+            reportColumnQueryId: 4
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 40
+            }
+            source {
+                databaseColumn: USER_CSS_CLASS
+                dataType: varchar2
+            }
+        )
+
+        column USER_INITIALS (
+            reportColumnQueryId: 3
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 30
+            }
+            source {
+                databaseColumn: USER_INITIALS
+                dataType: varchar2
+            }
+        )
+
+        column USER_NAME (
+            reportColumnQueryId: 5
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 50
+            }
+            source {
+                databaseColumn: USER_NAME
+                dataType: varchar2
+            }
+        )
+
+    )
+
+    pageItem P12_APPLICATION_ID (
+        type: selectList
+        label {
+            label: Application
+            alignment: left
+        }
+        lov {
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select application_name as display_value,
+                       application_id as return_value
+                  from tsk_applications
+                 where active_yn = 'Y'
+                 order by application_name
+                ```
+        }
+        layout {
+            sequence: 100
+            region: @task-details
+            slot: regionBody
+            alignment: left
+            startNewRow: false
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        source {
+            formRegion: @task-details
+            column: APPLICATION_ID
+            dataType: number
+        }
+    )
+
+    pageItem P12_ASSIGNEES (
+        type: selectMany
+        label {
+            label: Assignees
+            alignment: left
+        }
+        lov {
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select u.display_name as display_value,
+                       tm.team_member_id as return_value
+                  from tsk_team_members tm
+                  join tsk_users u
+                    on u.user_id = tm.user_id
+                 where tm.active_yn = 'Y'
+                   and u.active_yn = 'Y'
+                   and (:P12_TEAM_ID is null or tm.team_id = :P12_TEAM_ID)
+                 order by u.display_name
+                ```
+        }
+        layout {
+            sequence: 70
+            region: @task-details
+            slot: regionBody
+            alignment: left
+            columnSpan: 6
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+        }
+        sessionState {
+            storage: request
+        }
+    )
+
+    pageItem P12_TOPIC_GROUP_IDS (
+        type: selectMany
+        label {
+            label: Topic Groups
+            alignment: left
+        }
+        lov {
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select topic_name as display_value,
+                       topic_group_id as return_value
+                  from tsk_topic_groups
+                 where active_yn = 'Y'
+                    or exists (
+                           select 1
+                             from tsk_task_topic_groups ttg
+                            where ttg.task_id = :P12_TASK_ID
+                              and ttg.topic_group_id = tsk_topic_groups.topic_group_id
+                       )
+                 order by topic_name
+                ```
+        }
+        layout {
+            sequence: 75
+            region: @task-details
+            slot: regionBody
+            alignment: left
+            startNewRow: false
+            columnSpan: 6
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+        }
+        sessionState {
+            storage: request
+        }
+    )
+
+    pageItem P12_COMPLEXITY_ID (
+        type: selectList
+        label {
+            label: Complexity
+            alignment: left
+        }
+        lov {
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select complexity_name as display_value,
+                       complexity_id as return_value
+                  from tsk_complexities
+                 where active_yn = 'Y'
+                 order by display_seq, complexity_name
+                ```
+        }
+        layout {
+            sequence: 130
+            region: @task-details
+            slot: regionBody
+            alignment: left
+            startNewRow: false
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        source {
+            formRegion: @task-details
+            column: COMPLEXITY_ID
+            dataType: number
+        }
+    )
+
+    pageItem P12_DESCRIPTION (
+        type: richTextEditor
+        label {
+            label: Description
+            alignment: left
+        }
+        layout {
+            sequence: 80
+            region: @task-details
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+        }
+        source {
+            formRegion: @task-details
+            column: DESCRIPTION
+            dataType: clob
+        }
+    )
+
+    pageItem P12_DUE_DATE (
+        type: datePicker
+        label {
+            label: Due Date
+            alignment: left
+        }
+        layout {
+            sequence: 150
+            region: @task-details
+            slot: regionBody
+            alignment: left
+            startNewRow: false
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            width: 30
+        }
+        validation {
+            valueRequired: true
+        }
+        source {
+            formRegion: @task-details
+            column: DUE_DATE
+            dataType: date
+        }
+    )
+
+    pageItem P12_ESTIMATED_HOURS (
+        type: numberField
+        label {
+            label: Estimated Hours
+            alignment: left
+        }
+        layout {
+            sequence: 160
+            region: @task-details
+            slot: regionBody
+            alignment: left
+            startNewRow: false
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 20
+        }
+        source {
+            formRegion: @task-details
+            column: ESTIMATED_HOURS
+            dataType: number
+        }
+    )
+
+    pageItem P12_EXTERNAL_REFERENCE (
+        type: displayOnly
+        label {
+            label: External Reference
+            alignment: left
+        }
+        settings {
+            sendOnPageSubmit: false
+        }
+        layout {
+            sequence: 20
+            region: @audit
+            slot: regionBody
+            alignment: left
+            startNewRow: false
+            columnSpan: 6
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+        }
+        source {
+            formRegion: @task-details
+            column: EXTERNAL_REFERENCE
+            dataType: varchar2
+            queryOnly: true
+        }
+    )
+
+    pageItem P12_CREATED_AT (
+        type: displayOnly
+        label {
+            label: Created At
+            alignment: left
+        }
+        settings {
+            sendOnPageSubmit: false
+        }
+        layout {
+            sequence: 30
+            region: @audit
+            slot: regionBody
+            alignment: left
+            columnSpan: 6
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            formatMask: DD-MON-YYYY HH24:MI
+        }
+        source {
+            formRegion: @task-details
+            column: CREATED_AT
+            dataType: timestamp
+            queryOnly: true
+        }
+    )
+
+    pageItem P12_CREATED_BY (
+        type: displayOnly
+        label {
+            label: Created By
+            alignment: left
+        }
+        settings {
+            sendOnPageSubmit: false
+        }
+        layout {
+            sequence: 40
+            region: @audit
+            slot: regionBody
+            alignment: left
+            startNewRow: false
+            columnSpan: 6
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+        }
+        source {
+            formRegion: @task-details
+            column: CREATED_BY
+            dataType: varchar2
+            queryOnly: true
+        }
+    )
+
+    pageItem P12_UPDATED_AT (
+        type: displayOnly
+        label {
+            label: Updated At
+            alignment: left
+        }
+        settings {
+            sendOnPageSubmit: false
+        }
+        layout {
+            sequence: 50
+            region: @audit
+            slot: regionBody
+            alignment: left
+            columnSpan: 6
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            formatMask: DD-MON-YYYY HH24:MI
+        }
+        source {
+            formRegion: @task-details
+            column: UPDATED_AT
+            dataType: timestamp
+            queryOnly: true
+        }
+    )
+
+    pageItem P12_UPDATED_BY (
+        type: displayOnly
+        label {
+            label: Updated By
+            alignment: left
+        }
+        settings {
+            sendOnPageSubmit: false
+        }
+        layout {
+            sequence: 60
+            region: @audit
+            slot: regionBody
+            alignment: left
+            startNewRow: false
+            columnSpan: 6
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+        }
+        source {
+            formRegion: @task-details
+            column: UPDATED_BY
+            dataType: varchar2
+            queryOnly: true
+        }
+    )
+
+    pageItem P12_FILE_DESCRIPTION (
+        type: textarea
+        label {
+            label: Description
+            alignment: left
+        }
+        layout {
+            sequence: 20
+            region: @task-files
+            slot: regionBody
+            alignment: left
+            columnSpan: 12
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            height: 3
+        }
+        validation {
+            maxLength: 4000
+        }
+        sessionState {
+            storage: request
+        }
+    )
+
+    pageItem P12_FILE_DISPLAY_NAME (
+        type: textField
+        label {
+            label: Name
+            alignment: left
+        }
+        layout {
+            sequence: 10
+            region: @task-files
+            slot: regionBody
+            alignment: left
+            columnSpan: 12
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+        }
+        validation {
+            maxLength: 255
+        }
+        sessionState {
+            storage: request
+        }
+    )
+
+    pageItem P12_FILE_ID (
+        type: hidden
+        settings {
+            valueProtected: false
+        }
+        layout {
+            sequence: 190
+            region: @task-details
+            slot: regionBody
+        }
+        sessionState {
+            storage: request
+        }
+    )
+
+    pageItem P12_OWNER_MEMBER_ID (
+        type: hidden
+        layout {
+            sequence: 110
+            region: @task-details
+            slot: regionBody
+        }
+        source {
+            formRegion: @task-details
+            column: OWNER_MEMBER_ID
+            dataType: number
+        }
+    )
+
+    pageItem P12_PERCENT_COMPLETE (
+        type: numberField
+        label {
+            label: Complete %
+            alignment: left
+        }
+        layout {
+            sequence: 50
+            region: @task-details
+            slot: regionBody
+            alignment: left
+            startNewRow: false
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            width: 20
+        }
+        source {
+            formRegion: @task-details
+            column: PERCENT_COMPLETE
+            dataType: number
+        }
+    )
+
+    pageItem P12_PRIORITY_CODE (
+        type: selectList
+        label {
+            label: Priority
+            alignment: left
+        }
+        lov {
+            type: staticValues
+            staticValues: STATIC2:Low;LOW,Medium;MEDIUM,High;HIGH,Critical;CRITICAL
+            displayExtraValues: false
+            displayNullValue: false
+        }
+        layout {
+            sequence: 40
+            region: @task-details
+            slot: regionBody
+            alignment: left
+            startNewRow: false
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        source {
+            formRegion: @task-details
+            column: PRIORITY_CODE
+            dataType: varchar2
+        }
+    )
+
+    pageItem P12_START_DATE (
+        type: datePicker
+        label {
+            label: Start Date
+            alignment: left
+        }
+        layout {
+            sequence: 140
+            region: @task-details
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 30
+        }
+        source {
+            formRegion: @task-details
+            column: START_DATE
+            dataType: date
+        }
+    )
+
+    pageItem P12_STATUS_ID (
+        type: selectList
+        label {
+            label: Status
+            alignment: left
+        }
+        lov {
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select status_name as display_value,
+                       status_id as return_value
+                  from tsk_statuses
+                 where active_yn = 'Y'
+                 order by display_seq, status_name
+                ```
+        }
+        layout {
+            sequence: 30
+            region: @task-details
+            slot: regionBody
+            alignment: left
+            startNewRow: false
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        source {
+            formRegion: @task-details
+            column: STATUS_ID
+            dataType: number
+        }
+    )
+
+    pageItem P12_SUBMITTED_BY (
+        type: displayOnly
+        label {
+            label: Submitted By
+            alignment: left
+        }
+        settings {
+            sendOnPageSubmit: false
+        }
+        layout {
+            sequence: 10
+            region: @audit
+            slot: regionBody
+            alignment: left
+            columnSpan: 6
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+        }
+        sessionState {
+            storage: request
+        }
+    )
+
+    pageItem P12_TASK_FILE (
+        type: fileUpload
+        label {
+            label: Add file
+            alignment: left
+        }
+        storage {
+            type: appTempFiles
+            purgeFileAt: endOfRequest
+        }
+        layout {
+            sequence: 30
+            region: @task-files
+            slot: regionBody
+            alignment: left
+            columnSpan: 10
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+        }
+        security {
+            sessionStateProtection: checksumRequiredAppLevel
+        }
+    )
+
+    pageItem P12_TASK_ID (
+        type: hidden
+        layout {
+            sequence: 10
+            region: @task-details
+            slot: regionBody
+        }
+        source {
+            formRegion: @task-details
+            column: TASK_ID
+            dataType: number
+            queryOnly: true
+            primaryKey: true
+        }
+        security {
+            sessionStateProtection: checksumRequiredSessionLevel
+        }
+    )
+
+    pageItem P12_TASK_KEY (
+        type: displayOnly
+        label {
+            label: Task ID
+            alignment: left
+        }
+        settings {
+            sendOnPageSubmit: false
+        }
+        layout {
+            sequence: 20
+            region: @task-details
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+        }
+        source {
+            formRegion: @task-details
+            column: TASK_KEY
+            dataType: varchar2
+            queryOnly: true
+        }
+    )
+
+    pageItem P12_TEAM_ID (
+        type: selectList
+        label {
+            label: Team
+            alignment: left
+        }
+        lov {
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select team_name as display_value,
+                       team_id as return_value
+                  from tsk_teams
+                 order by team_name
+                ```
+        }
+        layout {
+            sequence: 90
+            region: @task-details
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        source {
+            formRegion: @task-details
+            column: TEAM_ID
+            dataType: number
+        }
+    )
+
+    pageItem P12_TITLE (
+        type: textField
+        label {
+            label: Title
+            alignment: left
+        }
+        layout {
+            sequence: 60
+            region: @task-details
+            slot: regionBody
+            alignment: left
+            columnSpan: 12
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+        }
+        validation {
+            maxLength: 255
+        }
+        source {
+            formRegion: @task-details
+            column: TITLE
+            dataType: varchar2
+        }
+    )
+
+    pageItem P12_TYPE_ID (
+        type: selectList
+        label {
+            label: Task Type
+            alignment: left
+        }
+        lov {
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select type_name as display_value,
+                       type_id as return_value
+                  from tsk_task_types
+                 order by type_name
+                ```
+        }
+        layout {
+            sequence: 120
+            region: @task-details
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        source {
+            formRegion: @task-details
+            column: TYPE_ID
+            dataType: number
+        }
+    )
+
+    pageItem P12_DELETE_UPDATE_ID (
+        type: hidden
+        layout {
+            sequence: 5
+            region: @edit-update-dialog
+            slot: regionBody
+        }
+        sessionState {
+            storage: request
+        }
+        security {
+            sessionStateProtection: checksumRequiredSessionLevel
+        }
+    )
+
+    pageItem P12_EDIT_UPDATE_ID (
+        type: hidden
+        layout {
+            sequence: 10
+            region: @edit-update-dialog
+            slot: regionBody
+        }
+        sessionState {
+            storage: request
+        }
+        security {
+            sessionStateProtection: checksumRequiredSessionLevel
+        }
+    )
+
+    pageItem P12_EDIT_UPDATE_TEXT (
+        type: richTextEditor
+        label {
+            label: Update
+            alignment: left
+        }
+        layout {
+            sequence: 20
+            region: @edit-update-dialog
+            slot: regionBody
+            alignment: left
+            columnSpan: 12
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            height: 7
+        }
+        validation {
+            maxLength: 4000
+        }
+        sessionState {
+            storage: request
+        }
+    )
+
+    pageItem P12_UPDATE_TEXT (
+        type: richTextEditor
+        label {
+            label: Add an update
+            alignment: left
+        }
+        layout {
+            sequence: 10
+            region: @update-entry
+            slot: regionBody
+            alignment: left
+            columnSpan: 9
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            height: 3
+        }
+        validation {
+            maxLength: 4000
+        }
+        sessionState {
+            storage: request
+        }
+    )
+
+    button cancel-edit-update (
+        buttonName: CANCEL_EDIT_UPDATE
+        label: Cancel
+        layout {
+            sequence: 10
+            region: @edit-update-dialog
+            slot: close
+        }
+        appearance {
+            buttonTemplate: @/text
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: triggerAction
+            executeValidations: false
+        }
+
+        triggerAction close-edit-update-dialog (
+            action: closeRegion
+            affectedElements {
+                selectionType: region
+                region: @edit-update-dialog
+            }
+            execution {
+                sequence: 10
+            }
+        )
+
+    )
+
+    button post-update (
+        buttonName: POST_UPDATE
+        label: Post
+        layout {
+            sequence: 20
+            region: @update-entry
+            slot: regionBody
+            startNewRow: false
+            columnSpan: 3
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            warnOnUnsavedChanges: doNotCheck
+        }
+    )
+
+    button save-update (
+        buttonName: SAVE_UPDATE
+        label: Save Update
+        layout {
+            sequence: 20
+            region: @edit-update-dialog
+            slot: next
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            warnOnUnsavedChanges: doNotCheck
+        }
+    )
+
+    button save-task (
+        buttonName: SAVE_TASK
+        label: Save
+        layout {
+            sequence: 10
+            region: @task-details
+            slot: edit
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            warnOnUnsavedChanges: doNotCheck
+            databaseAction: update
+        }
+    )
+
+    button delete-task (
+        buttonName: DELETE_TASK
+        label: Delete
+        layout {
+            sequence: 20
+            region: @task-details
+            slot: edit
+        }
+        appearance {
+            buttonTemplate: @/text
+            templateOptions: #DEFAULT#
+            cssClasses: u-danger
+        }
+        behavior {
+            action: submitPage
+            executeValidations: false
+            warnOnUnsavedChanges: doNotCheck
+            requiresConfirmation: true
+        }
+        confirmation {
+            message: Delete this task and all related updates, files, topic groups, and assignees?
+            style: danger
+        }
+    )
+
+    button upload-file (
+        buttonName: UPLOAD_FILE
+        label: Add File
+        layout {
+            sequence: 40
+            region: @task-files
+            slot: regionBody
+            startNewRow: false
+            columnSpan: 2
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: [
+                #DEFAULT#
+                t-Button--stretch
+            ]
+            cssClasses: u-margin-top-lg
+        }
+        behavior {
+            warnOnUnsavedChanges: doNotCheck
+        }
+    )
+
+    dynamicAction refresh-on-task-dialog-close (
+        name: Refresh on Task Dialog Close
+        execution {
+            sequence: 10
+        }
+        when {
+            event: apexafterclosedialog
+            selectionType: region
+            region: @task-details
+        }
+
+        action refresh-change-log (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @change-log
+            }
+            execution {
+                sequence: 20
+                fireOnInit: false
+            }
+        )
+
+        action refresh-task-details (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @task-details
+            }
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+    )
+
+    process delete-file (
+        name: Delete File
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                declare
+                    l_file_name tsk_task_files.file_name%type;
+                begin
+                    select nvl(file_display_name, file_name)
+                      into l_file_name
+                      from tsk_task_files
+                     where file_id = :P12_FILE_ID
+                       and task_id = :P12_TASK_ID;
+                
+                    delete from tsk_task_files
+                     where file_id = :P12_FILE_ID
+                       and task_id = :P12_TASK_ID;
+                
+                    insert into tsk_change_log (
+                        entity_name,
+                        entity_pk,
+                        task_id,
+                        change_action,
+                        change_note,
+                        changed_by
+                    ) values (
+                        'TASK_FILE',
+                        :P12_FILE_ID,
+                        :P12_TASK_ID,
+                        'REMOVE',
+                        'File deleted: ' || l_file_name,
+                        :APP_USER
+                    );
+                
+                    :P12_FILE_ID := null;
+                end;
+                ```
+        }
+        execution {
+            sequence: 15
+            point: beforeHeader
+        }
+        successMessage {
+            successMessage: File deleted
+        }
+        advanced {
+            executionMappingIdentifier: 17037086993056988
+        }
+        serverSideCondition {
+            type: request=Value
+            value: DELETE_FILE
+        }
+    )
+
+    process delete-update (
+        name: Delete Update
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                declare
+                    l_update_text varchar2(4000);
+                begin
+                    select dbms_lob.substr(update_text, 4000, 1)
+                      into l_update_text
+                      from tsk_task_updates
+                     where update_id = :P12_DELETE_UPDATE_ID
+                       and task_id = :P12_TASK_ID;
+                
+                    delete from tsk_task_updates
+                     where update_id = :P12_DELETE_UPDATE_ID
+                       and task_id = :P12_TASK_ID;
+                
+                    insert into tsk_change_log (
+                        entity_name,
+                        entity_pk,
+                        task_id,
+                        change_action,
+                        change_note,
+                        changed_by
+                    ) values (
+                        'TASK_UPDATE',
+                        :P12_DELETE_UPDATE_ID,
+                        :P12_TASK_ID,
+                        'DELETE',
+                        'Update deleted: ' || l_update_text,
+                        :APP_USER
+                    );
+                
+                    :P12_DELETE_UPDATE_ID := null;
+                end;
+                ```
+        }
+        execution {
+            sequence: 16
+            point: beforeHeader
+        }
+        successMessage {
+            successMessage: Update deleted
+        }
+        advanced {
+            executionMappingIdentifier: 9990001200000102
+        }
+        serverSideCondition {
+            type: request=Value
+            value: DELETE_UPDATE
+        }
+    )
+
+    process load-update-for-edit (
+        name: Load Update for Edit
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                begin
+                    select dbms_lob.substr(update_text, 4000, 1)
+                      into :P12_EDIT_UPDATE_TEXT
+                      from tsk_task_updates
+                     where update_id = :P12_EDIT_UPDATE_ID
+                       and task_id = :P12_TASK_ID;
+                end;
+                ```
+        }
+        execution {
+            sequence: 17
+            point: beforeHeader
+        }
+        advanced {
+            executionMappingIdentifier: 9990001200000103
+        }
+        serverSideCondition {
+            type: request=Value
+            value: EDIT_UPDATE
+        }
+    )
+
+    process download-file (
+        name: Download File
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                declare
+                    l_blob      blob;
+                    l_file_name tsk_task_files.file_name%type;
+                    l_mime_type tsk_task_files.mime_type%type;
+                begin
+                    select file_blob,
+                           file_name,
+                           mime_type
+                      into l_blob,
+                           l_file_name,
+                           l_mime_type
+                      from tsk_task_files
+                     where file_id = :P12_FILE_ID
+                       and task_id = :P12_TASK_ID;
+                
+                    owa_util.mime_header(nvl(l_mime_type, 'application/octet-stream'), false);
+                    htp.p('Content-length: ' || dbms_lob.getlength(l_blob));
+                    htp.p('Content-Disposition: attachment; filename="' || replace(l_file_name, '"', '') || '"');
+                    owa_util.http_header_close;
+                    wpg_docload.download_file(l_blob);
+                    apex_application.stop_apex_engine;
+                exception
+                    when apex_application.e_stop_apex_engine then
+                        raise;
+                end;
+                ```
+        }
+        execution {
+            sequence: 1
+            point: beforeHeader
+        }
+        advanced {
+            executionMappingIdentifier: 17036960687056987
+        }
+        serverSideCondition {
+            type: request=Value
+            value: DOWNLOAD_FILE
+        }
+    )
+
+    process delete-task (
+        name: Delete Task
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                declare
+                    l_task_key          tsk_tasks.task_key%type;
+                    l_title             tsk_tasks.title%type;
+                    l_update_count      pls_integer := 0;
+                    l_file_count        pls_integer := 0;
+                    l_topic_count       pls_integer := 0;
+                    l_assignee_count    pls_integer := 0;
+                    l_change_log_count  pls_integer := 0;
+                begin
+                    select task_key,
+                           title
+                      into l_task_key,
+                           l_title
+                      from tsk_tasks
+                     where task_id = :P12_TASK_ID
+                       for update;
+                
+                    delete from tsk_task_updates
+                     where task_id = :P12_TASK_ID;
+                    l_update_count := sql%rowcount;
+                
+                    delete from tsk_task_files
+                     where task_id = :P12_TASK_ID;
+                    l_file_count := sql%rowcount;
+                
+                    delete from tsk_task_topic_groups
+                     where task_id = :P12_TASK_ID;
+                    l_topic_count := sql%rowcount;
+                
+                    delete from tsk_task_assignees
+                     where task_id = :P12_TASK_ID;
+                    l_assignee_count := sql%rowcount;
+                
+                    delete from tsk_change_log
+                     where task_id = :P12_TASK_ID;
+                    l_change_log_count := sql%rowcount;
+                
+                    delete from tsk_tasks
+                     where task_id = :P12_TASK_ID;
+                
+                    if sql%rowcount = 0 then
+                        raise_application_error(-20001, 'The selected task was not found.');
+                    end if;
+                
+                    insert into tsk_change_log (
+                        entity_name,
+                        entity_pk,
+                        task_id,
+                        change_action,
+                        change_note,
+                        changed_by
+                    ) values (
+                        'TASK',
+                        :P12_TASK_ID,
+                        null,
+                        'DELETE',
+                        'Task deleted: ' || l_task_key || ' - ' || l_title ||
+                            '. Removed ' || l_update_count || ' updates, ' ||
+                            l_file_count || ' files, ' ||
+                            l_topic_count || ' topic group associations, ' ||
+                            l_assignee_count || ' assignee associations, and ' ||
+                            l_change_log_count || ' audit entries.',
+                        :APP_USER
+                    );
+                
+                    commit;
+                    apex_application.g_print_success_message := 'Task deleted';
+                    apex_util.redirect_url(
+                        apex_page.get_url(
+                            p_page => 10,
+                            p_clear_cache => '10'
+                        )
+                    );
+                    apex_application.stop_apex_engine;
+                exception
+                    when apex_application.e_stop_apex_engine then
+                        raise;
+                end;
+                ```
+        }
+        execution {
+            sequence: 5
+        }
+        advanced {
+            executionMappingIdentifier: 9990001200000105
+        }
+        serverSideCondition {
+            whenButtonPressed: @delete-task
+        }
+    )
+
+    process initialize-form-task-details (
+        name: Initialize form Task Details
+        type: formInitialization
+        formRegion: @task-details
+        execution {
+            sequence: 10
+            point: beforeHeader
+        }
+        advanced {
+            executionMappingIdentifier: 16537592289606193
+        }
+    )
+
+    process log-task-details-update (
+        name: Log Task Details Update
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                insert into tsk_change_log (
+                    entity_name,
+                    entity_pk,
+                    task_id,
+                    change_action,
+                    change_note,
+                    changed_by
+                ) values (
+                    'TASK',
+                    :P12_TASK_ID,
+                    :P12_TASK_ID,
+                    'UPDATE',
+                    'Task details updated',
+                    :APP_USER
+                );
+                ```
+        }
+        execution {
+            sequence: 20
+        }
+        successMessage {
+            successMessage: Task saved
+        }
+        advanced {
+            executionMappingIdentifier: 16537702130606193
+        }
+        serverSideCondition {
+            whenButtonPressed: @save-task
+        }
+    )
+
+    process post-update (
+        name: Post Update
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                declare
+                    l_team_member_id tsk_team_members.team_member_id%type;
+                    l_update_text varchar2(4000) := trim(:P12_UPDATE_TEXT);
+                begin
+                    if l_update_text is null then
+                        raise_application_error(-20001, 'Enter an update before posting.');
+                    end if;
+                
+                    begin
+                        select min(tm.team_member_id)
+                          into l_team_member_id
+                          from tsk_team_members tm
+                          join tsk_users u
+                            on u.user_id = tm.user_id
+                          join tsk_tasks t
+                            on t.team_id = tm.team_id
+                         where t.task_id = :P12_TASK_ID
+                           and tm.active_yn = 'Y'
+                           and u.active_yn = 'Y'
+                           and (lower(u.username) = lower(:APP_USER)
+                                or lower(u.email) = lower(:APP_USER));
+                    exception
+                        when no_data_found then
+                            l_team_member_id := null;
+                    end;
+                
+                    insert into tsk_task_updates (
+                        task_id,
+                        team_member_id,
+                        update_type,
+                        update_text
+                    ) values (
+                        :P12_TASK_ID,
+                        l_team_member_id,
+                        'COMMENT',
+                        l_update_text
+                    );
+                
+                    insert into tsk_change_log (
+                        entity_name,
+                        entity_pk,
+                        task_id,
+                        change_action,
+                        change_note,
+                        changed_by
+                    ) values (
+                        'TASK',
+                        :P12_TASK_ID,
+                        :P12_TASK_ID,
+                        'COMMENT',
+                        l_update_text,
+                        :APP_USER
+                    );
+                
+                    :P12_UPDATE_TEXT := null;
+                end;
+                ```
+        }
+        execution {
+            sequence: 40
+        }
+        successMessage {
+            successMessage: Update posted
+        }
+        advanced {
+            executionMappingIdentifier: 16526439866502002
+        }
+        serverSideCondition {
+            whenButtonPressed: @post-update
+        }
+    )
+
+    process save-update (
+        name: Save Update
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                declare
+                    l_update_text varchar2(4000) := trim(:P12_EDIT_UPDATE_TEXT);
+                begin
+                    if :P12_EDIT_UPDATE_ID is null then
+                        raise_application_error(-20001, 'Select an update to edit.');
+                    end if;
+                
+                    if l_update_text is null then
+                        raise_application_error(-20001, 'Enter update text before saving.');
+                    end if;
+                
+                    update tsk_task_updates
+                       set update_text = l_update_text
+                     where update_id = :P12_EDIT_UPDATE_ID
+                       and task_id = :P12_TASK_ID;
+                
+                    if sql%rowcount = 0 then
+                        raise_application_error(-20001, 'The selected update was not found.');
+                    end if;
+                
+                    insert into tsk_change_log (
+                        entity_name,
+                        entity_pk,
+                        task_id,
+                        change_action,
+                        change_note,
+                        changed_by
+                    ) values (
+                        'TASK_UPDATE',
+                        :P12_EDIT_UPDATE_ID,
+                        :P12_TASK_ID,
+                        'UPDATE',
+                        'Update edited: ' || l_update_text,
+                        :APP_USER
+                    );
+                
+                    :P12_EDIT_UPDATE_ID := null;
+                    :P12_EDIT_UPDATE_TEXT := null;
+                end;
+                ```
+        }
+        execution {
+            sequence: 45
+        }
+        successMessage {
+            successMessage: Update saved
+        }
+        advanced {
+            executionMappingIdentifier: 9990001200000104
+        }
+        serverSideCondition {
+            whenButtonPressed: @save-update
+        }
+    )
+
+    process process-form-task-details (
+        name: Process form Task Details
+        type: formAutoRowProcessing
+        formRegion: @task-details
+        execution {
+            sequence: 10
+        }
+        advanced {
+            executionMappingIdentifier: 16537640910606193
+        }
+    )
+
+    process set-audit-display-values (
+        name: Set Audit Display Values
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                begin
+                    select u.display_name
+                      into :P12_SUBMITTED_BY
+                      from tsk_team_members tm
+                      join tsk_users u
+                        on u.user_id = tm.user_id
+                     where tm.team_member_id = :P12_OWNER_MEMBER_ID;
+                exception
+                    when no_data_found then
+                        :P12_SUBMITTED_BY := null;
+                end;
+                ```
+        }
+        execution {
+            sequence: 11
+            point: beforeHeader
+        }
+        advanced {
+            executionMappingIdentifier: 17056055320241847
+        }
+    )
+
+    process set-current-assignees (
+        name: Set Current Assignees
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                select listagg(ta.team_member_id, ':') within group (order by u.display_name)
+                  into :P12_ASSIGNEES
+                  from tsk_task_assignees ta
+                  join tsk_team_members tm
+                    on tm.team_member_id = ta.team_member_id
+                  join tsk_users u
+                    on u.user_id = tm.user_id
+                 where ta.task_id = :P12_TASK_ID
+                   and ta.active_yn = 'Y';
+                ```
+        }
+        execution {
+            sequence: 12
+            point: beforeHeader
+        }
+        advanced {
+            executionMappingIdentifier: 17074626684394603
+        }
+    )
+
+    process set-current-topic-groups (
+        name: Set Current Topic Groups
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                select listagg(ttg.topic_group_id, ':') within group (order by tg.topic_name)
+                  into :P12_TOPIC_GROUP_IDS
+                  from tsk_task_topic_groups ttg
+                  join tsk_topic_groups tg
+                    on tg.topic_group_id = ttg.topic_group_id
+                 where ttg.task_id = :P12_TASK_ID;
+                ```
+        }
+        execution {
+            sequence: 13
+            point: beforeHeader
+        }
+    )
+
+    process sync-assignees (
+        name: Sync Assignees
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                declare
+                    l_added_count   pls_integer := 0;
+                    l_removed_count pls_integer := 0;
+                begin
+                    update tsk_task_assignees ta
+                       set active_yn = 'N',
+                           unassigned_on = trunc(sysdate),
+                           updated_at = systimestamp,
+                           updated_by = :APP_USER
+                     where ta.task_id = :P12_TASK_ID
+                       and ta.active_yn = 'Y'
+                       and not exists (
+                               select 1
+                                 from table(apex_string.split(nvl(:P12_ASSIGNEES, '~'), ':')) s
+                                where s.column_value = to_char(ta.team_member_id)
+                           );
+                
+                    l_removed_count := sql%rowcount;
+                
+                    for m in (
+                        select distinct to_number(column_value) as team_member_id
+                          from table(apex_string.split(:P12_ASSIGNEES, ':'))
+                         where regexp_like(column_value, '^[0-9]+$')
+                    ) loop
+                        update tsk_task_assignees
+                           set active_yn = 'Y',
+                               unassigned_on = null,
+                               updated_at = systimestamp,
+                               updated_by = :APP_USER
+                         where task_id = :P12_TASK_ID
+                           and team_member_id = m.team_member_id
+                           and active_yn = 'N';
+                
+                        if sql%rowcount = 0 then
+                            insert into tsk_task_assignees (
+                                task_id,
+                                team_member_id,
+                                assignment_role,
+                                allocated_pct
+                            )
+                            select :P12_TASK_ID,
+                                   tm.team_member_id,
+                                   tm.role_name,
+                                   null
+                              from tsk_team_members tm
+                             where tm.team_member_id = m.team_member_id
+                               and not exists (
+                                       select 1
+                                         from tsk_task_assignees ta
+                                        where ta.task_id = :P12_TASK_ID
+                                          and ta.team_member_id = m.team_member_id
+                                   );
+                
+                            l_added_count := l_added_count + sql%rowcount;
+                        else
+                            l_added_count := l_added_count + sql%rowcount;
+                        end if;
+                    end loop;
+                
+                    if l_added_count > 0 or l_removed_count > 0 then
+                        insert into tsk_change_log (
+                            entity_name,
+                            entity_pk,
+                            task_id,
+                            change_action,
+                            change_note,
+                            changed_by
+                        ) values (
+                            'TASK',
+                            :P12_TASK_ID,
+                            :P12_TASK_ID,
+                            'UPDATE',
+                            'Assignees updated: ' || l_added_count || ' added, ' || l_removed_count || ' removed',
+                            :APP_USER
+                        );
+                    end if;
+                end;
+                ```
+        }
+        execution {
+            sequence: 15
+        }
+        advanced {
+            executionMappingIdentifier: 17074785551394604
+        }
+        serverSideCondition {
+            whenButtonPressed: @save-task
+        }
+    )
+
+    process sync-topic-groups (
+        name: Sync Topic Groups
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                declare
+                    l_added_count   pls_integer := 0;
+                    l_removed_count pls_integer := 0;
+                    l_primary_topic_group_id tsk_topic_groups.topic_group_id%type;
+                begin
+                    delete from tsk_task_topic_groups ttg
+                     where ttg.task_id = :P12_TASK_ID
+                       and not exists (
+                               select 1
+                                 from table(apex_string.split(nvl(:P12_TOPIC_GROUP_IDS, '~'), ':')) s
+                                where s.column_value = to_char(ttg.topic_group_id)
+                           );
+                
+                    l_removed_count := sql%rowcount;
+                
+                    for tg in (
+                        select distinct to_number(column_value) as topic_group_id
+                          from table(apex_string.split(:P12_TOPIC_GROUP_IDS, ':'))
+                         where regexp_like(column_value, '^[0-9]+$')
+                    ) loop
+                        insert into tsk_task_topic_groups (
+                            task_id,
+                            topic_group_id
+                        )
+                        select :P12_TASK_ID,
+                               tg.topic_group_id
+                          from dual
+                         where not exists (
+                                   select 1
+                                     from tsk_task_topic_groups existing
+                                    where existing.task_id = :P12_TASK_ID
+                                      and existing.topic_group_id = tg.topic_group_id
+                               );
+                
+                        l_added_count := l_added_count + sql%rowcount;
+                    end loop;
+                
+                    select min(to_number(column_value))
+                      into l_primary_topic_group_id
+                      from table(apex_string.split(:P12_TOPIC_GROUP_IDS, ':'))
+                     where regexp_like(column_value, '^[0-9]+$');
+                
+                    update tsk_tasks
+                       set topic_group_id = l_primary_topic_group_id
+                     where task_id = :P12_TASK_ID;
+                
+                    if l_added_count > 0 or l_removed_count > 0 then
+                        insert into tsk_change_log (
+                            entity_name,
+                            entity_pk,
+                            task_id,
+                            change_action,
+                            change_note,
+                            changed_by
+                        ) values (
+                            'TASK',
+                            :P12_TASK_ID,
+                            :P12_TASK_ID,
+                            'UPDATE',
+                            'Topic groups updated: ' || l_added_count || ' added, ' || l_removed_count || ' removed',
+                            :APP_USER
+                        );
+                    end if;
+                end;
+                ```
+        }
+        execution {
+            sequence: 16
+        }
+        serverSideCondition {
+            whenButtonPressed: @save-task
+        }
+    )
+
+    process upload-file (
+        name: Upload File
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                declare
+                    l_file_count pls_integer := 0;
+                    l_file_id    tsk_task_files.file_id%type;
+                    l_file_name  tsk_task_files.file_name%type;
+                begin
+                    if :P12_TASK_FILE is null then
+                        raise_application_error(-20001, 'Choose a file before adding it.');
+                    end if;
+                
+                    for f in (
+                        select name,
+                               filename,
+                               mime_type,
+                               blob_content
+                          from apex_application_temp_files
+                         where name in (
+                                   select column_value
+                                     from table(apex_string.split(:P12_TASK_FILE, ':'))
+                               )
+                    ) loop
+                        l_file_name := coalesce(nullif(trim(:P12_FILE_DISPLAY_NAME), ''), f.filename);
+                
+                        insert into tsk_task_files (
+                            task_id,
+                            file_display_name,
+                            file_description,
+                            file_name,
+                            mime_type,
+                            file_blob,
+                            file_size,
+                            uploaded_by,
+                            updated_by
+                        ) values (
+                            :P12_TASK_ID,
+                            nullif(trim(:P12_FILE_DISPLAY_NAME), ''),
+                            :P12_FILE_DESCRIPTION,
+                            f.filename,
+                            f.mime_type,
+                            f.blob_content,
+                            dbms_lob.getlength(f.blob_content),
+                            :APP_USER,
+                            :APP_USER
+                        )
+                        returning file_id
+                             into l_file_id;
+                
+                        insert into tsk_change_log (
+                            entity_name,
+                            entity_pk,
+                            task_id,
+                            change_action,
+                            change_note,
+                            changed_by
+                        ) values (
+                            'TASK_FILE',
+                            l_file_id,
+                            :P12_TASK_ID,
+                            'UPDATE',
+                            'File added: ' || l_file_name,
+                            :APP_USER
+                        );
+                
+                        delete from apex_application_temp_files
+                         where name = f.name;
+                
+                        l_file_count := l_file_count + 1;
+                    end loop;
+                
+                    if l_file_count = 0 then
+                        raise_application_error(-20001, 'The selected file was not found in temporary storage.');
+                    end if;
+                
+                    :P12_TASK_FILE := null;
+                    :P12_FILE_DISPLAY_NAME := null;
+                    :P12_FILE_DESCRIPTION := null;
+                end;
+                ```
+        }
+        execution {
+            sequence: 25
+        }
+        successMessage {
+            successMessage: File added
+        }
+        advanced {
+            executionMappingIdentifier: 17037139555056988
+        }
+        serverSideCondition {
+            whenButtonPressed: @upload-file
+        }
+    )
+
+)

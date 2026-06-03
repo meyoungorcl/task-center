@@ -1,0 +1,280 @@
+page 50 (
+    name: Change Log
+    alias: CHANGE-LOG
+    title: Change Log
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+        warnOnUnsavedChanges: false
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region change-log (
+        name: Change Log
+        type: interactiveReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select changed_at,
+                       changed_by,
+                       entity_name,
+                       entity_pk,
+                       task_key,
+                       task_title,
+                       change_action,
+                       field_name,
+                       old_value,
+                       new_value
+                  from tsk_v_change_log
+                 order by changed_at desc
+                ```
+        }
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/interactive-report
+            templateOptions: [
+                #DEFAULT#
+                t-IRR-region--noBorders
+            ]
+        }
+        pagination {
+            type: rowRangesXToY
+        }
+        messages {
+            whenNoDataFound: No change log rows found.
+        }
+        advanced {
+            savedReportMappingIdentifier: 16439834666744657
+        }
+
+        column CHANGED_AT (
+            type: plainText
+            heading {
+                heading: Changed At
+            }
+            layout {
+                sequence: 10
+            }
+            appearance {
+                formatMask: DD-MON-YYYY HH24:MI
+            }
+            source {
+                dataType: DATE
+            }
+            advanced {
+                endUserAlias: A
+            }
+        )
+
+        column CHANGED_BY (
+            type: plainText
+            heading {
+                heading: Changed By
+            }
+            layout {
+                sequence: 20
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: B
+            }
+        )
+
+        column CHANGE_ACTION (
+            type: plainText
+            heading {
+                heading: Action
+            }
+            layout {
+                sequence: 70
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: G
+            }
+        )
+
+        column ENTITY_NAME (
+            type: plainText
+            heading {
+                heading: Entity
+            }
+            layout {
+                sequence: 30
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: C
+            }
+        )
+
+        column ENTITY_PK (
+            type: plainText
+            heading {
+                heading: Entity Key
+            }
+            layout {
+                sequence: 40
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: D
+            }
+        )
+
+        column FIELD_NAME (
+            type: plainText
+            heading {
+                heading: Field
+            }
+            layout {
+                sequence: 80
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: H
+            }
+        )
+
+        column NEW_VALUE (
+            type: plainText
+            heading {
+                heading: New Value
+            }
+            layout {
+                sequence: 100
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: J
+            }
+        )
+
+        column OLD_VALUE (
+            type: plainText
+            heading {
+                heading: Old Value
+            }
+            layout {
+                sequence: 90
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: I
+            }
+        )
+
+        column TASK_KEY (
+            type: plainText
+            heading {
+                heading: Task
+            }
+            layout {
+                sequence: 50
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: E
+            }
+        )
+
+        column TASK_TITLE (
+            type: plainText
+            heading {
+                heading: Task Title
+            }
+            layout {
+                sequence: 60
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: F
+            }
+        )
+
+        page {
+            borderWidth: 0.5
+            borderColor: #666666
+        }
+
+        savedReport primary (
+            visibility: primaryDefault
+            view {
+                rowsPerPage: 50
+            }
+
+            displayColumn CHANGED_AT (
+                sequence: 1
+            )
+
+            displayColumn CHANGED_BY (
+                sequence: 2
+            )
+
+            displayColumn CHANGE_ACTION (
+                sequence: 7
+            )
+
+            displayColumn ENTITY_NAME (
+                sequence: 3
+            )
+
+            displayColumn ENTITY_PK (
+                sequence: 4
+            )
+
+            displayColumn FIELD_NAME (
+                sequence: 8
+            )
+
+            displayColumn NEW_VALUE (
+                sequence: 10
+            )
+
+            displayColumn OLD_VALUE (
+                sequence: 9
+            )
+
+            displayColumn TASK_KEY (
+                sequence: 5
+            )
+
+            displayColumn TASK_TITLE (
+                sequence: 6
+            )
+
+        )
+
+    )
+
+)
+

@@ -1,0 +1,636 @@
+page 40 (
+    name: Email Schedules
+    alias: EMAIL-SCHEDULES
+    title: Email Schedules
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+        warnOnUnsavedChanges: false
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region daily-summary-controls (
+        name: Daily Team Member Task Summary
+        type: staticContent
+        layout {
+            sequence: 10
+            parentRegion: @email-preview-panel
+            slot: subRegions
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        serverSideCondition {
+            type: expression
+            plsqlExpression: tsk_daily_email_pkg.selected_schedule_is(:P40_EMAIL_SCHEDULE_ID, 'DAILY_MEMBER_STATUS')
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    region daily-summary-email-preview (
+        name: Daily Email Preview
+        type: dynamicContent
+        source {
+            plsqlFunctionBody:
+                ```plsql
+                declare
+                    l_team_member_id tsk_team_members.team_member_id%type;
+                begin
+                    l_team_member_id := :P40_PREVIEW_MEMBER_ID;
+                
+                    if l_team_member_id is null then
+                        select min(team_member_id)
+                          into l_team_member_id
+                          from (
+                              select tm.team_member_id
+                                from tsk_team_members tm
+                                join tsk_users u
+                                  on u.user_id = tm.user_id
+                                join tsk_email_schedules es
+                                  on es.team_id = tm.team_id
+                               where es.email_schedule_id = :P40_EMAIL_SCHEDULE_ID
+                                 and tm.active_yn = 'Y'
+                                 and u.active_yn = 'Y'
+                                 and (
+                                         not exists (
+                                             select 1
+                                               from tsk_email_recipients er
+                                              where er.email_schedule_id = es.email_schedule_id
+                                                and er.active_yn = 'Y'
+                                                and er.team_member_id is not null
+                                         )
+                                      or exists (
+                                             select 1
+                                               from tsk_email_recipients er
+                                              where er.email_schedule_id = es.email_schedule_id
+                                                and er.team_member_id = tm.team_member_id
+                                                and er.active_yn = 'Y'
+                                         )
+                                     )
+                              union all
+                              select tm.team_member_id
+                                from tsk_team_members tm
+                                join tsk_users u
+                                  on u.user_id = tm.user_id
+                               where :P40_EMAIL_SCHEDULE_ID is null
+                                 and tm.active_yn = 'Y'
+                                 and u.active_yn = 'Y'
+                          );
+                    end if;
+                
+                    return tsk_daily_email_pkg.member_email_html(l_team_member_id);
+                end;
+                ```
+            pageItemsToSubmit: [
+                P40_EMAIL_SCHEDULE_ID
+                P40_PREVIEW_MEMBER_ID
+            ]
+        }
+        layout {
+            sequence: 20
+            parentRegion: @email-preview-panel
+            slot: subRegions
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        serverSideCondition {
+            type: expression
+            plsqlExpression: tsk_daily_email_pkg.selected_schedule_is(:P40_EMAIL_SCHEDULE_ID, 'DAILY_MEMBER_STATUS')
+        }
+    )
+
+    region email-preview-panel (
+        name: Email Preview
+        type: staticContent
+        layout {
+            sequence: 20
+            slot: body
+            startNewRow: false
+            columnSpan: 8
+        }
+        appearance {
+            template: @/blank-with-attributes
+            templateOptions: #DEFAULT#
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    region email-schedule-list (
+        name: Email Schedules
+        type: classicReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                with selected_schedule as (
+                    select coalesce(
+                               max(to_number(:P40_EMAIL_SCHEDULE_ID)),
+                               min(email_schedule_id)
+                           ) as email_schedule_id
+                      from tsk_email_schedules
+                )
+                select null as schedule_card,
+                       es.email_schedule_id,
+                       es.schedule_name,
+                       es.schedule_code,
+                       t.team_name,
+                       es.enabled_yn,
+                       case
+                           when es.send_at is not null
+                           then to_char(es.send_at, 'Dy, Mon DD YYYY HH24:MI')
+                           else lpad(es.send_hour, 2, '0') || ':' || lpad(es.send_minute, 2, '0')
+                       end as send_time,
+                       case
+                           when es.email_schedule_id = ss.email_schedule_id
+                           then '#2563eb'
+                           else 'var(--ut-component-border-color)'
+                       end as card_border_color,
+                       case
+                           when es.email_schedule_id = ss.email_schedule_id
+                           then 'var(--ut-component-highlight-background-color)'
+                           else 'transparent'
+                       end as card_background,
+                       apex_page.get_url(
+                           p_page => 40,
+                           p_items => 'P40_EMAIL_SCHEDULE_ID',
+                           p_values => es.email_schedule_id
+                       ) as preview_url,
+                       apex_page.get_url(
+                           p_page => 41,
+                           p_clear_cache => '41',
+                           p_items => 'P41_EMAIL_SCHEDULE_ID',
+                           p_values => es.email_schedule_id
+                       ) as edit_url
+                  from tsk_email_schedules es
+                  join tsk_teams t
+                    on t.team_id = es.team_id
+                  cross join selected_schedule ss
+                 order by case es.schedule_code
+                              when 'DAILY_MEMBER_STATUS' then 1
+                              when 'MONTHLY_TEAM_PROGRESS' then 2
+                              when 'WEEKLY_TEAM_SUMMARY' then 3
+                              else 9
+                          end,
+                          es.schedule_name
+                ```
+            pageItemsToSubmit: P40_EMAIL_SCHEDULE_ID
+        }
+        layout {
+            sequence: 10
+            slot: body
+            columnSpan: 4
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        componentAppearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Report--inline
+                t-Report--stretch
+            ]
+        }
+        messages {
+            whenNoDataFound: No email schedules found.
+        }
+        heading {
+            type: none
+        }
+
+        column CARD_BACKGROUND (
+            reportColumnQueryId: 9
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 90
+            }
+        )
+
+        column CARD_BORDER_COLOR (
+            reportColumnQueryId: 8
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 80
+            }
+        )
+
+        column EDIT_URL (
+            reportColumnQueryId: 11
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 110
+            }
+        )
+
+        column EMAIL_SCHEDULE_ID (
+            reportColumnQueryId: 2
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 20
+            }
+        )
+
+        column ENABLED_YN (
+            reportColumnQueryId: 6
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 60
+            }
+        )
+
+        column PREVIEW_URL (
+            reportColumnQueryId: 10
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 100
+            }
+        )
+
+        column SCHEDULE_CARD (
+            reportColumnQueryId: 1
+            derivedColumn: N
+            heading {
+                heading: " "
+            }
+            layout {
+                sequence: 10
+            }
+            columnFormatting {
+                htmlExpression:
+                    ```html
+                    <div style="padding:14px 12px;margin-bottom:10px;border:1px solid #CARD_BORDER_COLOR#;border-left:4px solid #CARD_BORDER_COLOR#;border-radius:8px;background:#CARD_BACKGROUND#;color:inherit">
+                      <div style="display:flex;gap:10px;align-items:flex-start;justify-content:space-between">
+                        <a href="#PREVIEW_URL#" style="flex:1;text-decoration:none;color:inherit">
+                          <div style="font-weight:700">#SCHEDULE_NAME#</div>
+                          <div style="font-size:.82rem;color:var(--ut-component-text-muted-color)">#TEAM_NAME# &#8226; #SEND_TIME# &#8226; Enabled #ENABLED_YN#</div>
+                        </a>
+                        <a href="#EDIT_URL#" class="t-Button t-Button--small t-Button--noLabel t-Button--icon" title="Edit #SCHEDULE_NAME#" aria-label="Edit #SCHEDULE_NAME#"><span class="t-Icon fa fa-edit" aria-hidden="true"></span></a>
+                      </div>
+                    </div>
+                    ```
+            }
+        )
+
+        column SCHEDULE_CODE (
+            reportColumnQueryId: 4
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 40
+            }
+        )
+
+        column SCHEDULE_NAME (
+            reportColumnQueryId: 3
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 30
+            }
+        )
+
+        column SEND_TIME (
+            reportColumnQueryId: 7
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 70
+            }
+        )
+
+        column TEAM_NAME (
+            reportColumnQueryId: 5
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 50
+            }
+        )
+
+    )
+
+    region monthly-summary-controls (
+        name: Monthly Team Progress Summary
+        type: staticContent
+        layout {
+            sequence: 30
+            parentRegion: @email-preview-panel
+            slot: subRegions
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        serverSideCondition {
+            type: expression
+            plsqlExpression: tsk_daily_email_pkg.selected_schedule_is(:P40_EMAIL_SCHEDULE_ID, 'MONTHLY_TEAM_PROGRESS')
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    region monthly-summary-email-preview (
+        name: Monthly Email Preview
+        type: dynamicContent
+        source {
+            plsqlFunctionBody:
+                ```plsql
+                declare
+                    l_team_id tsk_teams.team_id%type;
+                begin
+                    l_team_id := :P40_PREVIEW_TEAM_ID;
+                
+                    if l_team_id is null then
+                        select coalesce(
+                                   (
+                                       select team_id
+                                         from tsk_email_schedules
+                                        where email_schedule_id = :P40_EMAIL_SCHEDULE_ID
+                                   ),
+                                   (
+                                       select min(team_id)
+                                         from tsk_teams
+                                        where active_yn = 'Y'
+                                   )
+                               )
+                          into l_team_id
+                          from dual;
+                    end if;
+                
+                    return tsk_daily_email_pkg.monthly_team_html(l_team_id);
+                end;
+                ```
+            pageItemsToSubmit: [
+                P40_EMAIL_SCHEDULE_ID
+                P40_PREVIEW_TEAM_ID
+            ]
+        }
+        layout {
+            sequence: 40
+            parentRegion: @email-preview-panel
+            slot: subRegions
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        serverSideCondition {
+            type: expression
+            plsqlExpression: tsk_daily_email_pkg.selected_schedule_is(:P40_EMAIL_SCHEDULE_ID, 'MONTHLY_TEAM_PROGRESS')
+        }
+    )
+
+    pageItem P40_EMAIL_SCHEDULE_ID (
+        type: hidden
+        layout {
+            sequence: 5
+            slot: body
+        }
+        security {
+            sessionStateProtection: checksumRequiredSessionLevel
+        }
+    )
+
+    pageItem P40_PREVIEW_MEMBER_ID (
+        type: selectOne
+        label {
+            label: Preview Recipient
+            alignment: left
+        }
+        lov {
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select u.display_name || ' (' || u.email || ')' as display_value,
+                       tm.team_member_id as return_value
+                  from tsk_team_members tm
+                  join tsk_users u
+                    on u.user_id = tm.user_id
+                 where tm.active_yn = 'Y'
+                   and u.active_yn = 'Y'
+                   and tm.team_id = coalesce(
+                           (
+                               select team_id
+                                 from tsk_email_schedules
+                                where email_schedule_id = :P40_EMAIL_SCHEDULE_ID
+                           ),
+                           tm.team_id
+                       )
+                   and (
+                           :P40_EMAIL_SCHEDULE_ID is null
+                        or not exists (
+                               select 1
+                                 from tsk_email_recipients er
+                                where er.email_schedule_id = :P40_EMAIL_SCHEDULE_ID
+                                  and er.active_yn = 'Y'
+                                  and er.team_member_id is not null
+                           )
+                        or exists (
+                               select 1
+                                 from tsk_email_recipients er
+                                where er.email_schedule_id = :P40_EMAIL_SCHEDULE_ID
+                                  and er.team_member_id = tm.team_member_id
+                                  and er.active_yn = 'Y'
+                           )
+                       )
+                 order by u.display_name
+                ```
+        }
+        layout {
+            sequence: 10
+            region: @daily-summary-controls
+            slot: regionBody
+            columnSpan: 6
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+        }
+    )
+
+    pageItem P40_PREVIEW_TEAM_ID (
+        type: selectOne
+        label {
+            label: Preview Team
+            alignment: left
+        }
+        lov {
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select team_name as display_value,
+                       team_id as return_value
+                  from tsk_teams
+                 where active_yn = 'Y'
+                 order by team_name
+                ```
+        }
+        layout {
+            sequence: 10
+            region: @monthly-summary-controls
+            slot: regionBody
+            columnSpan: 6
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+        }
+    )
+
+    button email-log (
+        buttonName: EMAIL_LOG
+        label: Email Log
+        layout {
+            sequence: 10
+            region: @email-schedule-list
+            slot: edit
+        }
+        appearance {
+            buttonTemplate: @/text
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: redirectThisApp
+            target: {
+                page: 42
+                clearCache: 42
+            }
+            warnOnUnsavedChanges: doNotCheck
+        }
+    )
+
+    dynamicAction refresh-daily-email-preview (
+        name: Refresh Daily Email Preview
+        execution {
+            sequence: 10
+        }
+        when {
+            selectionType: items
+            items: P40_PREVIEW_MEMBER_ID
+        }
+
+        action refresh-preview (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @daily-summary-email-preview
+            }
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+    )
+
+    dynamicAction refresh-monthly-email-preview (
+        name: Refresh Monthly Email Preview
+        execution {
+            sequence: 20
+        }
+        when {
+            selectionType: items
+            items: P40_PREVIEW_TEAM_ID
+        }
+
+        action refresh-preview (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @monthly-summary-email-preview
+            }
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+    )
+
+    dynamicAction refresh-on-schedule-dialog-close (
+        name: Refresh on Schedule Dialog Close
+        execution {
+            sequence: 30
+        }
+        when {
+            event: apexafterclosedialog
+            selectionType: region
+            region: @email-schedule-list
+        }
+
+        action refresh-daily-preview (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @daily-summary-email-preview
+            }
+            execution {
+                sequence: 20
+                fireOnInit: false
+            }
+        )
+
+        action refresh-monthly-preview (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @monthly-summary-email-preview
+            }
+            execution {
+                sequence: 30
+                fireOnInit: false
+            }
+        )
+
+        action refresh-schedules (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @email-schedule-list
+            }
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+    )
+
+)

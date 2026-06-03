@@ -1,0 +1,886 @@
+page 70 (
+    name: Team Member Dashboard
+    alias: TEAM-MEMBER-DASHBOARD
+    title: Team Member Dashboard
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+        warnOnUnsavedChanges: false
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region my-dashboard-left (
+        name: My Dashboard Left
+        type: staticContent
+        layout {
+            sequence: 20
+            slot: body
+            columnSpan: 4
+        }
+        appearance {
+            template: @/blank-with-attributes
+            templateOptions: #DEFAULT#
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    region my-open-tasks-by-priority (
+        name: Tasks by Priority
+        type: chart
+        layout {
+            sequence: 20
+            parentRegion: @my-dashboard-left
+            slot: subRegions
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        chart {
+            type: donut
+        }
+        title {
+            title: Tasks by Priority
+        }
+
+        series my-open-tasks-by-priority (
+            name: Tasks by Priority
+            execution {
+                sequence: 10
+            }
+            source {
+                type: sqlQuery
+                sqlQuery:
+                    ```sql
+                    select v.priority_code as label,
+                           count(distinct v.task_id) as value,
+                           apex_page.get_url(
+                               p_page => 70,
+                               p_clear_cache => '70',
+                               p_items => 'P70_PRIORITY',
+                               p_values => v.priority_code
+                           ) as link
+                      from tsk_v_task_list v
+                      join tsk_task_assignees ta
+                        on ta.task_id = v.task_id
+                       and ta.active_yn = 'Y'
+                      join tsk_team_members tm
+                        on tm.team_member_id = ta.team_member_id
+                       and tm.active_yn = 'Y'
+                      join tsk_users u
+                        on u.user_id = tm.user_id
+                       and u.active_yn = 'Y'
+                     where nvl(v.is_done_yn, 'N') = 'N'
+                       and (
+                               lower(u.username) = lower(:APP_USER)
+                            or lower(u.email) = lower(:APP_USER)
+                           )
+                     group by v.priority_code
+                     order by case v.priority_code
+                                  when 'CRITICAL' then 1
+                                  when 'HIGH' then 2
+                                  when 'MEDIUM' then 3
+                                  when 'LOW' then 4
+                                  else 5
+                              end
+                    ```
+            }
+            columnMapping {
+                label: LABEL
+                value: VALUE
+            }
+            link {
+                type: redirectUrl
+                targetUrl: &LINK.
+            }
+            label {
+                show: true
+            }
+        )
+
+    )
+
+    region my-tasks-due-by-week (
+        name: Tasks Due by Week
+        type: chart
+        layout {
+            sequence: 30
+            parentRegion: @my-dashboard-left
+            slot: subRegions
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        chart {
+            type: bar
+        }
+        title {
+            title: Tasks Due by Week
+        }
+        chartAppearance {
+            orientation: horizontal
+        }
+
+        series my-tasks-due-by-week (
+            name: Tasks Due
+            execution {
+                sequence: 10
+            }
+            source {
+                type: sqlQuery
+                sqlQuery:
+                    ```sql
+                    select 'Week of ' || to_char(trunc(v.due_date, 'IW'), 'YYYY-MM-DD') as label,
+                           count(distinct v.task_id) as value,
+                           apex_page.get_url(
+                               p_page => 70,
+                               p_clear_cache => '70',
+                               p_items => 'P70_DUE_WEEK',
+                               p_values => to_char(trunc(v.due_date, 'IW'), 'YYYY-MM-DD')
+                           ) as link,
+                           trunc(v.due_date, 'IW') as sort_date
+                      from tsk_v_task_list v
+                      join tsk_task_assignees ta
+                        on ta.task_id = v.task_id
+                       and ta.active_yn = 'Y'
+                      join tsk_team_members tm
+                        on tm.team_member_id = ta.team_member_id
+                       and tm.active_yn = 'Y'
+                      join tsk_users u
+                        on u.user_id = tm.user_id
+                       and u.active_yn = 'Y'
+                     where nvl(v.is_done_yn, 'N') = 'N'
+                       and v.due_date is not null
+                       and v.due_date >= trunc(sysdate)
+                       and (
+                               lower(u.username) = lower(:APP_USER)
+                            or lower(u.email) = lower(:APP_USER)
+                           )
+                     group by trunc(v.due_date, 'IW')
+                     order by sort_date
+                    ```
+            }
+            columnMapping {
+                label: LABEL
+                value: VALUE
+            }
+            link {
+                type: redirectUrl
+                targetUrl: &LINK.
+            }
+            label {
+                show: true
+            }
+        )
+
+        axis x (
+            name: x
+            majorTicks {
+                show: false
+            }
+        )
+
+        axis y (
+            name: y
+            value {
+                format: decimal
+                decimalPlaces: 0
+                formatScaling: none
+            }
+        )
+
+    )
+
+    region my-task-overview (
+        name: My Task Overview
+        type: classicReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                with my_tasks as (
+                    select distinct v.task_id,
+                           v.status_code,
+                           v.overdue_yn,
+                           v.is_done_yn
+                      from tsk_v_task_list v
+                      join tsk_task_assignees ta
+                        on ta.task_id = v.task_id
+                       and ta.active_yn = 'Y'
+                      join tsk_team_members tm
+                        on tm.team_member_id = ta.team_member_id
+                       and tm.active_yn = 'Y'
+                      join tsk_users u
+                        on u.user_id = tm.user_id
+                       and u.active_yn = 'Y'
+                     where lower(u.username) = lower(:APP_USER)
+                        or lower(u.email) = lower(:APP_USER)
+                )
+                select null as card_layout,
+                       count(*) as total_tasks,
+                       sum(case when nvl(is_done_yn, 'N') = 'N' then 1 else 0 end) as open_tasks,
+                       sum(case when status_code = 'IN_PROGRESS' then 1 else 0 end) as in_progress_tasks,
+                       sum(case when status_code = 'COMPLETED' then 1 else 0 end) as completed_tasks,
+                       sum(case when status_code = 'ARCHIVE' then 1 else 0 end) as archive_tasks,
+                       sum(case when overdue_yn = 'Y' and nvl(is_done_yn, 'N') = 'N' then 1 else 0 end) as overdue_tasks,
+                       apex_page.get_url(p_page => 70, p_clear_cache => '70', p_items => 'P70_SCOPE', p_values => 'ALL') as total_tasks_url,
+                       apex_page.get_url(p_page => 70, p_clear_cache => '70', p_items => 'P70_STATUS', p_values => 'In Progress') as in_progress_tasks_url,
+                       apex_page.get_url(p_page => 70, p_clear_cache => '70', p_items => 'P70_STATUS', p_values => 'Completed') as completed_tasks_url,
+                       apex_page.get_url(p_page => 70, p_clear_cache => '70', p_items => 'P70_STATUS', p_values => 'Archive') as archive_tasks_url,
+                       apex_page.get_url(p_page => 70, p_clear_cache => '70', p_items => 'P70_OVERDUE', p_values => 'Y') as overdue_tasks_url,
+                       apex_page.get_url(p_page => 70, p_clear_cache => '70', p_items => 'P70_SCOPE', p_values => 'OPEN') as open_tasks_url
+                  from my_tasks
+                ```
+        }
+        layout {
+            sequence: 10
+            parentRegion: @my-dashboard-left
+            slot: subRegions
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        componentAppearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Report--inline
+                t-Report--stretch
+            ]
+        }
+        messages {
+            whenNoDataFound: No assigned tasks found.
+        }
+
+        column CARD_LAYOUT (
+            reportColumnQueryId: 1
+            derivedColumn: N
+            heading {
+                heading: " "
+            }
+            layout {
+                sequence: 10
+            }
+            columnFormatting {
+                htmlExpression:
+                    ```html
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px">
+                      <a href="#TOTAL_TASKS_URL#" style="padding:12px;border:1px solid var(--ut-component-border-color);border-radius:8px;text-decoration:none;color:inherit"><span class="fa fa-clipboard-list u-info-text"></span> <b style="font-size:1.45rem">#TOTAL_TASKS#</b><br>Total Assigned</a>
+                      <a href="#OPEN_TASKS_URL#" style="padding:12px;border:1px solid var(--ut-component-border-color);border-radius:8px;text-decoration:none;color:inherit"><span class="fa fa-list-ul u-warning-text"></span> <b style="font-size:1.45rem">#OPEN_TASKS#</b><br>Open Tasks</a>
+                      <a href="#IN_PROGRESS_TASKS_URL#" style="padding:12px;border:1px solid var(--ut-component-border-color);border-radius:8px;text-decoration:none;color:inherit"><span class="fa fa-refresh" style="color:#2563eb" aria-hidden="true"></span> <b style="font-size:1.45rem">#IN_PROGRESS_TASKS#</b><br>In Progress</a>
+                      <a href="#COMPLETED_TASKS_URL#" style="padding:12px;border:1px solid var(--ut-component-border-color);border-radius:8px;text-decoration:none;color:inherit"><span class="fa fa-check-circle u-success-text"></span> <b style="font-size:1.45rem">#COMPLETED_TASKS#</b><br>Completed</a>
+                      <a href="#ARCHIVE_TASKS_URL#" style="padding:12px;border:1px solid var(--ut-component-border-color);border-radius:8px;text-decoration:none;color:inherit"><span class="fa fa-archive" style="color:#64748b" aria-hidden="true"></span> <b style="font-size:1.45rem">#ARCHIVE_TASKS#</b><br>Archive</a>
+                      <a href="#OVERDUE_TASKS_URL#" style="padding:12px;border:1px solid var(--ut-component-border-color);border-radius:8px;text-decoration:none;color:inherit"><span class="fa fa-exclamation-circle u-danger-text"></span> <b style="font-size:1.45rem">#OVERDUE_TASKS#</b><br>Overdue</a>
+                    </div>
+                    ```
+            }
+        )
+
+        column COMPLETED_TASKS (
+            reportColumnQueryId: 5
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 50
+            }
+        )
+
+        column COMPLETED_TASKS_URL (
+            reportColumnQueryId: 9
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 90
+            }
+        )
+
+        column ARCHIVE_TASKS (
+            reportColumnQueryId: 12
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 55
+            }
+        )
+
+        column ARCHIVE_TASKS_URL (
+            reportColumnQueryId: 13
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 95
+            }
+        )
+
+        column IN_PROGRESS_TASKS (
+            reportColumnQueryId: 4
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 40
+            }
+        )
+
+        column IN_PROGRESS_TASKS_URL (
+            reportColumnQueryId: 8
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 80
+            }
+        )
+
+        column OPEN_TASKS (
+            reportColumnQueryId: 3
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 30
+            }
+        )
+
+        column OPEN_TASKS_URL (
+            reportColumnQueryId: 11
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 110
+            }
+        )
+
+        column OVERDUE_TASKS (
+            reportColumnQueryId: 6
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 60
+            }
+        )
+
+        column OVERDUE_TASKS_URL (
+            reportColumnQueryId: 10
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 100
+            }
+        )
+
+        column TOTAL_TASKS (
+            reportColumnQueryId: 2
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 20
+            }
+        )
+
+        column TOTAL_TASKS_URL (
+            reportColumnQueryId: 7
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 70
+            }
+        )
+
+    )
+
+    region my-tasks-by-status (
+        name: My Tasks by Status
+        type: chart
+        layout {
+            sequence: 40
+            slot: body
+            columnSpan: 6
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        chart {
+            type: donut
+        }
+        title {
+            title: My Tasks by Status
+        }
+        serverSideCondition {
+            type: expression
+            plsqlExpression: 1 = 0
+        }
+
+        series my-tasks-by-status (
+            name: My Tasks by Status
+            execution {
+                sequence: 10
+            }
+            source {
+                type: sqlQuery
+                sqlQuery:
+                    ```sql
+                    select v.status_name as label,
+                           count(distinct v.task_id) as value,
+                           apex_page.get_url(
+                               p_page => 70,
+                               p_clear_cache => '70',
+                               p_items => 'P70_STATUS',
+                               p_values => v.status_name
+                           ) as link
+                      from tsk_v_task_list v
+                      join tsk_task_assignees ta
+                        on ta.task_id = v.task_id
+                       and ta.active_yn = 'Y'
+                      join tsk_team_members tm
+                        on tm.team_member_id = ta.team_member_id
+                       and tm.active_yn = 'Y'
+                      join tsk_users u
+                        on u.user_id = tm.user_id
+                       and u.active_yn = 'Y'
+                     where lower(u.username) = lower(:APP_USER)
+                        or lower(u.email) = lower(:APP_USER)
+                     group by v.status_name
+                     order by v.status_name
+                    ```
+            }
+            columnMapping {
+                label: LABEL
+                value: VALUE
+            }
+            link {
+                type: redirectUrl
+                targetUrl: &LINK.
+            }
+            label {
+                show: true
+            }
+        )
+
+    )
+
+    region recommended-work (
+        name: Recommended Work
+        type: classicReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select v.task_id,
+                       apex_page.get_url(
+                           p_page => 12,
+                           p_items => 'P12_TASK_ID',
+                           p_values => v.task_id
+                       ) as task_url,
+                       v.task_key,
+                       v.title,
+                       v.priority_code,
+                       v.due_date,
+                       case
+                           when v.due_date < trunc(sysdate) then 'Overdue'
+                           when v.due_date = trunc(sysdate) then 'Due Today'
+                           when v.due_date <= trunc(sysdate) + 7 then 'Due This Week'
+                           else 'Upcoming'
+                       end as due_window,
+                       v.status_name,
+                       v.application_name,
+                       v.type_name,
+                       v.percent_complete,
+                       (
+                           select count(*)
+                             from tsk_task_updates tu
+                            where tu.task_id = v.task_id
+                       ) as update_count,
+                       (
+                           select listagg(tg.topic_name, ', ') within group (order by tg.topic_name)
+                             from tsk_task_topic_groups ttg
+                             join tsk_topic_groups tg
+                               on tg.topic_group_id = ttg.topic_group_id
+                            where ttg.task_id = v.task_id
+                       ) as topic_groups,
+                       cast(v.updated_at as date) as last_updated
+                  from tsk_v_task_list v
+                  join tsk_task_assignees ta
+                    on ta.task_id = v.task_id
+                   and ta.active_yn = 'Y'
+                  join tsk_team_members tm
+                    on tm.team_member_id = ta.team_member_id
+                   and tm.active_yn = 'Y'
+                  join tsk_users u
+                    on u.user_id = tm.user_id
+                   and u.active_yn = 'Y'
+                 where (
+                           lower(u.username) = lower(:APP_USER)
+                        or lower(u.email) = lower(:APP_USER)
+                       )
+                   and (:P70_STATUS is null or v.status_name = :P70_STATUS)
+                   and (:P70_PRIORITY is null or v.priority_code = :P70_PRIORITY)
+                   and (:P70_OVERDUE is null or v.overdue_yn = :P70_OVERDUE)
+                   and (
+                           :P70_DUE_WEEK is null
+                        or (
+                            v.due_date >= trunc(sysdate)
+                            and v.due_date >= to_date(
+                                case
+                                    when regexp_like(:P70_DUE_WEEK, '^\d{4}-\d{2}-\d{2}$') then :P70_DUE_WEEK
+                                end,
+                                'YYYY-MM-DD'
+                            )
+                            and v.due_date < to_date(
+                                case
+                                    when regexp_like(:P70_DUE_WEEK, '^\d{4}-\d{2}-\d{2}$') then :P70_DUE_WEEK
+                                end,
+                                'YYYY-MM-DD'
+                            ) + 7)
+                       )
+                   and (
+                           :P70_SCOPE = 'ALL'
+                        or :P70_STATUS is not null
+                        or nvl(v.is_done_yn, 'N') = 'N'
+                       )
+                 order by v.updated_at desc nulls last,
+                          v.task_key
+                ```
+        }
+        layout {
+            sequence: 30
+            slot: body
+            startNewRow: false
+            columnSpan: 8
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        componentAppearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Report--stretch
+                t-Report--rowHighlight
+            ]
+        }
+        pagination {
+            type: nextAndPreviousLinks
+            rows: 20
+        }
+        messages {
+            whenNoDataFound: No open assigned tasks found.
+        }
+
+        column APPLICATION_NAME (
+            reportColumnQueryId: 9
+            derivedColumn: N
+            heading {
+                heading: Application
+            }
+            layout {
+                sequence: 70
+            }
+        )
+
+        column DUE_DATE (
+            reportColumnQueryId: 6
+            derivedColumn: N
+            heading {
+                heading: Due Date
+            }
+            layout {
+                sequence: 40
+            }
+            appearance {
+                formatMask: DD-MON-YYYY
+            }
+        )
+
+        column DUE_WINDOW (
+            reportColumnQueryId: 7
+            derivedColumn: N
+            heading {
+                heading: Due Window
+            }
+            layout {
+                sequence: 50
+            }
+        )
+
+        column LAST_UPDATED (
+            reportColumnQueryId: 14
+            derivedColumn: N
+            heading {
+                heading: Last Updated
+            }
+            layout {
+                sequence: 45
+            }
+            appearance {
+                formatMask: DD-MON-YYYY
+            }
+        )
+
+        column PERCENT_COMPLETE (
+            reportColumnQueryId: 11
+            derivedColumn: N
+            heading {
+                heading: Complete %
+                alignment: end
+            }
+            layout {
+                sequence: 90
+                columnAlignment: end
+            }
+        )
+
+        column TOPIC_GROUPS (
+            reportColumnQueryId: 13
+            derivedColumn: N
+            heading {
+                heading: Topic Groups
+            }
+            layout {
+                sequence: 85
+            }
+        )
+
+        column PRIORITY_CODE (
+            reportColumnQueryId: 5
+            derivedColumn: N
+            heading {
+                heading: Priority
+            }
+            layout {
+                sequence: 30
+            }
+        )
+
+        column STATUS_NAME (
+            reportColumnQueryId: 8
+            derivedColumn: N
+            heading {
+                heading: Status
+            }
+            layout {
+                sequence: 60
+            }
+        )
+
+        column TASK_ID (
+            reportColumnQueryId: 1
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 5
+            }
+        )
+
+        column TASK_KEY (
+            reportColumnQueryId: 3
+            derivedColumn: N
+            heading {
+                heading: Task
+            }
+            layout {
+                sequence: 10
+            }
+            columnFormatting {
+                htmlExpression: <a href="#TASK_URL#">#TASK_KEY#</a>
+            }
+        )
+
+        column TASK_URL (
+            reportColumnQueryId: 2
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 6
+            }
+        )
+
+        column TITLE (
+            reportColumnQueryId: 4
+            derivedColumn: N
+            heading {
+                heading: Title
+            }
+            layout {
+                sequence: 20
+            }
+        )
+
+        column UPDATE_COUNT (
+            reportColumnQueryId: 12
+            derivedColumn: N
+            heading {
+                heading: Updates
+                alignment: center
+            }
+            layout {
+                sequence: 95
+                columnAlignment: center
+            }
+        )
+
+        column TYPE_NAME (
+            reportColumnQueryId: 10
+            derivedColumn: N
+            heading {
+                heading: Type
+            }
+            layout {
+                sequence: 80
+            }
+        )
+
+    )
+
+    region team-member-dashboard-title (
+        name: Team Member Dashboard Title
+        title: &P70_PAGE_TITLE.
+        type: staticContent
+        layout {
+            sequence: 10
+            slot: breadcrumbBar
+        }
+        appearance {
+            template: @/title-bar
+            templateOptions: #DEFAULT#
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    button create-task (
+        buttonName: CREATE_TASK
+        label: Create Task
+        layout {
+            sequence: 10
+            region: @recommended-work
+            slot: edit
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: redirectThisApp
+            target: {
+                page: 11
+                clearCache: 11
+            }
+            warnOnUnsavedChanges: doNotCheck
+        }
+    )
+
+    pageItem P70_OVERDUE (
+        type: hidden
+        layout {
+            sequence: 40
+            region: @team-member-dashboard-title
+            slot: regionBody
+        }
+    )
+
+    pageItem P70_DUE_WEEK (
+        type: hidden
+        layout {
+            sequence: 50
+            region: @team-member-dashboard-title
+            slot: regionBody
+        }
+    )
+
+    pageItem P70_PAGE_TITLE (
+        type: hidden
+        layout {
+            sequence: 5
+            region: @team-member-dashboard-title
+            slot: regionBody
+        }
+    )
+
+    pageItem P70_PRIORITY (
+        type: hidden
+        layout {
+            sequence: 20
+            region: @team-member-dashboard-title
+            slot: regionBody
+        }
+    )
+
+    pageItem P70_SCOPE (
+        type: hidden
+        layout {
+            sequence: 30
+            region: @team-member-dashboard-title
+            slot: regionBody
+        }
+    )
+
+    pageItem P70_STATUS (
+        type: hidden
+        layout {
+            sequence: 10
+            region: @team-member-dashboard-title
+            slot: regionBody
+        }
+    )
+
+    process set-page-title (
+        name: Set Page Title
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                begin
+                    select u.display_name || '''s Tasks'
+                      into :P70_PAGE_TITLE
+                      from tsk_users u
+                     where u.active_yn = 'Y'
+                       and (
+                               lower(u.username) = lower(:APP_USER)
+                            or lower(u.email) = lower(:APP_USER)
+                           )
+                     fetch first 1 row only;
+                exception
+                    when no_data_found then
+                        :P70_PAGE_TITLE := :APP_USER || '''s Tasks';
+                end;
+                ```
+        }
+        execution {
+            sequence: 10
+            point: beforeHeader
+        }
+        advanced {
+            executionMappingIdentifier: 17611958954237496
+        }
+    )
+
+)

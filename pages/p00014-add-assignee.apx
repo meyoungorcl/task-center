@@ -1,0 +1,313 @@
+page 14 (
+    name: Add Assignee
+    alias: ADD-ASSIGNEE
+    title: Add Assignee
+    appearance {
+        pageMode: modalDialog
+        dialogTemplate: @/drawer
+        templateOptions: [
+            #DEFAULT#
+            js-dialog-class-t-Drawer--pullOutEnd
+        ]
+    }
+    dialog {
+        chained: false
+    }
+    navigation {
+        warnOnUnsavedChanges: false
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region assignee-form (
+        name: Assignee
+        type: staticContent
+        layout {
+            sequence: 10
+            slot: contentBody
+        }
+        appearance {
+            template: @/blank-with-attributes
+            templateOptions: #DEFAULT#
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    region buttons (
+        name: Buttons
+        type: staticContent
+        layout {
+            sequence: 20
+            slot: dialogFooter
+        }
+        appearance {
+            template: @/buttons-container
+            templateOptions: #DEFAULT#
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    pageItem P14_ALLOCATED_PCT (
+        type: numberField
+        label {
+            label: Allocation %
+            alignment: left
+        }
+        layout {
+            sequence: 40
+            region: @assignee-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 20
+        }
+        sessionState {
+            storage: request
+        }
+    )
+
+    pageItem P14_ASSIGNMENT_ROLE (
+        type: textField
+        label {
+            label: Role
+            alignment: left
+        }
+        layout {
+            sequence: 30
+            region: @assignee-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 40
+        }
+        validation {
+            maxLength: 100
+        }
+        sessionState {
+            storage: request
+        }
+    )
+
+    pageItem P14_TASK_ID (
+        type: hidden
+        layout {
+            sequence: 10
+            region: @assignee-form
+            slot: regionBody
+        }
+        security {
+            sessionStateProtection: checksumRequiredSessionLevel
+        }
+    )
+
+    pageItem P14_TEAM_MEMBER_ID (
+        type: selectList
+        label {
+            label: Assignee
+            alignment: left
+        }
+        lov {
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select u.display_name || ' - ' || t.team_name as display_value,
+                       tm.team_member_id as return_value
+                  from tsk_team_members tm
+                  join tsk_users u
+                    on u.user_id = tm.user_id
+                  join tsk_teams t
+                    on t.team_id = tm.team_id
+                  join tsk_tasks task
+                    on task.team_id = tm.team_id
+                 where task.task_id = :P14_TASK_ID
+                   and tm.active_yn = 'Y'
+                   and u.active_yn = 'Y'
+                   and t.active_yn = 'Y'
+                   and not exists (
+                           select 1
+                             from tsk_task_assignees ta
+                            where ta.task_id = :P14_TASK_ID
+                              and ta.team_member_id = tm.team_member_id
+                              and ta.active_yn = 'Y' )
+                 order by u.display_name
+                ```
+            displayExtraValues: false
+            displayNullValue: false
+        }
+        layout {
+            sequence: 20
+            region: @assignee-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        sessionState {
+            storage: request
+        }
+    )
+
+    button add (
+        buttonName: ADD
+        label: Add Assignee
+        layout {
+            sequence: 20
+            region: @buttons
+            slot: next
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            warnOnUnsavedChanges: doNotCheck
+        }
+    )
+
+    button cancel (
+        buttonName: CANCEL
+        label: Cancel
+        layout {
+            sequence: 10
+            region: @buttons
+            slot: close
+        }
+        appearance {
+            buttonTemplate: @/text
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: definedByDynamicAction
+        }
+    )
+
+    dynamicAction cancel-dialog (
+        name: Cancel Dialog
+        execution {
+            sequence: 10
+        }
+        when {
+            event: click
+            selectionType: button
+            button: @cancel
+        }
+
+        action native-dialog-cancel (
+            action: cancelDialog
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+    )
+
+    process add-assignee (
+        name: Add Assignee
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                declare
+                    l_display_name tsk_users.display_name%type;
+                begin
+                    if :P14_TEAM_MEMBER_ID is null then
+                        raise_application_error(-20001, 'Select an assignee.');
+                    end if;
+                
+                    select u.display_name
+                      into l_display_name
+                      from tsk_team_members tm
+                      join tsk_users u
+                        on u.user_id = tm.user_id
+                     where tm.team_member_id = :P14_TEAM_MEMBER_ID;
+                
+                    update tsk_task_assignees
+                       set active_yn = 'Y',
+                           unassigned_on = null,
+                           assignment_role = :P14_ASSIGNMENT_ROLE,
+                           allocated_pct = :P14_ALLOCATED_PCT,
+                           updated_at = systimestamp,
+                           updated_by = :APP_USER
+                     where task_id = :P14_TASK_ID
+                       and team_member_id = :P14_TEAM_MEMBER_ID
+                       and active_yn = 'N';
+                
+                    if sql%rowcount = 0 then
+                        insert into tsk_task_assignees (
+                            task_id,
+                            team_member_id,
+                            assignment_role,
+                            allocated_pct
+                        ) values (
+                            :P14_TASK_ID,
+                            :P14_TEAM_MEMBER_ID,
+                            :P14_ASSIGNMENT_ROLE,
+                            :P14_ALLOCATED_PCT
+                        );
+                    end if;
+                
+                    insert into tsk_change_log (
+                        entity_name,
+                        entity_pk,
+                        task_id,
+                        change_action,
+                        change_note,
+                        changed_by
+                    ) values (
+                        'TASK',
+                        :P14_TASK_ID,
+                        :P14_TASK_ID,
+                        'ASSIGN',
+                        'Assignee added: ' || l_display_name,
+                        :APP_USER
+                    );
+                end;
+                ```
+        }
+        execution {
+            sequence: 10
+        }
+        successMessage {
+            successMessage: Assignee added
+        }
+        advanced {
+            executionMappingIdentifier: 16527611783502004
+        }
+        serverSideCondition {
+            whenButtonPressed: @add
+        }
+    )
+
+    process close-dialog (
+        name: Close Dialog
+        type: closeDialog
+        execution {
+            sequence: 50
+        }
+        advanced {
+            executionMappingIdentifier: 16527736888502004
+        }
+        serverSideCondition {
+            whenButtonPressed: @add
+        }
+    )
+
+)
+

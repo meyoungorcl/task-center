@@ -1,0 +1,475 @@
+page 80 (
+    name: Topic Groups
+    alias: TOPIC-GROUPS
+    title: Topic Groups
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+        warnOnUnsavedChanges: false
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+        authorizationScheme: @administration-rights
+    }
+
+    region topic-groups (
+        name: Topic Groups
+        type: classicReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select tg.topic_group_id,
+                       apex_page.get_url(
+                           p_page => 80,
+                           p_clear_cache => '80',
+                           p_items => 'P80_TOPIC_GROUP_ID',
+                           p_values => tg.topic_group_id
+                       ) as select_url,
+                       apex_page.get_url(
+                           p_page => 81,
+                           p_clear_cache => '81',
+                           p_items => 'P81_TOPIC_GROUP_ID',
+                           p_values => tg.topic_group_id
+                       ) as edit_url,
+                       tg.topic_name,
+                       tg.description,
+                       tg.active_yn,
+                       count(t.task_id) as task_count,
+                       min(t.due_date) as next_due_date,
+                       tg.updated_at,
+                       tg.updated_by
+                  from tsk_topic_groups tg
+                  left join tsk_task_topic_groups ttg
+                    on ttg.topic_group_id = tg.topic_group_id
+                  left join tsk_tasks t
+                    on t.task_id = ttg.task_id
+                 group by tg.topic_group_id,
+                          tg.topic_name,
+                          tg.description,
+                          tg.active_yn,
+                          tg.updated_at,
+                          tg.updated_by
+                 order by tg.topic_name
+                ```
+        }
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        componentAppearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Report--stretch
+                t-Report--rowHighlight
+            ]
+        }
+        messages {
+            whenNoDataFound: No topic groups found.
+        }
+
+        column ACTIVE_YN (
+            reportColumnQueryId: 6
+            derivedColumn: N
+            type: plainText
+            heading {
+                heading: Active
+            }
+            layout {
+                sequence: 40
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column DESCRIPTION (
+            reportColumnQueryId: 5
+            derivedColumn: N
+            type: plainText
+            heading {
+                heading: Description
+            }
+            layout {
+                sequence: 30
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+        column EDIT_URL (
+            reportColumnQueryId: 3
+            derivedColumn: N
+            heading {
+                heading: " "
+            }
+            layout {
+                sequence: 15
+            }
+            columnFormatting {
+                htmlExpression: <a href="#EDIT_URL#" class="t-Button t-Button--noLabel t-Button--icon t-Button--tiny" title="Edit topic group" aria-label="Edit topic group"><span class="fa fa-edit" aria-hidden="true"></span></a>
+            }
+        )
+
+        column SELECT_URL (
+            reportColumnQueryId: 2
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 16
+            }
+        )
+
+        column NEXT_DUE_DATE (
+            reportColumnQueryId: 8
+            derivedColumn: N
+            type: plainText
+            heading {
+                heading: Next Due
+            }
+            layout {
+                sequence: 60
+            }
+            appearance {
+                formatMask: DD-MON-YYYY
+            }
+            source {
+                dataType: DATE
+            }
+        )
+
+        column TASK_COUNT (
+            reportColumnQueryId: 7
+            derivedColumn: N
+            type: plainText
+            heading {
+                heading: Tasks
+                alignment: end
+            }
+            layout {
+                sequence: 50
+                columnAlignment: end
+            }
+            source {
+                dataType: NUMBER
+            }
+        )
+
+        column TOPIC_GROUP_ID (
+            reportColumnQueryId: 1
+            derivedColumn: N
+            type: hidden
+            heading {
+                heading: Topic Group Id
+            }
+            layout {
+                sequence: 5
+            }
+            source {
+                dataType: NUMBER
+            }
+        )
+
+        column TOPIC_NAME (
+            reportColumnQueryId: 4
+            derivedColumn: N
+            type: plainText
+            heading {
+                heading: Topic
+            }
+            layout {
+                sequence: 20
+            }
+            source {
+                dataType: STRING
+            }
+            columnFormatting {
+                htmlExpression: <a href="#SELECT_URL#">#TOPIC_NAME#</a>
+            }
+        )
+
+        column UPDATED_AT (
+            reportColumnQueryId: 9
+            derivedColumn: N
+            type: plainText
+            heading {
+                heading: Updated
+            }
+            layout {
+                sequence: 70
+            }
+            appearance {
+                formatMask: DD-MON-YYYY HH24:MI
+            }
+            source {
+                dataType: DATE
+            }
+        )
+
+        column UPDATED_BY (
+            reportColumnQueryId: 10
+            derivedColumn: N
+            type: plainText
+            heading {
+                heading: Updated By
+            }
+            layout {
+                sequence: 80
+            }
+            source {
+                dataType: STRING
+            }
+        )
+
+    )
+
+    region topic-tasks (
+        name: Tasks in Topic
+        type: classicReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select t.task_id,
+                       apex_page.get_url(
+                           p_page => 12,
+                           p_items => 'P12_TASK_ID',
+                           p_values => t.task_id
+                       ) as task_url,
+                       t.task_key,
+                       t.title,
+                       s.status_name,
+                       t.priority_code,
+                       t.due_date,
+                       t.percent_complete,
+                       nvl(u.display_name, 'Unassigned') as owner_name
+                  from tsk_tasks t
+                  left join tsk_statuses s
+                    on s.status_id = t.status_id
+                  left join tsk_team_members tm
+                    on tm.team_member_id = t.owner_member_id
+                  left join tsk_users u
+                    on u.user_id = tm.user_id
+                 where exists (
+                           select 1
+                             from tsk_task_topic_groups ttg
+                            where ttg.task_id = t.task_id
+                              and ttg.topic_group_id = :P80_TOPIC_GROUP_ID
+                       )
+                 order by t.due_date nulls last, t.task_key
+                ```
+            pageItemsToSubmit: P80_TOPIC_GROUP_ID
+        }
+        layout {
+            sequence: 20
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        componentAppearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Report--stretch
+                t-Report--rowHighlight
+            ]
+        }
+        messages {
+            whenNoDataFound: Select a topic group to see its tasks.
+        }
+
+        column DUE_DATE (
+            reportColumnQueryId: 7
+            derivedColumn: N
+            heading {
+                heading: Due Date
+            }
+            layout {
+                sequence: 60
+            }
+            appearance {
+                formatMask: DD-MON-YYYY
+            }
+        )
+
+        column OWNER_NAME (
+            reportColumnQueryId: 9
+            derivedColumn: N
+            heading {
+                heading: Owner
+            }
+            layout {
+                sequence: 90
+            }
+        )
+
+        column PERCENT_COMPLETE (
+            reportColumnQueryId: 8
+            derivedColumn: N
+            heading {
+                heading: Complete %
+                alignment: end
+            }
+            layout {
+                sequence: 80
+                columnAlignment: end
+            }
+        )
+
+        column PRIORITY_CODE (
+            reportColumnQueryId: 6
+            derivedColumn: N
+            heading {
+                heading: Priority
+            }
+            layout {
+                sequence: 50
+            }
+        )
+
+        column STATUS_NAME (
+            reportColumnQueryId: 5
+            derivedColumn: N
+            heading {
+                heading: Status
+            }
+            layout {
+                sequence: 40
+            }
+        )
+
+        column TASK_ID (
+            reportColumnQueryId: 1
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 5
+            }
+        )
+
+        column TASK_KEY (
+            reportColumnQueryId: 3
+            derivedColumn: N
+            heading {
+                heading: Task
+            }
+            layout {
+                sequence: 10
+            }
+            columnFormatting {
+                htmlExpression: <a href="#TASK_URL#">#TASK_KEY#</a>
+            }
+        )
+
+        column TASK_URL (
+            reportColumnQueryId: 2
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 6
+            }
+        )
+
+        column TITLE (
+            reportColumnQueryId: 4
+            derivedColumn: N
+            heading {
+                heading: Title
+            }
+            layout {
+                sequence: 20
+            }
+        )
+
+    )
+
+    pageItem P80_TOPIC_GROUP_ID (
+        type: hidden
+        layout {
+            sequence: 10
+            region: @topic-groups
+            slot: regionBody
+        }
+    )
+
+    button create-topic-group (
+        buttonName: CREATE_TOPIC_GROUP
+        label: Add Topic Group
+        layout {
+            sequence: 10
+            region: @topic-groups
+            slot: edit
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: redirectThisApp
+            target: {
+                page: 81
+                clearCache: 81
+            }
+            warnOnUnsavedChanges: doNotCheck
+        }
+    )
+
+    dynamicAction refresh-on-topic-group-dialog-close (
+        name: Refresh on Topic Group Dialog Close
+        execution {
+            sequence: 10
+        }
+        when {
+            event: apexafterclosedialog
+            selectionType: region
+            region: @topic-groups
+        }
+
+        action refresh-topic-groups (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @topic-groups
+            }
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+        action refresh-topic-tasks (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @topic-tasks
+            }
+            execution {
+                sequence: 20
+                fireOnInit: false
+            }
+        )
+
+    )
+
+)

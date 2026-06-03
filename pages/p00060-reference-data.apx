@@ -1,0 +1,233 @@
+page 60 (
+    name: Reference Data
+    alias: REFERENCE-DATA
+    title: Reference Data
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+        warnOnUnsavedChanges: false
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region reference-data (
+        name: Reference Data
+        type: interactiveReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select 'STATUS' ref_type,
+                       status_code code,
+                       status_name name,
+                       display_seq,
+                       active_yn,
+                       is_open_yn flag_1,
+                       is_done_yn flag_2
+                  from tsk_statuses
+                union all
+                select 'TASK_TYPE' ref_type,
+                       type_code code,
+                       type_name name,
+                       display_seq,
+                       active_yn,
+                       cast(null as varchar2(1)) flag_1,
+                       cast(null as varchar2(1)) flag_2
+                  from tsk_task_types
+                union all
+                select 'COMPLEXITY' ref_type,
+                       complexity_code code,
+                       complexity_name name,
+                       display_seq,
+                       active_yn,
+                       to_char(complexity_weight) flag_1,
+                       cast(null as varchar2(1)) flag_2
+                  from tsk_complexities
+                ```
+        }
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/interactive-report
+            templateOptions: [
+                #DEFAULT#
+                t-IRR-region--noBorders
+            ]
+        }
+        pagination {
+            type: rowRangesXToY
+        }
+        messages {
+            whenNoDataFound: No reference data found.
+        }
+        advanced {
+            savedReportMappingIdentifier: 16437324696744654
+        }
+
+        column ACTIVE_YN (
+            type: plainText
+            heading {
+                heading: Active
+            }
+            layout {
+                sequence: 50
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: E
+            }
+        )
+
+        column CODE (
+            type: plainText
+            heading {
+                heading: Code
+            }
+            layout {
+                sequence: 20
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: B
+            }
+        )
+
+        column DISPLAY_SEQ (
+            type: plainText
+            heading {
+                heading: Seq
+                alignment: end
+            }
+            layout {
+                sequence: 40
+                columnAlignment: end
+            }
+            source {
+                dataType: NUMBER
+            }
+            advanced {
+                endUserAlias: D
+            }
+        )
+
+        column FLAG_1 (
+            type: plainText
+            heading {
+                heading: Flag 1
+            }
+            layout {
+                sequence: 60
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: F
+            }
+        )
+
+        column FLAG_2 (
+            type: plainText
+            heading {
+                heading: Flag 2
+            }
+            layout {
+                sequence: 70
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: G
+            }
+        )
+
+        column NAME (
+            type: plainText
+            heading {
+                heading: Name
+            }
+            layout {
+                sequence: 30
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: C
+            }
+        )
+
+        column REF_TYPE (
+            type: plainText
+            heading {
+                heading: Type
+            }
+            layout {
+                sequence: 10
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: A
+            }
+        )
+
+        page {
+            borderWidth: 0.5
+            borderColor: #666666
+        }
+
+        savedReport primary (
+            visibility: primaryDefault
+            view {
+                rowsPerPage: 50
+            }
+
+            displayColumn ACTIVE_YN (
+                sequence: 5
+            )
+
+            displayColumn CODE (
+                sequence: 2
+            )
+
+            displayColumn DISPLAY_SEQ (
+                sequence: 4
+            )
+
+            displayColumn FLAG_1 (
+                sequence: 6
+            )
+
+            displayColumn FLAG_2 (
+                sequence: 7
+            )
+
+            displayColumn NAME (
+                sequence: 3
+            )
+
+            displayColumn REF_TYPE (
+                sequence: 1
+            )
+
+        )
+
+    )
+
+)
+

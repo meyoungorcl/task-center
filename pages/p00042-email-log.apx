@@ -1,0 +1,360 @@
+page 42 (
+    name: Email Log
+    alias: EMAIL-LOG
+    title: Email Log
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+        warnOnUnsavedChanges: false
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region email-log (
+        name: Email Log
+        type: interactiveReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select l.email_log_id,
+                       cast(l.queued_at as date) as queued_at,
+                       cast(l.sent_at as date) as sent_at,
+                       l.status_code,
+                       s.schedule_name,
+                       s.schedule_code,
+                       t.team_name,
+                       u.display_name as team_member,
+                       l.recipient_email,
+                       l.email_subject,
+                       l.run_period_start,
+                       l.run_period_end,
+                       dbms_lob.substr(l.error_message, 4000, 1) as error_message
+                  from tsk_email_log l
+                  left join tsk_email_schedules s
+                    on s.email_schedule_id = l.email_schedule_id
+                  left join tsk_teams t
+                    on t.team_id = l.team_id
+                  left join tsk_team_members tm
+                    on tm.team_member_id = l.team_member_id
+                  left join tsk_users u
+                    on u.user_id = tm.user_id
+                 order by l.queued_at desc,
+                          l.email_log_id desc
+                ```
+        }
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/interactive-report
+            templateOptions: [
+                #DEFAULT#
+                t-IRR-region--noBorders
+            ]
+        }
+        pagination {
+            type: rowRangesXToY
+        }
+        messages {
+            whenNoDataFound: No email log entries found.
+        }
+        advanced {
+            savedReportMappingIdentifier: 4200004200000001
+        }
+
+        column EMAIL_LOG_ID (
+            type: hidden
+            heading {
+                heading: Email Log Id
+            }
+            layout {
+                sequence: 5
+            }
+            source {
+                dataType: NUMBER
+            }
+            advanced {
+                endUserAlias: A
+            }
+        )
+
+        column QUEUED_AT (
+            type: plainText
+            heading {
+                heading: Queued At
+            }
+            layout {
+                sequence: 10
+            }
+            appearance {
+                formatMask: DD-MON-YYYY HH24:MI
+            }
+            source {
+                dataType: DATE
+            }
+            advanced {
+                endUserAlias: B
+            }
+        )
+
+        column SENT_AT (
+            type: plainText
+            heading {
+                heading: Sent At
+            }
+            layout {
+                sequence: 20
+            }
+            appearance {
+                formatMask: DD-MON-YYYY HH24:MI
+            }
+            source {
+                dataType: DATE
+            }
+            advanced {
+                endUserAlias: C
+            }
+        )
+
+        column STATUS_CODE (
+            type: plainText
+            heading {
+                heading: Status
+            }
+            layout {
+                sequence: 30
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: D
+            }
+        )
+
+        column SCHEDULE_NAME (
+            type: plainText
+            heading {
+                heading: Schedule
+            }
+            layout {
+                sequence: 40
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: E
+            }
+        )
+
+        column SCHEDULE_CODE (
+            type: plainText
+            heading {
+                heading: Schedule Code
+            }
+            layout {
+                sequence: 50
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: F
+            }
+        )
+
+        column TEAM_NAME (
+            type: plainText
+            heading {
+                heading: Team
+            }
+            layout {
+                sequence: 60
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: G
+            }
+        )
+
+        column TEAM_MEMBER (
+            type: plainText
+            heading {
+                heading: Team Member
+            }
+            layout {
+                sequence: 70
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: H
+            }
+        )
+
+        column RECIPIENT_EMAIL (
+            type: plainText
+            heading {
+                heading: Recipient
+            }
+            layout {
+                sequence: 80
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: I
+            }
+        )
+
+        column EMAIL_SUBJECT (
+            type: plainText
+            heading {
+                heading: Subject
+            }
+            layout {
+                sequence: 90
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: J
+            }
+        )
+
+        column RUN_PERIOD_START (
+            type: plainText
+            heading {
+                heading: Period Start
+            }
+            layout {
+                sequence: 100
+            }
+            appearance {
+                formatMask: DD-MON-YYYY
+            }
+            source {
+                dataType: DATE
+            }
+            advanced {
+                endUserAlias: K
+            }
+        )
+
+        column RUN_PERIOD_END (
+            type: plainText
+            heading {
+                heading: Period End
+            }
+            layout {
+                sequence: 110
+            }
+            appearance {
+                formatMask: DD-MON-YYYY
+            }
+            source {
+                dataType: DATE
+            }
+            advanced {
+                endUserAlias: L
+            }
+        )
+
+        column ERROR_MESSAGE (
+            type: plainText
+            heading {
+                heading: Error Message
+            }
+            layout {
+                sequence: 120
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: M
+            }
+        )
+
+        page {
+            borderWidth: 0.5
+            borderColor: #666666
+        }
+
+        savedReport primary (
+            visibility: primaryDefault
+            view {
+                rowsPerPage: 50
+            }
+
+            displayColumn EMAIL_LOG_ID (
+                sequence: 1
+            )
+
+            displayColumn QUEUED_AT (
+                sequence: 2
+            )
+
+            displayColumn SENT_AT (
+                sequence: 3
+            )
+
+            displayColumn STATUS_CODE (
+                sequence: 4
+            )
+
+            displayColumn SCHEDULE_NAME (
+                sequence: 5
+            )
+
+            displayColumn SCHEDULE_CODE (
+                sequence: 6
+            )
+
+            displayColumn TEAM_NAME (
+                sequence: 7
+            )
+
+            displayColumn TEAM_MEMBER (
+                sequence: 8
+            )
+
+            displayColumn RECIPIENT_EMAIL (
+                sequence: 9
+            )
+
+            displayColumn EMAIL_SUBJECT (
+                sequence: 10
+            )
+
+            displayColumn RUN_PERIOD_START (
+                sequence: 11
+            )
+
+            displayColumn RUN_PERIOD_END (
+                sequence: 12
+            )
+
+            displayColumn ERROR_MESSAGE (
+                sequence: 13
+            )
+
+        )
+
+    )
+
+)

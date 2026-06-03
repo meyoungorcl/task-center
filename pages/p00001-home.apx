@@ -1,0 +1,1319 @@
+page 1 (
+    name: Dashboard
+    alias: HOME
+    title: Dashboard
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region dashboard-title (
+        name: Dashboard
+        title: Task Center Dashboard
+        type: staticContent
+        layout {
+            sequence: 10
+            slot: breadcrumbBar
+        }
+        appearance {
+            template: @/title-bar
+            templateOptions: #DEFAULT#
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    region task-aging (
+        name: Task Aging
+        type: chart
+        layout {
+            sequence: 80
+            slot: body
+            columnSpan: 6
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        title {
+            title: Not Started / In Progress Task Aging by User
+        }
+        chartAppearance {
+            orientation: horizontal
+            stack: true
+        }
+
+        series one-to-three-months (
+            name: 1-3 Months
+            execution {
+                sequence: 20
+            }
+            source {
+                type: sqlQuery
+                sqlQuery:
+                    ```sql
+                    select nvl(u.display_name, 'Unassigned') as label,
+                           count(*) as value,
+                           apex_page.get_url(
+                               p_page => 10,
+                               p_clear_cache => '10',
+                               p_items => 'P10_TEAM_MEMBER,P10_AGING',
+                               p_values => nvl(u.display_name, 'Unassigned') || ',1-3 Months'
+                           ) as link
+                      from tsk_tasks t
+                      left join tsk_statuses s
+                        on s.status_id = t.status_id
+                      left join tsk_team_members tm
+                        on tm.team_member_id = t.owner_member_id
+                      left join tsk_users u
+                        on u.user_id = tm.user_id
+                     where s.status_code in ('NOT_STARTED', 'IN_PROGRESS')
+                       and t.updated_at < add_months(systimestamp, -1)
+                       and t.updated_at >= add_months(systimestamp, -3)
+                     group by nvl(u.display_name, 'Unassigned')
+                     order by nvl(u.display_name, 'Unassigned')
+                    ```
+            }
+            columnMapping {
+                label: LABEL
+                value: VALUE
+            }
+            link {
+                type: redirectUrl
+                targetUrl: &LINK.
+            }
+            label {
+                show: true
+            }
+        )
+
+        series over-three-months (
+            name: Over 3 Months
+            execution {
+                sequence: 30
+            }
+            source {
+                type: sqlQuery
+                sqlQuery:
+                    ```sql
+                    select nvl(u.display_name, 'Unassigned') as label,
+                           count(*) as value,
+                           apex_page.get_url(
+                               p_page => 10,
+                               p_clear_cache => '10',
+                               p_items => 'P10_TEAM_MEMBER,P10_AGING',
+                               p_values => nvl(u.display_name, 'Unassigned') || ',Over 3 Months'
+                           ) as link
+                      from tsk_tasks t
+                      left join tsk_statuses s
+                        on s.status_id = t.status_id
+                      left join tsk_team_members tm
+                        on tm.team_member_id = t.owner_member_id
+                      left join tsk_users u
+                        on u.user_id = tm.user_id
+                     where s.status_code in ('NOT_STARTED', 'IN_PROGRESS')
+                       and t.updated_at < add_months(systimestamp, -3)
+                     group by nvl(u.display_name, 'Unassigned')
+                     order by nvl(u.display_name, 'Unassigned')
+                    ```
+            }
+            columnMapping {
+                label: LABEL
+                value: VALUE
+            }
+            link {
+                type: redirectUrl
+                targetUrl: &LINK.
+            }
+            label {
+                show: true
+            }
+        )
+
+        series under-one-month (
+            name: Last 1 Month
+            execution {
+                sequence: 10
+            }
+            source {
+                type: sqlQuery
+                sqlQuery:
+                    ```sql
+                    select nvl(u.display_name, 'Unassigned') as label,
+                           count(*) as value,
+                           apex_page.get_url(
+                               p_page => 10,
+                               p_clear_cache => '10',
+                               p_items => 'P10_TEAM_MEMBER,P10_AGING',
+                               p_values => nvl(u.display_name, 'Unassigned') || ',Last 1 Month'
+                           ) as link
+                      from tsk_tasks t
+                      left join tsk_statuses s
+                        on s.status_id = t.status_id
+                      left join tsk_team_members tm
+                        on tm.team_member_id = t.owner_member_id
+                      left join tsk_users u
+                        on u.user_id = tm.user_id
+                     where s.status_code in ('NOT_STARTED', 'IN_PROGRESS')
+                       and t.updated_at >= add_months(systimestamp, -1)
+                     group by nvl(u.display_name, 'Unassigned')
+                     order by nvl(u.display_name, 'Unassigned')
+                    ```
+            }
+            columnMapping {
+                label: LABEL
+                value: VALUE
+            }
+            link {
+                type: redirectUrl
+                targetUrl: &LINK.
+            }
+            label {
+                show: true
+            }
+        )
+
+        axis x (
+            name: x
+            majorTicks {
+                show: false
+            }
+        )
+
+        axis y (
+            name: y
+            value {
+                format: decimal
+                decimalPlaces: 0
+                formatScaling: none
+            }
+        )
+
+    )
+
+    region task-overview (
+        name: Task Overview
+        type: classicReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select null as card_layout,
+                       count(*) as total_tasks,
+                       sum(case when status_code = 'IN_PROGRESS' then 1 else 0 end) as in_progress_tasks,
+                       sum(case when status_code = 'COMPLETED' then 1 else 0 end) as completed_tasks,
+                       sum(case when overdue_yn = 'Y' then 1 else 0 end) as overdue_tasks,
+                       sum(case when status_code = 'NOT_STARTED' then 1 else 0 end) as not_started_tasks,
+                       sum(case when status_code = 'IN_REVIEW' then 1 else 0 end) as in_review_tasks,
+                       sum(case when status_code = 'BLOCKED' then 1 else 0 end) as blocked_tasks,
+                       apex_page.get_url(p_page => 10, p_clear_cache => '10') as total_tasks_url,
+                       apex_page.get_url(p_page => 10, p_clear_cache => '10', p_items => 'P10_STATUS', p_values => 'In Progress') as in_progress_tasks_url,
+                       apex_page.get_url(p_page => 10, p_clear_cache => '10', p_items => 'P10_STATUS', p_values => 'Completed') as completed_tasks_url,
+                       apex_page.get_url(p_page => 10, p_clear_cache => '10', p_items => 'P10_OVERDUE', p_values => 'Y') as overdue_tasks_url,
+                       apex_page.get_url(p_page => 10, p_clear_cache => '10', p_items => 'P10_STATUS', p_values => 'Not Started') as not_started_tasks_url,
+                       apex_page.get_url(p_page => 10, p_clear_cache => '10', p_items => 'P10_STATUS', p_values => 'In Review') as in_review_tasks_url,
+                       apex_page.get_url(p_page => 10, p_clear_cache => '10', p_items => 'P10_STATUS', p_values => 'Blocked') as blocked_tasks_url,
+                       sum(case when status_code = 'BACKLOG' then 1 else 0 end) as backlog_tasks,
+                       apex_page.get_url(p_page => 10, p_clear_cache => '10', p_items => 'P10_STATUS', p_values => 'Backlog') as backlog_tasks_url,
+                       sum(case when status_code = 'ARCHIVE' then 1 else 0 end) as archive_tasks,
+                       apex_page.get_url(p_page => 10, p_clear_cache => '10', p_items => 'P10_STATUS', p_values => 'Archive') as archive_tasks_url
+                  from tsk_v_task_list
+                ```
+        }
+        layout {
+            sequence: 20
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        componentAppearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Report--inline
+                t-Report--stretch
+            ]
+        }
+        messages {
+            whenNoDataFound: No task overview data found.
+        }
+
+        column BACKLOG_TASKS (
+            reportColumnQueryId: 16
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 160
+            }
+        )
+
+        column BACKLOG_TASKS_URL (
+            reportColumnQueryId: 17
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 170
+            }
+        )
+
+        column ARCHIVE_TASKS (
+            reportColumnQueryId: 18
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 180
+            }
+        )
+
+        column ARCHIVE_TASKS_URL (
+            reportColumnQueryId: 19
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 190
+            }
+        )
+
+        column BLOCKED_TASKS (
+            reportColumnQueryId: 8
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 80
+            }
+        )
+
+        column BLOCKED_TASKS_URL (
+            reportColumnQueryId: 15
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 150
+            }
+        )
+
+        column CARD_LAYOUT (
+            reportColumnQueryId: 1
+            derivedColumn: N
+            heading {
+                heading: " "
+            }
+            layout {
+                sequence: 10
+            }
+            columnFormatting {
+                htmlExpression:
+                    ```html
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+                      <a href="#TOTAL_TASKS_URL#" style="padding:16px;border:1px solid var(--ut-component-border-color);border-radius:8px;text-decoration:none;color:inherit"><span class="fa fa-clipboard-list u-info-text"></span> <b style="font-size:1.7rem">#TOTAL_TASKS#</b><br>Total Tasks</a>
+                      <a href="#IN_PROGRESS_TASKS_URL#" style="padding:16px;border:1px solid var(--ut-component-border-color);border-radius:8px;text-decoration:none;color:inherit"><span class="fa fa-refresh" style="color:#2563eb" aria-hidden="true"></span> <b style="font-size:1.7rem">#IN_PROGRESS_TASKS#</b><br>In Progress</a>
+                      <a href="#BACKLOG_TASKS_URL#" style="padding:16px;border:1px solid var(--ut-component-border-color);border-radius:8px;text-decoration:none;color:inherit"><span class="fa fa-list-ul u-info-text"></span> <b style="font-size:1.7rem">#BACKLOG_TASKS#</b><br>Backlog</a>
+                      <a href="#COMPLETED_TASKS_URL#" style="padding:16px;border:1px solid var(--ut-component-border-color);border-radius:8px;text-decoration:none;color:inherit"><span class="fa fa-check-circle u-success-text"></span> <b style="font-size:1.7rem">#COMPLETED_TASKS#</b><br>Completed</a>
+                      <a href="#OVERDUE_TASKS_URL#" style="padding:16px;border:1px solid var(--ut-component-border-color);border-radius:8px;text-decoration:none;color:inherit"><span class="fa fa-exclamation-circle u-danger-text"></span> <b style="font-size:1.7rem">#OVERDUE_TASKS#</b><br>Overdue</a>
+                      <a href="#NOT_STARTED_TASKS_URL#" style="padding:16px;border:1px solid var(--ut-component-border-color);border-radius:8px;text-decoration:none;color:inherit"><span class="fa fa-hourglass-start" style="color:#f5b400" aria-hidden="true"></span> <b style="font-size:1.7rem">#NOT_STARTED_TASKS#</b><br>Not Started</a>
+                      <a href="#IN_REVIEW_TASKS_URL#" style="padding:16px;border:1px solid var(--ut-component-border-color);border-radius:8px;text-decoration:none;color:inherit"><span class="fa fa-search u-warning-text"></span> <b style="font-size:1.7rem">#IN_REVIEW_TASKS#</b><br>In Review</a>
+                      <a href="#BLOCKED_TASKS_URL#" style="padding:16px;border:1px solid var(--ut-component-border-color);border-radius:8px;text-decoration:none;color:inherit"><span class="fa fa-ban u-warning-text"></span> <b style="font-size:1.7rem">#BLOCKED_TASKS#</b><br>Blocked</a>
+                      <a href="#ARCHIVE_TASKS_URL#" style="padding:16px;border:1px solid var(--ut-component-border-color);border-radius:8px;text-decoration:none;color:inherit"><span class="fa fa-archive" style="color:#64748b" aria-hidden="true"></span> <b style="font-size:1.7rem">#ARCHIVE_TASKS#</b><br>Archive</a>
+                    </div>
+                    ```
+            }
+        )
+
+        column COMPLETED_TASKS (
+            reportColumnQueryId: 4
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 40
+            }
+        )
+
+        column COMPLETED_TASKS_URL (
+            reportColumnQueryId: 11
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 110
+            }
+        )
+
+        column IN_PROGRESS_TASKS (
+            reportColumnQueryId: 3
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 30
+            }
+        )
+
+        column IN_PROGRESS_TASKS_URL (
+            reportColumnQueryId: 10
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 100
+            }
+        )
+
+        column IN_REVIEW_TASKS (
+            reportColumnQueryId: 7
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 70
+            }
+        )
+
+        column IN_REVIEW_TASKS_URL (
+            reportColumnQueryId: 14
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 140
+            }
+        )
+
+        column NOT_STARTED_TASKS (
+            reportColumnQueryId: 6
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 60
+            }
+        )
+
+        column NOT_STARTED_TASKS_URL (
+            reportColumnQueryId: 13
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 130
+            }
+        )
+
+        column OVERDUE_TASKS (
+            reportColumnQueryId: 5
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 50
+            }
+        )
+
+        column OVERDUE_TASKS_URL (
+            reportColumnQueryId: 12
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 120
+            }
+        )
+
+        column TOTAL_TASKS (
+            reportColumnQueryId: 2
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 20
+            }
+        )
+
+        column TOTAL_TASKS_URL (
+            reportColumnQueryId: 9
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 90
+            }
+        )
+
+    )
+
+    region tasks-by-application (
+        name: Tasks by Application
+        type: chart
+        layout {
+            sequence: 70
+            slot: body
+            startNewRow: false
+            columnSpan: 6
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        title {
+            title: Tasks by Application
+        }
+        chartAppearance {
+            orientation: horizontal
+        }
+        legend {
+            show: false
+        }
+
+        series tasks-by-application (
+            name: Tasks by Application
+            execution {
+                sequence: 10
+            }
+            source {
+                type: sqlQuery
+                sqlQuery:
+                    ```sql
+                    select application_name as LABEL,
+                           sum(task_count) as VALUE,
+                           apex_page.get_url(
+                               p_page => 10,
+                               p_clear_cache => '10',
+                               p_items => 'P10_APPLICATION',
+                               p_values => application_name
+                           ) as LINK
+                      from tsk_v_tasks_by_application
+                     group by application_name
+                     order by sum(task_count) desc, application_name
+                    ```
+            }
+            columnMapping {
+                label: LABEL
+                value: VALUE
+            }
+            link {
+                type: redirectUrl
+                targetUrl: &LINK.
+            }
+        )
+
+        axis x (
+            name: x
+            majorTicks {
+                show: false
+            }
+        )
+
+        axis y (
+            name: y
+            value {
+                format: decimal
+                decimalPlaces: 0
+                formatScaling: none
+            }
+        )
+
+    )
+
+    region tasks-by-status (
+        name: Tasks by Status
+        type: chart
+        layout {
+            sequence: 30
+            slot: body
+            columnSpan: 6
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        chart {
+            type: donut
+        }
+        title {
+            title: Tasks by Status
+        }
+
+        series tasks-by-status (
+            name: Tasks by Status
+            execution {
+                sequence: 10
+            }
+            source {
+                type: sqlQuery
+                sqlQuery:
+                    ```sql
+                    select status_name as LABEL,
+                           count(*) as VALUE,
+                           apex_page.get_url(
+                               p_page => 10,
+                               p_clear_cache => '10',
+                               p_items => 'P10_STATUS',
+                               p_values => status_name
+                           ) as LINK
+                      from tsk_v_task_list
+                     group by status_name
+                     order by status_name
+                    ```
+            }
+            columnMapping {
+                label: LABEL
+                value: VALUE
+            }
+            link {
+                type: redirectUrl
+                targetUrl: &LINK.
+            }
+            label {
+                show: true
+            }
+        )
+
+    )
+
+    region tasks-by-type (
+        name: Tasks by Type
+        type: chart
+        layout {
+            sequence: 40
+            slot: body
+            startNewRow: false
+            columnSpan: 6
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        chart {
+            type: donut
+        }
+        title {
+            title: Tasks by Type
+        }
+
+        series tasks-by-type (
+            name: Tasks by Type
+            execution {
+                sequence: 10
+            }
+            source {
+                type: sqlQuery
+                sqlQuery:
+                    ```sql
+                    select type_name as LABEL,
+                           count(*) as VALUE,
+                           apex_page.get_url(
+                               p_page => 10,
+                               p_clear_cache => '10',
+                               p_items => 'P10_TYPE',
+                               p_values => type_name
+                           ) as LINK
+                      from tsk_v_task_list
+                     group by type_name
+                     order by type_name
+                    ```
+            }
+            columnMapping {
+                label: LABEL
+                value: VALUE
+            }
+            link {
+                type: redirectUrl
+                targetUrl: &LINK.
+            }
+            label {
+                show: true
+            }
+        )
+
+    )
+
+    region tasks-priority-by-user (
+        name: Tasks by Priority by User
+        type: chart
+        layout {
+            sequence: 90
+            slot: body
+            startNewRow: false
+            columnSpan: 6
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        title {
+            title: Tasks by Priority by User
+        }
+        chartAppearance {
+            stack: true
+        }
+
+        series priority-critical (
+            name: Critical
+            execution {
+                sequence: 10
+            }
+            source {
+                type: sqlQuery
+                sqlQuery:
+                    ```sql
+                    select u.display_name as label,
+                           count(distinct t.task_id) as value,
+                           apex_page.get_url(
+                               p_page => 10,
+                               p_clear_cache => '10',
+                               p_items => 'P10_TEAM_MEMBER,P10_PRIORITY',
+                               p_values => u.display_name || ',CRITICAL'
+                           ) as link
+                      from tsk_tasks t
+                      join tsk_statuses s
+                        on s.status_id = t.status_id
+                       and nvl(s.is_done_yn, 'N') = 'N'
+                      join tsk_task_assignees ta
+                        on ta.task_id = t.task_id
+                       and ta.active_yn = 'Y'
+                      join tsk_team_members tm
+                        on tm.team_member_id = ta.team_member_id
+                       and tm.active_yn = 'Y'
+                      join tsk_users u
+                        on u.user_id = tm.user_id
+                       and u.active_yn = 'Y'
+                     where t.priority_code = 'CRITICAL'
+                     group by u.display_name
+                     order by u.display_name
+                    ```
+            }
+            columnMapping {
+                label: LABEL
+                value: VALUE
+            }
+            link {
+                type: redirectUrl
+                targetUrl: &LINK.
+            }
+            label {
+                show: true
+            }
+        )
+
+        series priority-high (
+            name: High
+            execution {
+                sequence: 20
+            }
+            source {
+                type: sqlQuery
+                sqlQuery:
+                    ```sql
+                    select u.display_name as label,
+                           count(distinct t.task_id) as value,
+                           apex_page.get_url(
+                               p_page => 10,
+                               p_clear_cache => '10',
+                               p_items => 'P10_TEAM_MEMBER,P10_PRIORITY',
+                               p_values => u.display_name || ',HIGH'
+                           ) as link
+                      from tsk_tasks t
+                      join tsk_statuses s
+                        on s.status_id = t.status_id
+                       and nvl(s.is_done_yn, 'N') = 'N'
+                      join tsk_task_assignees ta
+                        on ta.task_id = t.task_id
+                       and ta.active_yn = 'Y'
+                      join tsk_team_members tm
+                        on tm.team_member_id = ta.team_member_id
+                       and tm.active_yn = 'Y'
+                      join tsk_users u
+                        on u.user_id = tm.user_id
+                       and u.active_yn = 'Y'
+                     where t.priority_code = 'HIGH'
+                     group by u.display_name
+                     order by u.display_name
+                    ```
+            }
+            columnMapping {
+                label: LABEL
+                value: VALUE
+            }
+            link {
+                type: redirectUrl
+                targetUrl: &LINK.
+            }
+            label {
+                show: true
+            }
+        )
+
+        series priority-low (
+            name: Low
+            execution {
+                sequence: 40
+            }
+            source {
+                type: sqlQuery
+                sqlQuery:
+                    ```sql
+                    select u.display_name as label,
+                           count(distinct t.task_id) as value,
+                           apex_page.get_url(
+                               p_page => 10,
+                               p_clear_cache => '10',
+                               p_items => 'P10_TEAM_MEMBER,P10_PRIORITY',
+                               p_values => u.display_name || ',LOW'
+                           ) as link
+                      from tsk_tasks t
+                      join tsk_statuses s
+                        on s.status_id = t.status_id
+                       and nvl(s.is_done_yn, 'N') = 'N'
+                      join tsk_task_assignees ta
+                        on ta.task_id = t.task_id
+                       and ta.active_yn = 'Y'
+                      join tsk_team_members tm
+                        on tm.team_member_id = ta.team_member_id
+                       and tm.active_yn = 'Y'
+                      join tsk_users u
+                        on u.user_id = tm.user_id
+                       and u.active_yn = 'Y'
+                     where t.priority_code = 'LOW'
+                     group by u.display_name
+                     order by u.display_name
+                    ```
+            }
+            columnMapping {
+                label: LABEL
+                value: VALUE
+            }
+            link {
+                type: redirectUrl
+                targetUrl: &LINK.
+            }
+            label {
+                show: true
+            }
+        )
+
+        series priority-medium (
+            name: Medium
+            execution {
+                sequence: 30
+            }
+            source {
+                type: sqlQuery
+                sqlQuery:
+                    ```sql
+                    select u.display_name as label,
+                           count(distinct t.task_id) as value,
+                           apex_page.get_url(
+                               p_page => 10,
+                               p_clear_cache => '10',
+                               p_items => 'P10_TEAM_MEMBER,P10_PRIORITY',
+                               p_values => u.display_name || ',MEDIUM'
+                           ) as link
+                      from tsk_tasks t
+                      join tsk_statuses s
+                        on s.status_id = t.status_id
+                       and nvl(s.is_done_yn, 'N') = 'N'
+                      join tsk_task_assignees ta
+                        on ta.task_id = t.task_id
+                       and ta.active_yn = 'Y'
+                      join tsk_team_members tm
+                        on tm.team_member_id = ta.team_member_id
+                       and tm.active_yn = 'Y'
+                      join tsk_users u
+                        on u.user_id = tm.user_id
+                       and u.active_yn = 'Y'
+                     where t.priority_code = 'MEDIUM'
+                     group by u.display_name
+                     order by u.display_name
+                    ```
+            }
+            columnMapping {
+                label: LABEL
+                value: VALUE
+            }
+            link {
+                type: redirectUrl
+                targetUrl: &LINK.
+            }
+            label {
+                show: true
+            }
+        )
+
+        axis x (
+            name: x
+            majorTicks {
+                show: false
+            }
+        )
+
+        axis y (
+            name: y
+            value {
+                format: decimal
+                decimalPlaces: 0
+                formatScaling: none
+            }
+        )
+
+    )
+
+    region team-member-by-status (
+        name: Team Member by Status
+        type: chart
+        layout {
+            sequence: 60
+            slot: body
+            columnSpan: 6
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        title {
+            title: Team Member by Status
+        }
+        chartAppearance {
+            orientation: horizontal
+            stack: true
+        }
+
+        series backlog (
+            name: Backlog
+            execution {
+                sequence: 5
+            }
+            source {
+                type: sqlQuery
+                sqlQuery:
+                    ```sql
+                    select nvl(u.display_name, 'Unassigned') as LABEL,
+                           count(*) as VALUE,
+                           apex_page.get_url(
+                               p_page => 10,
+                               p_clear_cache => '10',
+                               p_items => 'P10_TEAM_MEMBER,P10_STATUS',
+                               p_values => nvl(u.display_name, 'Unassigned') || ',Backlog'
+                           ) as LINK
+                      from tsk_tasks t
+                      join tsk_statuses s
+                        on s.status_id = t.status_id
+                      left join tsk_team_members tm
+                        on tm.team_member_id = t.owner_member_id
+                      left join tsk_users u
+                        on u.user_id = tm.user_id
+                     where s.status_code = 'BACKLOG'
+                     group by nvl(u.display_name, 'Unassigned')
+                     order by nvl(u.display_name, 'Unassigned')
+                    ```
+            }
+            columnMapping {
+                label: LABEL
+                value: VALUE
+            }
+            link {
+                type: redirectUrl
+                targetUrl: &LINK.
+            }
+        )
+
+        series blocked (
+            name: Blocked
+            execution {
+                sequence: 40
+            }
+            source {
+                type: sqlQuery
+                sqlQuery:
+                    ```sql
+                    select nvl(u.display_name, 'Unassigned') as LABEL,
+                           count(*) as VALUE,
+                           apex_page.get_url(
+                               p_page => 10,
+                               p_clear_cache => '10',
+                               p_items => 'P10_TEAM_MEMBER,P10_STATUS',
+                               p_values => nvl(u.display_name, 'Unassigned') || ',Blocked'
+                           ) as LINK
+                      from tsk_tasks t
+                      join tsk_statuses s
+                        on s.status_id = t.status_id
+                      left join tsk_team_members tm
+                        on tm.team_member_id = t.owner_member_id
+                      left join tsk_users u
+                        on u.user_id = tm.user_id
+                     where s.status_code = 'BLOCKED'
+                     group by nvl(u.display_name, 'Unassigned')
+                     order by nvl(u.display_name, 'Unassigned')
+                    ```
+            }
+            columnMapping {
+                label: LABEL
+                value: VALUE
+            }
+            link {
+                type: redirectUrl
+                targetUrl: &LINK.
+            }
+        )
+
+        series completed (
+            name: Completed
+            execution {
+                sequence: 50
+            }
+            source {
+                type: sqlQuery
+                sqlQuery:
+                    ```sql
+                    select nvl(u.display_name, 'Unassigned') as LABEL,
+                           count(*) as VALUE,
+                           apex_page.get_url(
+                               p_page => 10,
+                               p_clear_cache => '10',
+                               p_items => 'P10_TEAM_MEMBER,P10_STATUS',
+                               p_values => nvl(u.display_name, 'Unassigned') || ',Completed'
+                           ) as LINK
+                      from tsk_tasks t
+                      join tsk_statuses s
+                        on s.status_id = t.status_id
+                      left join tsk_team_members tm
+                        on tm.team_member_id = t.owner_member_id
+                      left join tsk_users u
+                        on u.user_id = tm.user_id
+                     where s.status_code = 'COMPLETED'
+                     group by nvl(u.display_name, 'Unassigned')
+                     order by nvl(u.display_name, 'Unassigned')
+                    ```
+            }
+            columnMapping {
+                label: LABEL
+                value: VALUE
+            }
+            link {
+                type: redirectUrl
+                targetUrl: &LINK.
+            }
+        )
+
+        series in-progress (
+            name: In Progress
+            execution {
+                sequence: 20
+            }
+            source {
+                type: sqlQuery
+                sqlQuery:
+                    ```sql
+                    select nvl(u.display_name, 'Unassigned') as LABEL,
+                           count(*) as VALUE,
+                           apex_page.get_url(
+                               p_page => 10,
+                               p_clear_cache => '10',
+                               p_items => 'P10_TEAM_MEMBER,P10_STATUS',
+                               p_values => nvl(u.display_name, 'Unassigned') || ',In Progress'
+                           ) as LINK
+                      from tsk_tasks t
+                      join tsk_statuses s
+                        on s.status_id = t.status_id
+                      left join tsk_team_members tm
+                        on tm.team_member_id = t.owner_member_id
+                      left join tsk_users u
+                        on u.user_id = tm.user_id
+                     where s.status_code = 'IN_PROGRESS'
+                     group by nvl(u.display_name, 'Unassigned')
+                     order by nvl(u.display_name, 'Unassigned')
+                    ```
+            }
+            columnMapping {
+                label: LABEL
+                value: VALUE
+            }
+            link {
+                type: redirectUrl
+                targetUrl: &LINK.
+            }
+        )
+
+        series in-review (
+            name: In Review
+            execution {
+                sequence: 30
+            }
+            source {
+                type: sqlQuery
+                sqlQuery:
+                    ```sql
+                    select nvl(u.display_name, 'Unassigned') as LABEL,
+                           count(*) as VALUE,
+                           apex_page.get_url(
+                               p_page => 10,
+                               p_clear_cache => '10',
+                               p_items => 'P10_TEAM_MEMBER,P10_STATUS',
+                               p_values => nvl(u.display_name, 'Unassigned') || ',In Review'
+                           ) as LINK
+                      from tsk_tasks t
+                      join tsk_statuses s
+                        on s.status_id = t.status_id
+                      left join tsk_team_members tm
+                        on tm.team_member_id = t.owner_member_id
+                      left join tsk_users u
+                        on u.user_id = tm.user_id
+                     where s.status_code = 'IN_REVIEW'
+                     group by nvl(u.display_name, 'Unassigned')
+                     order by nvl(u.display_name, 'Unassigned')
+                    ```
+            }
+            columnMapping {
+                label: LABEL
+                value: VALUE
+            }
+            link {
+                type: redirectUrl
+                targetUrl: &LINK.
+            }
+        )
+
+        series not-started (
+            name: Not Started
+            execution {
+                sequence: 10
+            }
+            source {
+                type: sqlQuery
+                sqlQuery:
+                    ```sql
+                    select nvl(u.display_name, 'Unassigned') as LABEL,
+                           count(*) as VALUE,
+                           apex_page.get_url(
+                               p_page => 10,
+                               p_clear_cache => '10',
+                               p_items => 'P10_TEAM_MEMBER,P10_STATUS',
+                               p_values => nvl(u.display_name, 'Unassigned') || ',Not Started'
+                           ) as LINK
+                      from tsk_tasks t
+                      join tsk_statuses s
+                        on s.status_id = t.status_id
+                      left join tsk_team_members tm
+                        on tm.team_member_id = t.owner_member_id
+                      left join tsk_users u
+                        on u.user_id = tm.user_id
+                     where s.status_code = 'NOT_STARTED'
+                     group by nvl(u.display_name, 'Unassigned')
+                     order by nvl(u.display_name, 'Unassigned')
+                    ```
+            }
+            columnMapping {
+                label: LABEL
+                value: VALUE
+            }
+            link {
+                type: redirectUrl
+                targetUrl: &LINK.
+            }
+        )
+
+        axis x (
+            name: x
+            majorTicks {
+                show: false
+            }
+        )
+
+        axis y (
+            name: y
+            value {
+                format: decimal
+                decimalPlaces: 0
+                formatScaling: none
+            }
+        )
+
+    )
+
+    region upcoming-due-dates (
+        name: Upcoming Due Dates
+        type: classicReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select task_id,
+                       due_date,
+                       task_key,
+                       title,
+                       status_name,
+                       priority_code,
+                       team_name,
+                       application_name,
+                       assignees,
+                       apex_page.get_url(
+                           p_page => 12,
+                           p_items => 'P12_TASK_ID',
+                           p_values => task_id
+                       ) as task_url
+                  from tsk_v_task_list
+                 where due_date is not null
+                   and due_date >= trunc(sysdate)
+                   and nvl(is_done_yn, 'N') = 'N'
+                 order by due_date, priority_code desc, task_key
+                 fetch first 15 rows only
+                ```
+        }
+        layout {
+            sequence: 50
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        componentAppearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Report--stretch
+                t-Report--rowHighlight
+            ]
+        }
+        messages {
+            whenNoDataFound: No upcoming due dates.
+        }
+
+        column APPLICATION_NAME (
+            reportColumnQueryId: 7
+            derivedColumn: N
+            heading {
+                heading: Application
+            }
+            layout {
+                sequence: 70
+            }
+        )
+
+        column ASSIGNEES (
+            reportColumnQueryId: 8
+            derivedColumn: N
+            heading {
+                heading: Assignees
+            }
+            layout {
+                sequence: 80
+            }
+        )
+
+        column DUE_DATE (
+            reportColumnQueryId: 1
+            derivedColumn: N
+            heading {
+                heading: Due Date
+            }
+            layout {
+                sequence: 10
+            }
+            appearance {
+                formatMask: DD-MON-YYYY
+            }
+        )
+
+        column PRIORITY_CODE (
+            reportColumnQueryId: 5
+            derivedColumn: N
+            heading {
+                heading: Priority
+            }
+            layout {
+                sequence: 50
+            }
+        )
+
+        column STATUS_NAME (
+            reportColumnQueryId: 4
+            derivedColumn: N
+            heading {
+                heading: Status
+            }
+            layout {
+                sequence: 40
+            }
+        )
+
+        column TASK_ID (
+            reportColumnQueryId: 10
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 5
+            }
+        )
+
+        column TASK_KEY (
+            reportColumnQueryId: 2
+            derivedColumn: N
+            heading {
+                heading: Task
+            }
+            layout {
+                sequence: 20
+            }
+            columnFormatting {
+                htmlExpression: <a href="#TASK_URL#">#TASK_KEY#</a>
+            }
+        )
+
+        column TASK_URL (
+            reportColumnQueryId: 9
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 90
+            }
+        )
+
+        column TEAM_NAME (
+            reportColumnQueryId: 6
+            derivedColumn: N
+            heading {
+                heading: Team
+            }
+            layout {
+                sequence: 60
+            }
+        )
+
+        column TITLE (
+            reportColumnQueryId: 3
+            derivedColumn: N
+            heading {
+                heading: Title
+            }
+            layout {
+                sequence: 30
+            }
+        )
+
+    )
+
+)

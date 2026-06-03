@@ -1,0 +1,705 @@
+page 10 (
+    name: Tasks
+    alias: TASKS
+    title: Tasks
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+        warnOnUnsavedChanges: false
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region task-filters (
+        name: Filters
+        type: facetedSearch
+        source {
+            filteredRegion: @tasks
+        }
+        layout {
+            sequence: 10
+            slot: body
+            columnSpan: 3
+        }
+        appearance {
+            template: @/standard
+            templateOptions: #DEFAULT#
+        }
+        accessibility {
+            landmarkLabel: Filters
+        }
+        settings {
+            compactNosThreshold: 10000
+            showCurrentFacets: selector
+            currentFacetsSelector: #active_facets
+            showTotalRowCount: true
+            displayChartForTopNValues: 10
+        }
+
+        facet P10_AGING (
+            type: checkboxGroup
+            label {
+                label: Aging
+            }
+            lov {
+                type: distinctValues
+            }
+            layout {
+                sequence: 90
+            }
+            source {
+                databaseColumn: AGING_BUCKET
+            }
+        )
+
+        facet P10_APPLICATION (
+            type: checkboxGroup
+            label {
+                label: Application
+            }
+            lov {
+                type: distinctValues
+            }
+            layout {
+                sequence: 40
+            }
+            listEntries {
+                maxDisplayedEntries: 10
+            }
+            source {
+                databaseColumn: APPLICATION_NAME
+            }
+        )
+
+        facet P10_MY_TASKS (
+            type: checkboxGroup
+            label {
+                label: My Tasks
+            }
+            lov {
+                type: staticValues
+                staticValues: STATIC:My Tasks;Y
+            }
+            layout {
+                sequence: 15
+            }
+            source {
+                databaseColumn: MY_TASKS_YN
+            }
+        )
+
+        facet P10_LAST_UPDATED (
+            type: checkboxGroup
+            label {
+                label: Last Updated
+            }
+            lov {
+                type: staticValues
+                staticValues: "STATIC2:Last Day;Last Day,Last Week;Last Week,Last Month;Last Month"
+            }
+            layout {
+                sequence: 75
+            }
+            source {
+                databaseColumn: LAST_UPDATED_FACET
+            }
+            multipleValues {
+                type: delimitedList
+            }
+        )
+
+        facet P10_OVERDUE (
+            type: checkboxGroup
+            label {
+                label: Overdue
+            }
+            lov {
+                type: staticValues
+                staticValues: STATIC:Overdue;Y
+            }
+            layout {
+                sequence: 80
+            }
+            source {
+                databaseColumn: OVERDUE_YN
+            }
+        )
+
+        facet P10_PRIORITY (
+            type: checkboxGroup
+            label {
+                label: Priority
+            }
+            lov {
+                type: distinctValues
+            }
+            layout {
+                sequence: 60
+            }
+            source {
+                databaseColumn: PRIORITY_CODE
+            }
+        )
+
+        facet P10_SEARCH (
+            type: search
+            label {
+                label: Search
+            }
+            layout {
+                sequence: 10
+            }
+            source {
+                dbColumns: TASK_KEY,TITLE,TEAM_NAME,TEAM_MEMBER,TYPE_NAME,APPLICATION_NAME,STATUS_NAME,PRIORITY_CODE,ASSIGNEES,TOPIC_GROUPS
+            }
+        )
+
+        facet P10_STATUS (
+            type: checkboxGroup
+            label {
+                label: Status
+            }
+            lov {
+                type: distinctValues
+            }
+            layout {
+                sequence: 50
+            }
+            source {
+                databaseColumn: STATUS_NAME
+            }
+        )
+
+        facet P10_TEAM_MEMBER (
+            type: checkboxGroup
+            label {
+                label: Assignee
+            }
+            lov {
+                type: distinctValues
+            }
+            layout {
+                sequence: 20
+            }
+            listEntries {
+                maxDisplayedEntries: 10
+            }
+            source {
+                databaseColumn: ASSIGNEE_FACET
+            }
+            multipleValues {
+                type: delimitedList
+            }
+        )
+
+        facet P10_TOPIC_GROUP (
+            type: checkboxGroup
+            label {
+                label: Topic Group
+            }
+            lov {
+                type: distinctValues
+            }
+            layout {
+                sequence: 35
+            }
+            listEntries {
+                maxDisplayedEntries: 10
+            }
+            source {
+                databaseColumn: TOPIC_GROUP_FACET
+            }
+            multipleValues {
+                type: delimitedList
+            }
+        )
+
+        facet P10_TYPE (
+            type: checkboxGroup
+            label {
+                label: Type
+            }
+            lov {
+                type: distinctValues
+            }
+            layout {
+                sequence: 30
+            }
+            listEntries {
+                maxDisplayedEntries: 10
+            }
+            source {
+                databaseColumn: TYPE_NAME
+            }
+        )
+
+    )
+
+    region tasks (
+        name: Tasks
+        type: classicReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select v.task_id,
+                       apex_page.get_url(
+                           p_page => 12,
+                           p_items => 'P12_TASK_ID',
+                           p_values => v.task_id
+                       ) as task_url,
+                       v.task_key,
+                       v.team_name,
+                       nvl(owner_u.display_name, 'Unassigned') as team_member,
+                       v.title,
+                       v.type_name,
+                       v.application_name,
+                       v.complexity_name,
+                       v.status_name,
+                       v.priority_code,
+                       v.due_date,
+                       v.percent_complete,
+                       case
+                           when st.status_code in ('NOT_STARTED', 'IN_PROGRESS')
+                                and t.updated_at >= add_months(systimestamp, -1)
+                           then 'Last 1 Month'
+                           when st.status_code in ('NOT_STARTED', 'IN_PROGRESS')
+                                and t.updated_at < add_months(systimestamp, -1)
+                                and t.updated_at >= add_months(systimestamp, -3)
+                           then '1-3 Months'
+                           when st.status_code in ('NOT_STARTED', 'IN_PROGRESS')
+                                and t.updated_at < add_months(systimestamp, -3)
+                           then 'Over 3 Months'
+                       end as aging_bucket,
+                       (
+                           select count(*)
+                             from tsk_task_updates tu
+                            where tu.task_id = v.task_id
+                       ) as update_count,
+                       v.assignees,
+                       (
+                           select listagg(display_name, ':') within group (order by display_name)
+                             from (
+                                      select u.display_name
+                                        from tsk_task_assignees ta
+                                        join tsk_team_members tm
+                                          on tm.team_member_id = ta.team_member_id
+                                        join tsk_users u
+                                          on u.user_id = tm.user_id
+                                       where ta.task_id = v.task_id
+                                         and ta.active_yn = 'Y'
+                                         and tm.active_yn = 'Y'
+                                         and u.active_yn = 'Y'
+                                       group by u.display_name
+                                  )
+                       ) as assignee_facet,
+                       v.overdue_yn,
+                       case
+                           when exists (
+                               select 1
+                                 from tsk_task_assignees my_ta
+                                 join tsk_team_members my_tm
+                                   on my_tm.team_member_id = my_ta.team_member_id
+                                 join tsk_users my_u
+                                   on my_u.user_id = my_tm.user_id
+                                where my_ta.task_id = v.task_id
+                                  and my_ta.active_yn = 'Y'
+                                  and my_tm.active_yn = 'Y'
+                                  and (
+                                      lower(my_u.email) = lower(:APP_USER)
+                                      or lower(my_u.username) = lower(:APP_USER)
+                                  )
+                           )
+                           then 'Y'
+                           else 'N'
+                       end as my_tasks_yn,
+                       (
+                           select listagg(tg.topic_name, ', ') within group (order by tg.topic_name)
+                             from tsk_task_topic_groups ttg
+                             join tsk_topic_groups tg
+                               on tg.topic_group_id = ttg.topic_group_id
+                            where ttg.task_id = v.task_id
+                       ) as topic_groups,
+                       (
+                           select listagg(topic_name, ':') within group (order by topic_name)
+                             from (
+                                      select tg.topic_name
+                                        from tsk_task_topic_groups ttg
+                                        join tsk_topic_groups tg
+                                          on tg.topic_group_id = ttg.topic_group_id
+                                       where ttg.task_id = v.task_id
+                                       group by tg.topic_name
+                                  )
+                       ) as topic_group_facet,
+                       cast(v.updated_at as date) as last_updated,
+                       case
+                           when cast(v.updated_at as date) >= sysdate - 1
+                           then 'Last Day:Last Week:Last Month'
+                           when cast(v.updated_at as date) >= sysdate - 7
+                           then 'Last Week:Last Month'
+                           when cast(v.updated_at as date) >= add_months(sysdate, -1)
+                           then 'Last Month'
+                       end as last_updated_facet
+                  from tsk_v_task_list v
+                  left join tsk_tasks t
+                    on t.task_id = v.task_id
+                  left join tsk_statuses st
+                    on st.status_id = t.status_id
+                  left join tsk_team_members owner_tm
+                    on owner_tm.team_member_id = t.owner_member_id
+                  left join tsk_users owner_u
+                    on owner_u.user_id = owner_tm.user_id
+                 order by v.updated_at desc nulls last, v.task_key
+                ```
+        }
+        layout {
+            sequence: 20
+            slot: body
+            startNewRow: false
+            columnSpan: 9
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        componentAppearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Report--stretch
+                t-Report--rowHighlight
+            ]
+        }
+        pagination {
+            type: nextAndPreviousLinks
+            rows: 20
+        }
+        messages {
+            whenNoDataFound: No tasks found.
+        }
+
+        column AGING_BUCKET (
+            reportColumnQueryId: 18
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 125
+            }
+        )
+
+        column APPLICATION_NAME (
+            reportColumnQueryId: 8
+            derivedColumn: N
+            heading {
+                heading: Application
+            }
+            layout {
+                sequence: 60
+            }
+        )
+
+        column ASSIGNEES (
+            reportColumnQueryId: 14
+            derivedColumn: N
+            heading {
+                heading: Assignees
+            }
+            layout {
+                sequence: 35
+            }
+        )
+
+        column ASSIGNEE_FACET (
+            reportColumnQueryId: 19
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 36
+            }
+        )
+
+        column COMPLEXITY_NAME (
+            reportColumnQueryId: 9
+            derivedColumn: N
+            heading {
+                heading: Complexity
+            }
+            layout {
+                sequence: 70
+            }
+        )
+
+        column DUE_DATE (
+            reportColumnQueryId: 12
+            derivedColumn: N
+            heading {
+                heading: Due Date
+            }
+            layout {
+                sequence: 15
+            }
+            appearance {
+                formatMask: DD-MON-YYYY
+            }
+        )
+
+        column MY_TASKS_YN (
+            reportColumnQueryId: 16
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 140
+            }
+        )
+
+        column LAST_UPDATED (
+            reportColumnQueryId: 22
+            derivedColumn: N
+            heading {
+                heading: Last Updated
+            }
+            layout {
+                sequence: 25
+            }
+            appearance {
+                formatMask: DD-MON-YYYY
+            }
+        )
+
+        column LAST_UPDATED_FACET (
+            reportColumnQueryId: 23
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 145
+            }
+        )
+
+        column OVERDUE_YN (
+            reportColumnQueryId: 15
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 130
+            }
+        )
+
+        column PERCENT_COMPLETE (
+            reportColumnQueryId: 13
+            derivedColumn: N
+            heading {
+                heading: Complete %
+                alignment: end
+            }
+            layout {
+                sequence: 110
+                columnAlignment: end
+            }
+        )
+
+        column PRIORITY_CODE (
+            reportColumnQueryId: 11
+            derivedColumn: N
+            heading {
+                heading: Priority
+            }
+            layout {
+                sequence: 90
+            }
+        )
+
+        column STATUS_NAME (
+            reportColumnQueryId: 10
+            derivedColumn: N
+            heading {
+                heading: Status
+            }
+            layout {
+                sequence: 80
+            }
+        )
+
+        column TASK_ID (
+            reportColumnQueryId: 1
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 5
+            }
+        )
+
+        column TASK_KEY (
+            reportColumnQueryId: 3
+            derivedColumn: N
+            heading {
+                heading: Task
+            }
+            layout {
+                sequence: 10
+            }
+            columnFormatting {
+                htmlExpression: <a href="#TASK_URL#">#TASK_KEY#</a>
+            }
+        )
+
+        column TASK_URL (
+            reportColumnQueryId: 2
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 6
+            }
+        )
+
+        column TEAM_MEMBER (
+            reportColumnQueryId: 5
+            derivedColumn: N
+            heading {
+                heading: Submitted by
+            }
+            layout {
+                sequence: 150
+            }
+        )
+
+        column TEAM_NAME (
+            reportColumnQueryId: 4
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 20
+            }
+        )
+
+        column TOPIC_GROUPS (
+            reportColumnQueryId: 20
+            derivedColumn: N
+            heading {
+                heading: Topic Groups
+            }
+            layout {
+                sequence: 45
+            }
+        )
+
+        column TOPIC_GROUP_FACET (
+            reportColumnQueryId: 21
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 46
+            }
+        )
+
+        column TITLE (
+            reportColumnQueryId: 6
+            derivedColumn: N
+            heading {
+                heading: Title
+            }
+            layout {
+                sequence: 40
+            }
+        )
+
+        column TYPE_NAME (
+            reportColumnQueryId: 7
+            derivedColumn: N
+            heading {
+                heading: Type
+            }
+            layout {
+                sequence: 50
+            }
+        )
+
+        column UPDATE_COUNT (
+            reportColumnQueryId: 17
+            derivedColumn: N
+            heading {
+                heading: Updates
+                alignment: center
+            }
+            layout {
+                sequence: 120
+                columnAlignment: center
+            }
+        )
+
+    )
+
+    region tasks-title (
+        name: Tasks Title
+        title: Tasks
+        type: staticContent
+        layout {
+            sequence: 10
+            slot: breadcrumbBar
+        }
+        appearance {
+            template: @/title-bar
+            templateOptions: #DEFAULT#
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    button create-task (
+        buttonName: CREATE_TASK
+        label: Create Task
+        layout {
+            sequence: 10
+            region: @tasks
+            slot: edit
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: redirectThisApp
+            target: {
+                page: 11
+                clearCache: 11
+            }
+            warnOnUnsavedChanges: doNotCheck
+        }
+    )
+
+    dynamicAction refresh-on-task-dialog-close (
+        name: Refresh on Task Dialog Close
+        execution {
+            sequence: 10
+        }
+        when {
+            event: apexafterclosedialog
+            selectionType: region
+            region: @tasks
+        }
+
+        action refresh-tasks (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @tasks
+            }
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+    )
+
+)

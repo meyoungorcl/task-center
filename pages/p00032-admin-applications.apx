@@ -1,0 +1,299 @@
+page 32 (
+    name: Applications
+    alias: ADMIN-APPLICATIONS
+    title: Applications
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+        warnOnUnsavedChanges: false
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region applications (
+        name: Applications
+        type: interactiveReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select a.application_id,
+                       a.application_code,
+                       a.application_name,
+                       t.team_name as owner_team,
+                       a.description,
+                       a.active_yn,
+                       a.updated_at,
+                       a.updated_by
+                  from tsk_applications a
+                  left join tsk_teams t
+                    on t.team_id = a.owner_team_id
+                 order by a.application_name
+                ```
+        }
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/interactive-report
+            templateOptions: [
+                #DEFAULT#
+                t-IRR-region--noBorders
+            ]
+        }
+        link {
+            linkColumn: customTarget
+            target: {
+                page: 31
+                items: {
+                    P31_APPLICATION_ID: #APPLICATION_ID#
+                }
+                clearCache: 31
+            }
+            linkIcon: <img src="#IMAGE_PREFIX#app_ui/img/icons/apex-edit-pencil.png" class="apex-edit-pencil" alt="Edit">
+        }
+        pagination {
+            type: rowRangesXToY
+        }
+        messages {
+            whenNoDataFound: No applications found.
+        }
+        advanced {
+            savedReportMappingIdentifier: 16545087920674811
+        }
+
+        column ACTIVE_YN (
+            type: plainText
+            heading {
+                heading: Active
+            }
+            layout {
+                sequence: 50
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: F
+            }
+        )
+
+        column APPLICATION_CODE (
+            type: plainText
+            heading {
+                heading: Code
+            }
+            layout {
+                sequence: 10
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: B
+            }
+        )
+
+        column APPLICATION_ID (
+            type: hidden
+            heading {
+                heading: Application Id
+            }
+            layout {
+                sequence: 5
+            }
+            source {
+                dataType: NUMBER
+            }
+            advanced {
+                endUserAlias: A
+            }
+        )
+
+        column APPLICATION_NAME (
+            type: plainText
+            heading {
+                heading: Application
+            }
+            layout {
+                sequence: 20
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: C
+            }
+        )
+
+        column DESCRIPTION (
+            type: plainText
+            heading {
+                heading: Description
+            }
+            layout {
+                sequence: 40
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: E
+            }
+        )
+
+        column OWNER_TEAM (
+            type: plainText
+            heading {
+                heading: Owner Team
+            }
+            layout {
+                sequence: 30
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: D
+            }
+        )
+
+        column UPDATED_AT (
+            type: plainText
+            heading {
+                heading: Updated
+            }
+            layout {
+                sequence: 60
+            }
+            appearance {
+                formatMask: DD-MON-YYYY HH24:MI
+            }
+            source {
+                dataType: DATE
+            }
+            advanced {
+                endUserAlias: G
+            }
+        )
+
+        column UPDATED_BY (
+            type: plainText
+            heading {
+                heading: Updated By
+            }
+            layout {
+                sequence: 70
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: H
+            }
+        )
+
+        page {
+            borderWidth: 0.5
+            borderColor: #666666
+        }
+
+        savedReport primary (
+            visibility: primaryDefault
+            view {
+                rowsPerPage: 50
+            }
+
+            displayColumn ACTIVE_YN (
+                sequence: 6
+            )
+
+            displayColumn APPLICATION_CODE (
+                sequence: 2
+            )
+
+            displayColumn APPLICATION_ID (
+                sequence: 1
+            )
+
+            displayColumn APPLICATION_NAME (
+                sequence: 3
+            )
+
+            displayColumn DESCRIPTION (
+                sequence: 5
+            )
+
+            displayColumn OWNER_TEAM (
+                sequence: 4
+            )
+
+            displayColumn UPDATED_AT (
+                sequence: 7
+            )
+
+            displayColumn UPDATED_BY (
+                sequence: 8
+            )
+
+        )
+
+    )
+
+    button create-application (
+        buttonName: CREATE_APPLICATION
+        label: Create Application
+        layout {
+            sequence: 10
+            region: @applications
+            slot: rightOfInteractiveReportSearchBar
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: redirectThisApp
+            target: {
+                page: 31
+                clearCache: 31
+            }
+            warnOnUnsavedChanges: doNotCheck
+        }
+    )
+
+    dynamicAction refresh-on-application-dialog-close (
+        name: Refresh on Application Dialog Close
+        execution {
+            sequence: 10
+        }
+        when {
+            event: apexafterclosedialog
+            selectionType: region
+            region: @applications
+        }
+
+        action refresh-applications (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @applications
+            }
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+    )
+
+)
+

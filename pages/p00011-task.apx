@@ -1,0 +1,810 @@
+page 11 (
+    name: Task
+    alias: TASK
+    title: Task
+    appearance {
+        pageMode: modalDialog
+        dialogTemplate: @/drawer
+        templateOptions: [
+            #DEFAULT#
+            js-dialog-class-t-Drawer--pullOutEnd
+        ]
+    }
+    dialog {
+        chained: false
+    }
+    navigation {
+        warnOnUnsavedChanges: false
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region buttons (
+        name: Buttons
+        type: staticContent
+        layout {
+            sequence: 20
+            slot: dialogFooter
+        }
+        appearance {
+            template: @/buttons-container
+            templateOptions: #DEFAULT#
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    region task-form (
+        name: Task
+        type: form
+        source {
+            location: localDatabase
+            tableName: TSK_TASKS
+        }
+        layout {
+            sequence: 10
+            slot: contentBody
+        }
+        appearance {
+            template: @/blank-with-attributes
+            templateOptions: #DEFAULT#
+        }
+        edit {
+            enabled: true
+            allowedOperations: [
+                add
+                update
+            ]
+        }
+    )
+
+    pageItem P11_APPLICATION_ID (
+        type: selectList
+        label {
+            label: Application
+            alignment: left
+        }
+        lov {
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select application_name as display_value,
+                       application_id as return_value
+                  from tsk_applications
+                 where active_yn = 'Y'
+                 order by application_name
+                ```
+        }
+        layout {
+            sequence: 100
+            region: @task-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        validation {
+            valueRequired: true
+        }
+        source {
+            formRegion: @task-form
+            column: APPLICATION_ID
+            dataType: number
+        }
+    )
+
+    pageItem P11_ASSIGNEES (
+        type: selectMany
+        label {
+            label: Assignees
+            alignment: left
+        }
+        lov {
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select u.display_name as display_value,
+                       tm.team_member_id as return_value
+                  from tsk_team_members tm
+                  join tsk_users u
+                    on u.user_id = tm.user_id
+                 where tm.active_yn = 'Y'
+                   and u.active_yn = 'Y'
+                   and (:P11_TEAM_ID is null or tm.team_id = :P11_TEAM_ID)
+                 order by u.display_name
+                ```
+        }
+        layout {
+            sequence: 75
+            region: @task-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+        }
+        sessionState {
+            storage: request
+        }
+    )
+
+    pageItem P11_COMPLEXITY_ID (
+        type: selectList
+        label {
+            label: Complexity
+            alignment: left
+        }
+        lov {
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select complexity_name as display_value,
+                       complexity_id as return_value
+                  from tsk_complexities
+                 where active_yn = 'Y'
+                 order by display_seq, complexity_name
+                ```
+        }
+        layout {
+            sequence: 120
+            region: @task-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        validation {
+            valueRequired: true
+        }
+        source {
+            formRegion: @task-form
+            column: COMPLEXITY_ID
+            dataType: number
+        }
+    )
+
+    pageItem P11_DESCRIPTION (
+        type: richTextEditor
+        label {
+            label: Description
+            alignment: left
+        }
+        layout {
+            sequence: 80
+            region: @task-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+        }
+        source {
+            formRegion: @task-form
+            column: DESCRIPTION
+            dataType: clob
+        }
+    )
+
+    pageItem P11_DUE_DATE (
+        type: datePicker
+        label {
+            label: Due Date
+            alignment: left
+        }
+        layout {
+            sequence: 150
+            region: @task-form
+            slot: regionBody
+            alignment: left
+            startNewRow: false
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            width: 30
+        }
+        validation {
+            valueRequired: true
+        }
+        source {
+            formRegion: @task-form
+            column: DUE_DATE
+            dataType: date
+        }
+    )
+
+    pageItem P11_ESTIMATED_HOURS (
+        type: numberField
+        label {
+            label: Estimated Hours
+            alignment: left
+        }
+        layout {
+            sequence: 130
+            region: @task-form
+            slot: regionBody
+            alignment: left
+            startNewRow: false
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 20
+        }
+        source {
+            formRegion: @task-form
+            column: ESTIMATED_HOURS
+            dataType: number
+        }
+    )
+
+    pageItem P11_EXTERNAL_REFERENCE (
+        type: hidden
+        layout {
+            sequence: 170
+            region: @task-form
+            slot: regionBody
+        }
+        source {
+            formRegion: @task-form
+            column: EXTERNAL_REFERENCE
+            dataType: varchar2
+        }
+    )
+
+    pageItem P11_OWNER_MEMBER_ID (
+        type: hidden
+        layout {
+            sequence: 115
+            region: @task-form
+            slot: regionBody
+        }
+        source {
+            formRegion: @task-form
+            column: OWNER_MEMBER_ID
+            dataType: number
+        }
+    )
+
+    pageItem P11_TOPIC_GROUP_ID (
+        type: selectList
+        label {
+            label: Topic Group
+            alignment: left
+        }
+        lov {
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select topic_name as display_value,
+                       topic_group_id as return_value
+                  from tsk_topic_groups
+                 where active_yn = 'Y'
+                    or topic_group_id = :P11_TOPIC_GROUP_ID
+                 order by topic_name
+                ```
+            displayExtraValues: false
+            displayNullValue: true
+            nullDisplayValue: "- No topic -"
+        }
+        layout {
+            sequence: 118
+            region: @task-form
+            slot: regionBody
+            alignment: left
+            startNewRow: false
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        source {
+            formRegion: @task-form
+            column: TOPIC_GROUP_ID
+            dataType: number
+        }
+    )
+
+    pageItem P11_PRIORITY_CODE (
+        type: selectList
+        label {
+            label: Priority
+            alignment: left
+        }
+        lov {
+            type: staticValues
+            staticValues: STATIC2:Low;LOW,Medium;MEDIUM,High;HIGH,Critical;CRITICAL
+            displayExtraValues: false
+            displayNullValue: false
+        }
+        layout {
+            sequence: 40
+            region: @task-form
+            slot: regionBody
+            alignment: left
+            startNewRow: false
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        source {
+            formRegion: @task-form
+            column: PRIORITY_CODE
+            dataType: varchar2
+        }
+    )
+
+    pageItem P11_START_DATE (
+        type: datePicker
+        label {
+            label: Start Date
+            alignment: left
+        }
+        layout {
+            sequence: 140
+            region: @task-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 30
+        }
+        source {
+            formRegion: @task-form
+            column: START_DATE
+            dataType: date
+        }
+    )
+
+    pageItem P11_STATUS_ID (
+        type: selectList
+        label {
+            label: Status
+            alignment: left
+        }
+        lov {
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select status_name as display_value,
+                       status_id as return_value
+                  from tsk_statuses
+                 where active_yn = 'Y'
+                 order by display_seq, status_name
+                ```
+        }
+        layout {
+            sequence: 30
+            region: @task-form
+            slot: regionBody
+            alignment: left
+            startNewRow: false
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        validation {
+            valueRequired: true
+        }
+        source {
+            formRegion: @task-form
+            column: STATUS_ID
+            dataType: number
+        }
+    )
+
+    pageItem P11_TASK_ID (
+        type: hidden
+        layout {
+            sequence: 10
+            region: @task-form
+            slot: regionBody
+        }
+        source {
+            formRegion: @task-form
+            column: TASK_ID
+            dataType: number
+            queryOnly: true
+            primaryKey: true
+        }
+        security {
+            sessionStateProtection: checksumRequiredSessionLevel
+        }
+    )
+
+    pageItem P11_TEAM_ID (
+        type: hidden
+        layout {
+            sequence: 90
+            region: @task-form
+            slot: regionBody
+        }
+        source {
+            formRegion: @task-form
+            column: TEAM_ID
+            dataType: number
+        }
+    )
+
+    pageItem P11_TITLE (
+        type: textField
+        label {
+            label: Title
+            alignment: left
+        }
+        layout {
+            sequence: 60
+            region: @task-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+        }
+        validation {
+            maxLength: 255
+        }
+        source {
+            formRegion: @task-form
+            column: TITLE
+            dataType: varchar2
+        }
+    )
+
+    pageItem P11_TYPE_ID (
+        type: selectList
+        label {
+            label: Task Type
+            alignment: left
+        }
+        lov {
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select type_name as display_value,
+                       type_id as return_value
+                  from tsk_task_types
+                 order by type_name
+                ```
+        }
+        layout {
+            sequence: 110
+            region: @task-form
+            slot: regionBody
+            alignment: left
+            startNewRow: false
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        source {
+            formRegion: @task-form
+            column: TYPE_ID
+            dataType: number
+        }
+    )
+
+    button cancel (
+        buttonName: CANCEL
+        label: Cancel
+        layout {
+            sequence: 10
+            region: @buttons
+            slot: close
+        }
+        appearance {
+            buttonTemplate: @/text
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: definedByDynamicAction
+        }
+    )
+
+    button create (
+        buttonName: CREATE
+        label: Create Task
+        layout {
+            sequence: 30
+            region: @buttons
+            slot: next
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            warnOnUnsavedChanges: doNotCheck
+            databaseAction: insert
+        }
+        serverSideCondition {
+            type: itemIsNull
+            item: P11_TASK_ID
+        }
+    )
+
+    button save (
+        buttonName: SAVE
+        label: Apply Changes
+        layout {
+            sequence: 20
+            region: @buttons
+            slot: next
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            warnOnUnsavedChanges: doNotCheck
+            databaseAction: update
+        }
+        serverSideCondition {
+            type: itemIsNotNull
+            item: P11_TASK_ID
+        }
+    )
+
+    dynamicAction cancel-dialog (
+        name: Cancel Dialog
+        execution {
+            sequence: 10
+        }
+        when {
+            event: click
+            selectionType: button
+            button: @cancel
+        }
+
+        action native-dialog-cancel (
+            action: cancelDialog
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+    )
+
+    process assign-and-email-assignees (
+        name: Assign and Email Assignees
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                declare
+                    l_assignee_names varchar2(32767);
+                    l_task_url       varchar2(4000);
+                    l_email_count    pls_integer := 0;
+                begin
+                    if :P11_ASSIGNEES is null then
+                        return;
+                    end if;
+                
+                    l_task_url := apex_mail.get_instance_url ||
+                                  apex_page.get_url(
+                                      p_application => :APP_ID,
+                                      p_page        => 12,
+                                      p_session     => 0,
+                                      p_clear_cache => '12',
+                                      p_items       => 'P12_TASK_ID',
+                                      p_values      => :P11_TASK_ID,
+                                      p_plain_url   => true
+                                  );
+                
+                    for m in (
+                        select distinct to_number(s.column_value) as team_member_id,
+                               u.display_name,
+                               u.email,
+                               tm.role_name
+                          from table(apex_string.split(:P11_ASSIGNEES, ':')) s
+                          join tsk_team_members tm
+                            on tm.team_member_id = to_number(s.column_value)
+                          join tsk_users u
+                            on u.user_id = tm.user_id
+                         where regexp_like(s.column_value, '^[0-9]+$')
+                           and tm.active_yn = 'Y'
+                           and u.active_yn = 'Y'
+                    ) loop
+                        insert into tsk_task_assignees (
+                            task_id,
+                            team_member_id,
+                            assignment_role,
+                            allocated_pct
+                        )
+                        select :P11_TASK_ID,
+                               m.team_member_id,
+                               m.role_name,
+                               null
+                          from dual
+                         where not exists (
+                                 select 1
+                                   from tsk_task_assignees ta
+                                  where ta.task_id = :P11_TASK_ID
+                                    and ta.team_member_id = m.team_member_id
+                               );
+                
+                        l_assignee_names :=
+                            case
+                                when l_assignee_names is null then m.display_name
+                                else l_assignee_names || ', ' || m.display_name
+                            end;
+                
+                        if m.email is not null then
+                            apex_mail.send(
+                                p_to        => m.email,
+                                p_from      => 'no-reply@oracle.com',
+                                p_subj      => 'Task assigned: ' || :P11_TITLE,
+                                p_body      => 'You have been assigned a task in Task Center.' || chr(10) || chr(10) ||
+                                               'Task: ' || :P11_TITLE || chr(10) ||
+                                               'Due Date: ' || :P11_DUE_DATE || chr(10) ||
+                                               'Open Task: ' || l_task_url,
+                                p_body_html => '<p>You have been assigned a task in Task Center.</p>' ||
+                                               '<p><strong>Task:</strong> ' || apex_escape.html(:P11_TITLE) || '<br>' ||
+                                               '<strong>Due Date:</strong> ' || apex_escape.html(:P11_DUE_DATE) || '</p>' ||
+                                               '<p><a href="' || apex_escape.html_attribute(l_task_url) || '">Open Task</a></p>'
+                            );
+                
+                            l_email_count := l_email_count + 1;
+                        end if;
+                    end loop;
+                
+                    if l_assignee_names is not null then
+                        insert into tsk_change_log (
+                            entity_name,
+                            entity_pk,
+                            task_id,
+                            change_action,
+                            change_note,
+                            changed_by
+                        ) values (
+                            'TASK',
+                            :P11_TASK_ID,
+                            :P11_TASK_ID,
+                            'ASSIGN',
+                            'Task assigned to: ' || l_assignee_names,
+                            :APP_USER
+                        );
+                    end if;
+                
+                    if l_email_count > 0 then
+                        apex_mail.push_queue;
+                    end if;
+                end;
+                ```
+        }
+        execution {
+            sequence: 20
+        }
+        advanced {
+            executionMappingIdentifier: 17119101707731545
+        }
+        serverSideCondition {
+            whenButtonPressed: @create
+        }
+    )
+
+    process close-dialog (
+        name: Close Dialog
+        type: closeDialog
+        execution {
+            sequence: 50
+        }
+        advanced {
+            executionMappingIdentifier: 16508086056047762
+        }
+        serverSideCondition {
+            type: requestIsContainedInValue
+            value: CREATE,SAVE
+        }
+    )
+
+    process default-new-task-values (
+        name: Default New Task Values
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                begin
+                    if :P11_TEAM_ID is null then
+                        select team_id
+                          into :P11_TEAM_ID
+                          from tsk_teams
+                         where upper(team_name) = 'APPLICATION DEVELOPMENT'
+                           and active_yn = 'Y'
+                         fetch first 1 row only;
+                    end if;
+                
+                    if :P11_STATUS_ID is null then
+                        select status_id
+                          into :P11_STATUS_ID
+                          from tsk_statuses
+                         where status_code = 'NOT_STARTED'
+                           and active_yn = 'Y'
+                         fetch first 1 row only;
+                    end if;
+                
+                    if :P11_OWNER_MEMBER_ID is null then
+                        select min(tm.team_member_id)
+                          into :P11_OWNER_MEMBER_ID
+                          from tsk_team_members tm
+                          join tsk_users u
+                            on u.user_id = tm.user_id
+                          join tsk_teams t
+                            on t.team_id = tm.team_id
+                         where tm.active_yn = 'Y'
+                           and u.active_yn = 'Y'
+                           and t.active_yn = 'Y'
+                           and (
+                               lower(u.username) = lower(:APP_USER)
+                               or lower(u.email) = lower(:APP_USER)
+                           );
+                    end if;
+                exception
+                    when no_data_found then
+                        null;
+                end;
+                ```
+        }
+        execution {
+            sequence: 20
+            point: beforeHeader
+        }
+        advanced {
+            executionMappingIdentifier: 17012946050782725
+        }
+        serverSideCondition {
+            type: itemIsNull
+            item: P11_TASK_ID
+        }
+    )
+
+    process initialize-form-task-form (
+        name: Initialize form Task
+        type: formInitialization
+        formRegion: @task-form
+        execution {
+            sequence: 10
+            point: beforeHeader
+        }
+        advanced {
+            executionMappingIdentifier: 16508110050047762
+        }
+    )
+
+    process process-form-task-form (
+        name: Process form Task
+        type: formAutoRowProcessing
+        formRegion: @task-form
+        execution {
+            sequence: 10
+        }
+        advanced {
+            executionMappingIdentifier: 16508280552047762
+        }
+    )
+
+)

@@ -1,0 +1,542 @@
+page 30 (
+    name: Application Summary
+    alias: APPLICATIONS
+    title: Application Summary
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+        warnOnUnsavedChanges: false
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region application-summary-title (
+        name: Application Summary Title
+        title: Application Summary
+        type: staticContent
+        layout {
+            sequence: 10
+            slot: breadcrumbBar
+        }
+        appearance {
+            template: @/title-bar
+            templateOptions: #DEFAULT#
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    region applications (
+        name: Application Summary
+        type: interactiveReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select a.application_id,
+                       t.team_name,
+                       a.application_code,
+                       a.application_name,
+                       count(tsk.task_id) as task_count,
+                       sum(case when s.status_code = 'BACKLOG' then 1 else 0 end) as backlog_tasks,
+                       sum(case when s.status_code = 'NOT_STARTED' then 1 else 0 end) as not_started_tasks,
+                       sum(case when s.status_code = 'IN_PROGRESS' then 1 else 0 end) as in_progress_tasks,
+                       sum(case when s.status_code = 'IN_REVIEW' then 1 else 0 end) as in_review_tasks,
+                       sum(case when s.status_code = 'BLOCKED' then 1 else 0 end) as blocked_tasks,
+                       sum(case when s.status_code = 'COMPLETED' then 1 else 0 end) as completed_tasks,
+                       apex_page.get_url(
+                           p_page => 10,
+                           p_clear_cache => '10',
+                           p_items => 'P10_APPLICATION',
+                           p_values => a.application_name
+                       ) as task_count_url,
+                       apex_page.get_url(
+                           p_page => 10,
+                           p_clear_cache => '10',
+                           p_items => 'P10_APPLICATION,P10_STATUS',
+                           p_values => a.application_name || ',Backlog'
+                       ) as backlog_tasks_url,
+                       apex_page.get_url(
+                           p_page => 10,
+                           p_clear_cache => '10',
+                           p_items => 'P10_APPLICATION,P10_STATUS',
+                           p_values => a.application_name || ',Not Started'
+                       ) as not_started_tasks_url,
+                       apex_page.get_url(
+                           p_page => 10,
+                           p_clear_cache => '10',
+                           p_items => 'P10_APPLICATION,P10_STATUS',
+                           p_values => a.application_name || ',In Progress'
+                       ) as in_progress_tasks_url,
+                       apex_page.get_url(
+                           p_page => 10,
+                           p_clear_cache => '10',
+                           p_items => 'P10_APPLICATION,P10_STATUS',
+                           p_values => a.application_name || ',In Review'
+                       ) as in_review_tasks_url,
+                       apex_page.get_url(
+                           p_page => 10,
+                           p_clear_cache => '10',
+                           p_items => 'P10_APPLICATION,P10_STATUS',
+                           p_values => a.application_name || ',Blocked'
+                       ) as blocked_tasks_url,
+                       apex_page.get_url(
+                           p_page => 10,
+                           p_clear_cache => '10',
+                           p_items => 'P10_APPLICATION,P10_STATUS',
+                           p_values => a.application_name || ',Completed'
+                       ) as completed_tasks_url
+                  from tsk_applications a
+                  left join tsk_teams t
+                    on t.team_id = a.owner_team_id
+                  left join tsk_tasks tsk
+                    on tsk.application_id = a.application_id
+                  left join tsk_statuses s
+                    on s.status_id = tsk.status_id
+                 group by a.application_id,
+                          t.team_name,
+                          a.application_code,
+                          a.application_name
+                 order by t.team_name, a.application_name
+                ```
+        }
+        layout {
+            sequence: 20
+            slot: body
+        }
+        appearance {
+            template: @/interactive-report
+            templateOptions: [
+                #DEFAULT#
+                t-IRR-region--noBorders
+            ]
+        }
+        pagination {
+            type: rowRangesXToY
+        }
+        messages {
+            whenNoDataFound: No application summary rows found.
+        }
+        advanced {
+            savedReportMappingIdentifier: 16447731006744664
+        }
+
+        column APPLICATION_CODE (
+            type: plainText
+            heading {
+                heading: Code
+            }
+            layout {
+                sequence: 20
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: C
+            }
+        )
+
+        column APPLICATION_ID (
+            type: hidden
+            heading {
+                heading: Application Id
+            }
+            layout {
+                sequence: 5
+            }
+            source {
+                dataType: NUMBER
+            }
+            advanced {
+                endUserAlias: A
+            }
+        )
+
+        column APPLICATION_NAME (
+            type: plainText
+            heading {
+                heading: Application
+            }
+            layout {
+                sequence: 30
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: D
+            }
+        )
+
+        column BACKLOG_TASKS (
+            type: plainText
+            heading {
+                heading: Backlog
+                alignment: center
+            }
+            layout {
+                sequence: 50
+                columnAlignment: center
+            }
+            columnFormatting {
+                htmlExpression: <a href="#BACKLOG_TASKS_URL#">#BACKLOG_TASKS#</a>
+            }
+            source {
+                dataType: NUMBER
+            }
+            advanced {
+                endUserAlias: F
+            }
+        )
+
+        column BACKLOG_TASKS_URL (
+            type: hidden
+            heading {
+                heading: Backlog Tasks Url
+            }
+            layout {
+                sequence: 120
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: M
+            }
+        )
+
+        column BLOCKED_TASKS (
+            type: plainText
+            heading {
+                heading: Blocked
+                alignment: center
+            }
+            layout {
+                sequence: 90
+                columnAlignment: center
+            }
+            columnFormatting {
+                htmlExpression: <a href="#BLOCKED_TASKS_URL#">#BLOCKED_TASKS#</a>
+            }
+            source {
+                dataType: NUMBER
+            }
+            advanced {
+                endUserAlias: J
+            }
+        )
+
+        column BLOCKED_TASKS_URL (
+            type: hidden
+            heading {
+                heading: Blocked Tasks Url
+            }
+            layout {
+                sequence: 160
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: Q
+            }
+        )
+
+        column COMPLETED_TASKS (
+            type: plainText
+            heading {
+                heading: Completed
+                alignment: center
+            }
+            layout {
+                sequence: 100
+                columnAlignment: center
+            }
+            columnFormatting {
+                htmlExpression: <a href="#COMPLETED_TASKS_URL#">#COMPLETED_TASKS#</a>
+            }
+            source {
+                dataType: NUMBER
+            }
+            advanced {
+                endUserAlias: K
+            }
+        )
+
+        column COMPLETED_TASKS_URL (
+            type: hidden
+            heading {
+                heading: Completed Tasks Url
+            }
+            layout {
+                sequence: 170
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: R
+            }
+        )
+
+        column IN_PROGRESS_TASKS (
+            type: plainText
+            heading {
+                heading: In Progress
+                alignment: center
+            }
+            layout {
+                sequence: 70
+                columnAlignment: center
+            }
+            columnFormatting {
+                htmlExpression: <a href="#IN_PROGRESS_TASKS_URL#">#IN_PROGRESS_TASKS#</a>
+            }
+            source {
+                dataType: NUMBER
+            }
+            advanced {
+                endUserAlias: H
+            }
+        )
+
+        column IN_PROGRESS_TASKS_URL (
+            type: hidden
+            heading {
+                heading: In Progress Tasks Url
+            }
+            layout {
+                sequence: 140
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: O
+            }
+        )
+
+        column IN_REVIEW_TASKS (
+            type: plainText
+            heading {
+                heading: In Review
+                alignment: center
+            }
+            layout {
+                sequence: 80
+                columnAlignment: center
+            }
+            columnFormatting {
+                htmlExpression: <a href="#IN_REVIEW_TASKS_URL#">#IN_REVIEW_TASKS#</a>
+            }
+            source {
+                dataType: NUMBER
+            }
+            advanced {
+                endUserAlias: I
+            }
+        )
+
+        column IN_REVIEW_TASKS_URL (
+            type: hidden
+            heading {
+                heading: In Review Tasks Url
+            }
+            layout {
+                sequence: 150
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: P
+            }
+        )
+
+        column NOT_STARTED_TASKS (
+            type: plainText
+            heading {
+                heading: Not Started
+                alignment: center
+            }
+            layout {
+                sequence: 60
+                columnAlignment: center
+            }
+            columnFormatting {
+                htmlExpression: <a href="#NOT_STARTED_TASKS_URL#">#NOT_STARTED_TASKS#</a>
+            }
+            source {
+                dataType: NUMBER
+            }
+            advanced {
+                endUserAlias: G
+            }
+        )
+
+        column NOT_STARTED_TASKS_URL (
+            type: hidden
+            heading {
+                heading: Not Started Tasks Url
+            }
+            layout {
+                sequence: 130
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: N
+            }
+        )
+
+        column TASK_COUNT (
+            type: plainText
+            heading {
+                heading: Task Count
+                alignment: center
+            }
+            layout {
+                sequence: 40
+                columnAlignment: center
+            }
+            columnFormatting {
+                htmlExpression: <a href="#TASK_COUNT_URL#">#TASK_COUNT#</a>
+            }
+            source {
+                dataType: NUMBER
+            }
+            advanced {
+                endUserAlias: E
+            }
+        )
+
+        column TASK_COUNT_URL (
+            type: hidden
+            heading {
+                heading: Task Count Url
+            }
+            layout {
+                sequence: 110
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: L
+            }
+        )
+
+        column TEAM_NAME (
+            type: hidden
+            heading {
+                heading: Team
+            }
+            layout {
+                sequence: 10
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: B
+            }
+        )
+
+        page {
+            borderWidth: 0.5
+            borderColor: #666666
+        }
+
+        savedReport primary (
+            visibility: primaryDefault
+            view {
+                rowsPerPage: 50
+            }
+
+            displayColumn APPLICATION_CODE (
+                sequence: 3
+            )
+
+            displayColumn APPLICATION_ID (
+                sequence: 1
+            )
+
+            displayColumn APPLICATION_NAME (
+                sequence: 4
+            )
+
+            displayColumn BACKLOG_TASKS (
+                sequence: 6
+            )
+
+            displayColumn BACKLOG_TASKS_URL (
+                sequence: 13
+            )
+
+            displayColumn BLOCKED_TASKS (
+                sequence: 10
+            )
+
+            displayColumn BLOCKED_TASKS_URL (
+                sequence: 17
+            )
+
+            displayColumn COMPLETED_TASKS (
+                sequence: 11
+            )
+
+            displayColumn COMPLETED_TASKS_URL (
+                sequence: 18
+            )
+
+            displayColumn IN_PROGRESS_TASKS (
+                sequence: 8
+            )
+
+            displayColumn IN_PROGRESS_TASKS_URL (
+                sequence: 15
+            )
+
+            displayColumn IN_REVIEW_TASKS (
+                sequence: 9
+            )
+
+            displayColumn IN_REVIEW_TASKS_URL (
+                sequence: 16
+            )
+
+            displayColumn NOT_STARTED_TASKS (
+                sequence: 7
+            )
+
+            displayColumn NOT_STARTED_TASKS_URL (
+                sequence: 14
+            )
+
+            displayColumn TASK_COUNT (
+                sequence: 5
+            )
+
+            displayColumn TASK_COUNT_URL (
+                sequence: 12
+            )
+
+            displayColumn TEAM_NAME (
+                sequence: 2
+            )
+
+        )
+
+    )
+
+)
+

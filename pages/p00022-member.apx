@@ -1,0 +1,348 @@
+page 22 (
+    name: Member
+    alias: MEMBER
+    title: Member
+    appearance {
+        pageMode: modalDialog
+        dialogTemplate: @/drawer
+        templateOptions: [
+            #DEFAULT#
+            js-dialog-class-t-Drawer--pullOutEnd
+        ]
+    }
+    dialog {
+        chained: false
+    }
+    navigation {
+        warnOnUnsavedChanges: false
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region buttons (
+        name: Buttons
+        type: staticContent
+        layout {
+            sequence: 20
+            slot: dialogFooter
+        }
+        appearance {
+            template: @/buttons-container
+            templateOptions: #DEFAULT#
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    region member-form (
+        name: Member
+        type: staticContent
+        layout {
+            sequence: 10
+            slot: contentBody
+        }
+        appearance {
+            template: @/blank-with-attributes
+            templateOptions: #DEFAULT#
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    pageItem P22_DISPLAY_NAME (
+        type: textField
+        label {
+            label: Display Name
+            alignment: left
+        }
+        layout {
+            sequence: 30
+            region: @member-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            width: 60
+        }
+        validation {
+            maxLength: 200
+        }
+        sessionState {
+            storage: request
+        }
+    )
+
+    pageItem P22_EMAIL (
+        type: textField
+        label {
+            label: Email
+            alignment: left
+        }
+        layout {
+            sequence: 40
+            region: @member-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            width: 60
+        }
+        validation {
+            maxLength: 320
+        }
+        sessionState {
+            storage: request
+        }
+    )
+
+    pageItem P22_JOINED_ON (
+        type: datePicker
+        label {
+            label: Joined On
+            alignment: left
+        }
+        layout {
+            sequence: 60
+            region: @member-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 30
+        }
+        sessionState {
+            storage: request
+        }
+    )
+
+    pageItem P22_ROLE_NAME (
+        type: textField
+        label {
+            label: Role
+            alignment: left
+        }
+        layout {
+            sequence: 50
+            region: @member-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 40
+        }
+        validation {
+            maxLength: 100
+        }
+        sessionState {
+            storage: request
+        }
+    )
+
+    pageItem P22_TEAM_ID (
+        type: selectList
+        label {
+            label: Team
+            alignment: left
+        }
+        lov {
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select team_name as display_value,
+                       team_id as return_value
+                  from tsk_teams
+                 where active_yn = 'Y'
+                 order by team_name
+                ```
+        }
+        layout {
+            sequence: 10
+            region: @member-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        sessionState {
+            storage: request
+        }
+    )
+
+    pageItem P22_USERNAME (
+        type: textField
+        label {
+            label: Username
+            alignment: left
+        }
+        layout {
+            sequence: 20
+            region: @member-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            width: 40
+        }
+        validation {
+            maxLength: 100
+        }
+        sessionState {
+            storage: request
+        }
+    )
+
+    button cancel (
+        buttonName: CANCEL
+        label: Cancel
+        layout {
+            sequence: 10
+            region: @buttons
+            slot: close
+        }
+        appearance {
+            buttonTemplate: @/text
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: definedByDynamicAction
+        }
+    )
+
+    button create (
+        buttonName: CREATE
+        label: Create Member
+        layout {
+            sequence: 20
+            region: @buttons
+            slot: next
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            warnOnUnsavedChanges: doNotCheck
+        }
+    )
+
+    dynamicAction cancel-dialog (
+        name: Cancel Dialog
+        execution {
+            sequence: 10
+        }
+        when {
+            event: click
+            selectionType: button
+            button: @cancel
+        }
+
+        action native-dialog-cancel (
+            action: cancelDialog
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+    )
+
+    process close-dialog (
+        name: Close Dialog
+        type: closeDialog
+        execution {
+            sequence: 50
+        }
+        advanced {
+            executionMappingIdentifier: 16500363298047746
+        }
+        serverSideCondition {
+            whenButtonPressed: @create
+        }
+    )
+
+    process create-member (
+        name: Create Member
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                declare
+                    l_user_id tsk_users.user_id%type;
+                begin
+                    begin
+                        select user_id
+                          into l_user_id
+                          from tsk_users
+                         where lower(username) = lower(:P22_USERNAME);
+                    exception
+                        when no_data_found then
+                            begin
+                                select user_id
+                                  into l_user_id
+                                  from tsk_users
+                                 where lower(email) = lower(:P22_EMAIL);
+                            exception
+                                when no_data_found then
+                                    insert into tsk_users (
+                                        username,
+                                        display_name,
+                                        email
+                                    ) values (
+                                        lower(:P22_USERNAME),
+                                        :P22_DISPLAY_NAME,
+                                        lower(:P22_EMAIL)
+                                    )
+                                    returning user_id into l_user_id;
+                            end;
+                    end;
+                
+                    begin
+                        insert into tsk_team_members (
+                            team_id,
+                            user_id,
+                            role_name,
+                            joined_on
+                        ) values (
+                            :P22_TEAM_ID,
+                            l_user_id,
+                            :P22_ROLE_NAME,
+                            nvl(:P22_JOINED_ON, trunc(sysdate))
+                        );
+                    exception
+                        when dup_val_on_index then
+                            raise_application_error(-20001, 'This member is already assigned to the selected team.');
+                    end;
+                end;
+                ```
+        }
+        execution {
+            sequence: 10
+        }
+        advanced {
+            executionMappingIdentifier: 16500288370047746
+        }
+        serverSideCondition {
+            whenButtonPressed: @create
+        }
+    )
+
+)
+

@@ -1,0 +1,53 @@
+breadcrumb breadcrumb (
+    name: Breadcrumb
+
+    entry home (
+        name: Home
+        pageNumber: 1
+        execution {
+            sequence: 10
+        }
+        link {
+            target: {
+                page: 1
+            }
+        }
+    )
+
+    entry task-details (
+        name: Task Details
+        pageNumber: 12
+        execution {
+            sequence: 30
+        }
+        appearance {
+            parentEntry: @tasks
+        }
+        link {
+            target: {
+                page: 12
+                items: {
+                    P12_TASK_ID: &P12_TASK_ID.
+                }
+            }
+        }
+    )
+
+    entry tasks (
+        name: Tasks
+        pageNumber: 10
+        execution {
+            sequence: 20
+        }
+        appearance {
+            parentEntry: @home
+        }
+        link {
+            target: {
+                page: 10
+            }
+        }
+    )
+
+)
+

@@ -1,0 +1,698 @@
+page 41 (
+    name: Email Schedule
+    alias: EMAIL-SCHEDULE
+    title: Email Schedule
+    appearance {
+        pageMode: modalDialog
+        dialogTemplate: @/drawer
+        templateOptions: [
+            #DEFAULT#
+            js-dialog-class-t-Drawer--pullOutEnd
+        ]
+    }
+    dialog {
+        chained: false
+    }
+    navigation {
+        warnOnUnsavedChanges: false
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region buttons (
+        name: Buttons
+        type: staticContent
+        layout {
+            sequence: 20
+            slot: dialogFooter
+        }
+        appearance {
+            template: @/buttons-container
+            templateOptions: #DEFAULT#
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    region email-schedule-form (
+        name: Schedule Parameters
+        type: form
+        source {
+            location: localDatabase
+            tableName: TSK_EMAIL_SCHEDULES
+        }
+        layout {
+            sequence: 10
+            slot: contentBody
+        }
+        appearance {
+            template: @/blank-with-attributes
+            templateOptions: #DEFAULT#
+        }
+        edit {
+            enabled: true
+            allowedOperations: update
+        }
+    )
+
+    pageItem P41_EMAIL_SCHEDULE_ID (
+        type: hidden
+        layout {
+            sequence: 10
+            region: @email-schedule-form
+            slot: regionBody
+        }
+        source {
+            formRegion: @email-schedule-form
+            column: EMAIL_SCHEDULE_ID
+            dataType: number
+            queryOnly: true
+            primaryKey: true
+        }
+        security {
+            sessionStateProtection: checksumRequiredSessionLevel
+        }
+    )
+
+    pageItem P41_ENABLED_YN (
+        type: selectList
+        label {
+            label: Enabled
+            alignment: left
+        }
+        lov {
+            type: staticValues
+            staticValues: STATIC2:Yes;Y,No;N
+            displayExtraValues: false
+            displayNullValue: false
+        }
+        layout {
+            sequence: 40
+            region: @email-schedule-form
+            slot: regionBody
+            columnSpan: 6
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        source {
+            formRegion: @email-schedule-form
+            column: ENABLED_YN
+            dataType: varchar2
+        }
+    )
+
+    pageItem P41_INCLUDE_ASSIGNED_TASKS_YN (
+        type: selectList
+        label {
+            label: Include Assigned Tasks
+            alignment: left
+        }
+        lov {
+            type: staticValues
+            staticValues: STATIC2:Yes;Y,No;N
+            displayExtraValues: false
+            displayNullValue: false
+        }
+        layout {
+            sequence: 90
+            region: @email-schedule-form
+            slot: regionBody
+            columnSpan: 6
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        source {
+            formRegion: @email-schedule-form
+            column: INCLUDE_ASSIGNED_TASKS_YN
+            dataType: varchar2
+        }
+    )
+
+    pageItem P41_INCLUDE_COMMENTS_YN (
+        type: selectList
+        label {
+            label: Include Comments
+            alignment: left
+        }
+        lov {
+            type: staticValues
+            staticValues: STATIC2:Yes;Y,No;N
+            displayExtraValues: false
+            displayNullValue: false
+        }
+        layout {
+            sequence: 120
+            region: @email-schedule-form
+            slot: regionBody
+            startNewRow: false
+            columnSpan: 6
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        source {
+            formRegion: @email-schedule-form
+            column: INCLUDE_COMMENTS_YN
+            dataType: varchar2
+        }
+    )
+
+    pageItem P41_INCLUDE_OVERDUE_TASKS_YN (
+        type: selectList
+        label {
+            label: Include Overdue Tasks
+            alignment: left
+        }
+        lov {
+            type: staticValues
+            staticValues: STATIC2:Yes;Y,No;N
+            displayExtraValues: false
+            displayNullValue: false
+        }
+        layout {
+            sequence: 110
+            region: @email-schedule-form
+            slot: regionBody
+            columnSpan: 6
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        source {
+            formRegion: @email-schedule-form
+            column: INCLUDE_OVERDUE_TASKS_YN
+            dataType: varchar2
+        }
+    )
+
+    pageItem P41_INCLUDE_TASK_UPDATES_YN (
+        type: selectList
+        label {
+            label: Include Task Updates
+            alignment: left
+        }
+        lov {
+            type: staticValues
+            staticValues: STATIC2:Yes;Y,No;N
+            displayExtraValues: false
+            displayNullValue: false
+        }
+        layout {
+            sequence: 100
+            region: @email-schedule-form
+            slot: regionBody
+            startNewRow: false
+            columnSpan: 6
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        source {
+            formRegion: @email-schedule-form
+            column: INCLUDE_TASK_UPDATES_YN
+            dataType: varchar2
+        }
+    )
+
+    pageItem P41_RECIPIENTS_SCOPE (
+        type: selectList
+        label {
+            label: Recipients
+            alignment: left
+        }
+        lov {
+            type: staticValues
+            staticValues: STATIC2:Team Members;TEAM_MEMBERS,Team Leads;TEAM_LEADS,Managers;MANAGERS,Custom;CUSTOM
+            displayExtraValues: false
+            displayNullValue: false
+        }
+        layout {
+            sequence: 50
+            region: @email-schedule-form
+            slot: regionBody
+            startNewRow: false
+            columnSpan: 6
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        source {
+            formRegion: @email-schedule-form
+            column: RECIPIENTS_SCOPE
+            dataType: varchar2
+        }
+        serverSideCondition {
+            type: expression
+            plsqlExpression: :P41_SCHEDULE_CODE <> 'DAILY_MEMBER_STATUS'
+        }
+    )
+
+    pageItem P41_SCHEDULE_CODE (
+        type: textField
+        label {
+            label: Schedule Code
+            alignment: left
+        }
+        layout {
+            sequence: 30
+            region: @email-schedule-form
+            slot: regionBody
+            columnSpan: 12
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 50
+        }
+        source {
+            formRegion: @email-schedule-form
+            column: SCHEDULE_CODE
+            dataType: varchar2
+            queryOnly: true
+        }
+    )
+
+    pageItem P41_SCHEDULE_NAME (
+        type: textField
+        label {
+            label: Schedule Name
+            alignment: left
+        }
+        layout {
+            sequence: 20
+            region: @email-schedule-form
+            slot: regionBody
+            columnSpan: 12
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            width: 60
+        }
+        validation {
+            maxLength: 200
+        }
+        source {
+            formRegion: @email-schedule-form
+            column: SCHEDULE_NAME
+            dataType: varchar2
+        }
+    )
+
+    pageItem P41_SEND_HOUR (
+        type: hidden
+        layout {
+            sequence: 65
+            region: @email-schedule-form
+            slot: regionBody
+        }
+        source {
+            formRegion: @email-schedule-form
+            column: SEND_HOUR
+            dataType: number
+        }
+    )
+
+    pageItem P41_SEND_MINUTE (
+        type: hidden
+        layout {
+            sequence: 70
+            region: @email-schedule-form
+            slot: regionBody
+        }
+        source {
+            formRegion: @email-schedule-form
+            column: SEND_MINUTE
+            dataType: number
+        }
+    )
+
+    pageItem P41_SEND_AT (
+        type: datePicker
+        label {
+            label: Send Date and Time
+            alignment: left
+        }
+        settings {
+            showTime: true
+        }
+        layout {
+            sequence: 60
+            region: @email-schedule-form
+            slot: regionBody
+            columnSpan: 12
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            formatMask: YYYY-MM-DD HH24:MI
+            width: 30
+        }
+        source {
+            formRegion: @email-schedule-form
+            column: SEND_AT
+            dataType: timestamp
+        }
+    )
+
+    pageItem P41_TEAM_ID (
+        type: hidden
+        layout {
+            sequence: 25
+            region: @email-schedule-form
+            slot: regionBody
+        }
+        source {
+            formRegion: @email-schedule-form
+            column: TEAM_ID
+            dataType: number
+        }
+    )
+
+    pageItem P41_TEAM_MEMBER_IDS (
+        type: selectMany
+        label {
+            label: Team Members to Email
+            alignment: left
+        }
+        lov {
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select u.display_name || ' (' || u.email || ')' as display_value,
+                       tm.team_member_id as return_value
+                  from tsk_team_members tm
+                  join tsk_users u
+                    on u.user_id = tm.user_id
+                 where tm.active_yn = 'Y'
+                   and u.active_yn = 'Y'
+                   and tm.team_id = :P41_TEAM_ID
+                 order by u.display_name
+                ```
+        }
+        layout {
+            sequence: 55
+            region: @email-schedule-form
+            slot: regionBody
+            columnSpan: 12
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+        }
+        sessionState {
+            storage: request
+        }
+    )
+
+    pageItem P41_WEEKLY_DAY_NUMBER (
+        type: numberField
+        label {
+            label: Day Number
+            alignment: left
+        }
+        layout {
+            sequence: 80
+            region: @email-schedule-form
+            slot: regionBody
+            columnSpan: 4
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 10
+        }
+        source {
+            formRegion: @email-schedule-form
+            column: WEEKLY_DAY_NUMBER
+            dataType: number
+        }
+    )
+
+    button cancel (
+        buttonName: CANCEL
+        label: Cancel
+        layout {
+            sequence: 10
+            region: @buttons
+            slot: close
+        }
+        appearance {
+            buttonTemplate: @/text
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: definedByDynamicAction
+        }
+    )
+
+    button save (
+        buttonName: SAVE
+        label: Apply Changes
+        layout {
+            sequence: 20
+            region: @buttons
+            slot: next
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            warnOnUnsavedChanges: doNotCheck
+            databaseAction: update
+        }
+    )
+
+    button send-now (
+        buttonName: SEND_NOW
+        label: Send Now
+        layout {
+            sequence: 15
+            region: @buttons
+            slot: next
+        }
+        appearance {
+            buttonTemplate: @/text
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            warnOnUnsavedChanges: doNotCheck
+            databaseAction: update
+        }
+        serverSideCondition {
+            type: expression
+            plsqlExpression: :P41_SCHEDULE_CODE = 'DAILY_MEMBER_STATUS'
+        }
+    )
+
+    dynamicAction cancel-dialog (
+        name: Cancel Dialog
+        execution {
+            sequence: 10
+        }
+        when {
+            event: click
+            selectionType: button
+            button: @cancel
+        }
+
+        action native-dialog-cancel (
+            action: cancelDialog
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+    )
+
+    process close-dialog (
+        name: Close Dialog
+        type: closeDialog
+        execution {
+            sequence: 50
+        }
+        advanced {
+            executionMappingIdentifier: 17627149638402447
+        }
+        serverSideCondition {
+            type: requestIsContainedInValue
+            value: SAVE,SEND_NOW
+        }
+    )
+
+    process initialize-form-email-schedule-form (
+        name: Initialize form Email Schedule
+        type: formInitialization
+        formRegion: @email-schedule-form
+        execution {
+            sequence: 10
+            point: beforeHeader
+        }
+        advanced {
+            executionMappingIdentifier: 17627232165402447
+        }
+    )
+
+    process load-team-member-recipients (
+        name: Load Team Member Recipients
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                begin
+                    select listagg(team_member_id, ':') within group (order by team_member_id)
+                      into :P41_TEAM_MEMBER_IDS
+                      from tsk_email_recipients
+                     where email_schedule_id = :P41_EMAIL_SCHEDULE_ID
+                       and active_yn = 'Y'
+                       and team_member_id is not null;
+                end;
+                ```
+        }
+        execution {
+            sequence: 20
+            point: beforeHeader
+        }
+        advanced {
+            executionMappingIdentifier: 17864346476672107
+        }
+    )
+
+    process process-form-email-schedule-form (
+        name: Process form Email Schedule
+        type: formAutoRowProcessing
+        formRegion: @email-schedule-form
+        execution {
+            sequence: 10
+        }
+        advanced {
+            executionMappingIdentifier: 17627375741402447
+        }
+    )
+
+    process save-team-member-recipients (
+        name: Save Team Member Recipients
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                begin
+                    update tsk_email_recipients
+                       set active_yn = 'N'
+                     where email_schedule_id = :P41_EMAIL_SCHEDULE_ID;
+                
+                    for r in (
+                        select distinct to_number(column_value) as team_member_id
+                          from table(apex_string.split(:P41_TEAM_MEMBER_IDS, ':'))
+                         where regexp_like(column_value, '^[0-9]+$')
+                    ) loop
+                        merge into tsk_email_recipients dst
+                        using (
+                            select :P41_EMAIL_SCHEDULE_ID as email_schedule_id,
+                                   r.team_member_id as team_member_id
+                              from dual
+                        ) src
+                        on (
+                            dst.email_schedule_id = src.email_schedule_id
+                            and dst.team_member_id = src.team_member_id
+                        )
+                        when matched then
+                            update set active_yn = 'Y'
+                        when not matched then
+                            insert (
+                                email_schedule_id,
+                                team_member_id,
+                                active_yn,
+                                created_by
+                            ) values (
+                                src.email_schedule_id,
+                                src.team_member_id,
+                                'Y',
+                                :APP_USER
+                            );
+                    end loop;
+                end;
+                ```
+        }
+        execution {
+            sequence: 15
+        }
+        advanced {
+            executionMappingIdentifier: 17864479348672107
+        }
+        serverSideCondition {
+            type: requestIsContainedInValue
+            value: SAVE,SEND_NOW
+        }
+    )
+
+    process sync-email-automation (
+        name: Sync Email Automation
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                begin
+                    null;
+                end;
+                ```
+        }
+        execution {
+            sequence: 20
+        }
+        advanced {
+            executionMappingIdentifier: 17632726993415849
+        }
+        serverSideCondition {
+            type: requestIsContainedInValue
+            value: SAVE,SEND_NOW
+        }
+    )
+
+    process send-daily-email-now (
+        name: Send Daily Email Now
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                begin
+                    tsk_daily_email_pkg.send_daily_schedule(:P41_EMAIL_SCHEDULE_ID);
+                end;
+                ```
+        }
+        execution {
+            sequence: 30
+        }
+        successMessage {
+            successMessage: Daily email queued
+        }
+        advanced {
+            executionMappingIdentifier: 9990004100000002
+        }
+        serverSideCondition {
+            type: requestIsContainedInValue
+            value: SEND_NOW
+        }
+    )
+
+)

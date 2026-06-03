@@ -1,0 +1,433 @@
+page 20 (
+    name: Teams
+    alias: TEAMS
+    title: Teams
+    appearance {
+        pageTemplate: @/standard
+        templateOptions: #DEFAULT#
+    }
+    navigation {
+        cursorFocus: doNotFocusCursor
+        warnOnUnsavedChanges: false
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region teams (
+        name: Team Workload
+        type: interactiveReport
+        source {
+            location: localDatabase
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select t.team_id,
+                       w.team_member_id,
+                       w.user_id,
+                       t.team_name,
+                       display_name,
+                       email,
+                       role_name,
+                       member_active_yn,
+                       nvl(assigned_tasks, 0) as assigned_tasks,
+                       nvl(in_progress_tasks, 0) as in_progress_tasks,
+                       nvl(blocked_tasks, 0) as blocked_tasks,
+                       nvl(overdue_tasks, 0) as overdue_tasks,
+                       avg_percent_complete
+                  from tsk_teams t
+                  left join tsk_v_team_member_workload w
+                    on w.team_id = t.team_id
+                 order by t.team_name, w.display_name
+                ```
+        }
+        layout {
+            sequence: 10
+            slot: body
+        }
+        appearance {
+            template: @/interactive-report
+            templateOptions: [
+                #DEFAULT#
+                t-IRR-region--noBorders
+            ]
+        }
+        link {
+            linkColumn: customTarget
+            target: {
+                page: 21
+                items: {
+                    P21_TEAM_ID: #TEAM_ID#
+                }
+                clearCache: 21
+            }
+            linkIcon: <img src="#IMAGE_PREFIX#app_ui/img/icons/apex-edit-pencil.png" class="apex-edit-pencil" alt="Edit">
+        }
+        pagination {
+            type: rowRangesXToY
+        }
+        messages {
+            whenNoDataFound: No team workload rows found.
+        }
+        advanced {
+            savedReportMappingIdentifier: 16441116385744658
+        }
+
+        column ASSIGNED_TASKS (
+            type: plainText
+            heading {
+                heading: Assigned
+                alignment: end
+            }
+            layout {
+                sequence: 50
+                columnAlignment: end
+            }
+            source {
+                dataType: NUMBER
+            }
+            advanced {
+                endUserAlias: I
+            }
+        )
+
+        column AVG_PERCENT_COMPLETE (
+            type: plainText
+            heading {
+                heading: Avg %
+                alignment: end
+            }
+            layout {
+                sequence: 90
+                columnAlignment: end
+            }
+            source {
+                dataType: NUMBER
+            }
+            advanced {
+                endUserAlias: M
+            }
+        )
+
+        column BLOCKED_TASKS (
+            type: plainText
+            heading {
+                heading: Blocked
+                alignment: end
+            }
+            layout {
+                sequence: 70
+                columnAlignment: end
+            }
+            source {
+                dataType: NUMBER
+            }
+            advanced {
+                endUserAlias: K
+            }
+        )
+
+        column DISPLAY_NAME (
+            type: plainText
+            heading {
+                heading: Member
+            }
+            layout {
+                sequence: 20
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: E
+            }
+        )
+
+        column EMAIL (
+            type: plainText
+            heading {
+                heading: Email
+            }
+            layout {
+                sequence: 25
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: F
+            }
+        )
+
+        column IN_PROGRESS_TASKS (
+            type: plainText
+            heading {
+                heading: In Progress
+                alignment: end
+            }
+            layout {
+                sequence: 60
+                columnAlignment: end
+            }
+            source {
+                dataType: NUMBER
+            }
+            advanced {
+                endUserAlias: J
+            }
+        )
+
+        column MEMBER_ACTIVE_YN (
+            type: plainText
+            heading {
+                heading: Active
+            }
+            layout {
+                sequence: 40
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: H
+            }
+        )
+
+        column OVERDUE_TASKS (
+            type: plainText
+            heading {
+                heading: Overdue
+                alignment: end
+            }
+            layout {
+                sequence: 80
+                columnAlignment: end
+            }
+            source {
+                dataType: NUMBER
+            }
+            advanced {
+                endUserAlias: L
+            }
+        )
+
+        column ROLE_NAME (
+            type: plainText
+            heading {
+                heading: Role
+            }
+            layout {
+                sequence: 30
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: G
+            }
+        )
+
+        column TEAM_ID (
+            type: hidden
+            heading {
+                heading: Team Id
+            }
+            layout {
+                sequence: 5
+            }
+            source {
+                dataType: NUMBER
+            }
+            advanced {
+                endUserAlias: A
+            }
+        )
+
+        column TEAM_MEMBER_ID (
+            type: hidden
+            heading {
+                heading: Team Member Id
+            }
+            layout {
+                sequence: 6
+            }
+            source {
+                dataType: NUMBER
+            }
+            advanced {
+                endUserAlias: B
+            }
+        )
+
+        column TEAM_NAME (
+            type: plainText
+            heading {
+                heading: Team
+            }
+            layout {
+                sequence: 10
+            }
+            source {
+                dataType: STRING
+            }
+            advanced {
+                endUserAlias: D
+            }
+        )
+
+        column USER_ID (
+            type: hidden
+            heading {
+                heading: User Id
+            }
+            layout {
+                sequence: 7
+            }
+            source {
+                dataType: NUMBER
+            }
+            advanced {
+                endUserAlias: C
+            }
+        )
+
+        page {
+            borderWidth: 0.5
+            borderColor: #666666
+        }
+
+        savedReport primary (
+            visibility: primaryDefault
+            view {
+                rowsPerPage: 50
+            }
+
+            displayColumn ASSIGNED_TASKS (
+                sequence: 9
+            )
+
+            displayColumn AVG_PERCENT_COMPLETE (
+                sequence: 13
+            )
+
+            displayColumn BLOCKED_TASKS (
+                sequence: 11
+            )
+
+            displayColumn DISPLAY_NAME (
+                sequence: 5
+            )
+
+            displayColumn EMAIL (
+                sequence: 6
+            )
+
+            displayColumn IN_PROGRESS_TASKS (
+                sequence: 10
+            )
+
+            displayColumn MEMBER_ACTIVE_YN (
+                sequence: 8
+            )
+
+            displayColumn OVERDUE_TASKS (
+                sequence: 12
+            )
+
+            displayColumn ROLE_NAME (
+                sequence: 7
+            )
+
+            displayColumn TEAM_ID (
+                sequence: 1
+            )
+
+            displayColumn TEAM_MEMBER_ID (
+                sequence: 2
+            )
+
+            displayColumn TEAM_NAME (
+                sequence: 4
+            )
+
+            displayColumn USER_ID (
+                sequence: 3
+            )
+
+        )
+
+    )
+
+    button create-member (
+        buttonName: CREATE_MEMBER
+        label: Create Member
+        layout {
+            sequence: 20
+            region: @teams
+            slot: rightOfInteractiveReportSearchBar
+        }
+        appearance {
+            buttonTemplate: @/text
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: redirectThisApp
+            target: {
+                page: 22
+                clearCache: 22
+            }
+            warnOnUnsavedChanges: doNotCheck
+        }
+    )
+
+    button create-team (
+        buttonName: CREATE_TEAM
+        label: Create Team
+        layout {
+            sequence: 10
+            region: @teams
+            slot: rightOfInteractiveReportSearchBar
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: redirectThisApp
+            target: {
+                page: 21
+                clearCache: 21
+            }
+            warnOnUnsavedChanges: doNotCheck
+        }
+    )
+
+    dynamicAction refresh-on-team-dialog-close (
+        name: Refresh on Team Dialog Close
+        execution {
+            sequence: 10
+        }
+        when {
+            event: apexafterclosedialog
+            selectionType: region
+            region: @teams
+        }
+
+        action refresh-teams (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @teams
+            }
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+    )
+
+)
+
