@@ -15,6 +15,23 @@ page 42 (
         formAutoComplete: false
     }
 
+    region email-log-title (
+        name: Email Log Title
+        title: Email Log
+        type: staticContent
+        layout {
+            sequence: 10
+            slot: breadcrumbBar
+        }
+        appearance {
+            template: @/title-bar
+            templateOptions: #DEFAULT#
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
     region email-log (
         name: Email Log
         type: interactiveReport

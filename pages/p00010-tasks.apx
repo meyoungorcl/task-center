@@ -282,8 +282,8 @@ page 10 (
                              from tsk_task_updates tu
                             where tu.task_id = v.task_id
                        ) as update_count,
-                       v.assignees,
-                       (
+                       nvl(v.assignees, 'Not Assigned') as assignees,
+                       nvl((
                            select listagg(display_name, ':') within group (order by display_name)
                              from (
                                       select u.display_name
@@ -298,7 +298,7 @@ page 10 (
                                          and u.active_yn = 'Y'
                                        group by u.display_name
                                   )
-                       ) as assignee_facet,
+                       ), 'Not Assigned') as assignee_facet,
                        v.overdue_yn,
                        case
                            when exists (

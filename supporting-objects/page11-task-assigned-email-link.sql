@@ -21,17 +21,17 @@ wwv_flow_imp.import_begin (
  p_version_yyyy_mm_dd=>'2026.03.30'
 ,p_release=>'26.1.0'
 ,p_default_workspace_id=>7097755211213275
-,p_default_application_id=>132
+,p_default_application_id=>12892
 ,p_default_id_offset=>0
 ,p_default_owner=>'WKSP_DBAPPDEV'
 );
 end;
 /
  
-prompt APPLICATION 132 - Task Center
+prompt APPLICATION 12892 - Task Center
 --
 -- Application Export:
---   Application:     132
+--   Application:     12892
 --   Name:            Task Center
 --   Date and Time:   21:26 Tuesday June 2, 2026
 --   Exported By:     WKSP_DBAPPDEV
@@ -186,6 +186,7 @@ wwv_flow_imp_page.create_page_item(
 ,p_prompt=>'Assignees'
 ,p_source_type=>'ALWAYS_NULL'
 ,p_display_as=>'NATIVE_SELECT_MANY'
+,p_placeholder=>'Not Assigned'
 ,p_lov=>wwv_flow_string.join(wwv_flow_t_varchar2(
 'select u.display_name as display_value,',
 '       tm.team_member_id as return_value',
@@ -306,7 +307,7 @@ wwv_flow_imp_page.create_page_item(
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
-  'value_protected', 'Y')).to_clob
+  'value_protected', 'N')).to_clob
 );
 wwv_flow_imp_page.create_page_item(
  p_id=>wwv_flow_imp.id(16507268025047761)
@@ -319,7 +320,7 @@ wwv_flow_imp_page.create_page_item(
 ,p_display_as=>'NATIVE_HIDDEN'
 ,p_is_persistent=>'N'
 ,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
-  'value_protected', 'Y')).to_clob
+  'value_protected', 'N')).to_clob
 );
 wwv_flow_imp_page.create_page_item(
  p_id=>wwv_flow_imp.id(17021178927843943)
@@ -380,7 +381,7 @@ wwv_flow_imp_page.create_page_item(
 '  from tsk_statuses',
 ' where active_yn = ''Y''',
 ' order by display_seq, status_name'))
-,p_lov_display_null=>'YES'
+,p_lov_display_null=>'NO'
 ,p_cHeight=>1
 ,p_begin_on_new_line=>'N'
 ,p_field_template=>1610598484065263269
@@ -448,7 +449,7 @@ wwv_flow_imp_page.create_page_item(
 ,p_item_source_plug_id=>wwv_flow_imp.id(16506118818047760)
 ,p_prompt=>'Topic Group'
 ,p_source=>'TOPIC_GROUP_ID'
-,p_display_as=>'NATIVE_SELECT_LIST'
+,p_display_as=>'NATIVE_COMBOBOX'
 ,p_lov=>wwv_flow_string.join(wwv_flow_t_varchar2(
 'select topic_name as display_value,',
 '       topic_group_id as return_value',
@@ -465,8 +466,24 @@ wwv_flow_imp_page.create_page_item(
 ,p_is_persistent=>'N'
 ,p_lov_display_extra=>'NO'
 ,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
-  'execute_validations', 'N',
-  'page_action_on_selection', 'NONE')).to_clob
+  'case_sensitive', 'N',
+  'fetch_on_search', 'N',
+  'infinite_scroll', 'Y',
+  'manual_entries_item', 'P11_TOPIC_GROUP_MANUAL',
+  'match_type', 'CONTAINS',
+  'min_chars', '0',
+  'use_cache', 'Y')).to_clob
+);
+wwv_flow_imp_page.create_page_item(
+ p_id=>wwv_flow_imp.id(9990001100001001)
+,p_name=>'P11_TOPIC_GROUP_MANUAL'
+,p_item_sequence=>119
+,p_item_plug_id=>wwv_flow_imp.id(16506118818047760)
+,p_source_type=>'ALWAYS_NULL'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_is_persistent=>'N'
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'value_protected', 'N')).to_clob
 );
 wwv_flow_imp_page.create_page_item(
  p_id=>wwv_flow_imp.id(16506675350047761)
@@ -700,6 +717,47 @@ wwv_flow_imp_page.create_page_process(
 ,p_process_name=>'Initialize form Task'
 ,p_static_id=>'initialize-form-task-form'
 ,p_internal_uid=>16508110050047762
+);
+wwv_flow_imp_page.create_page_process(
+ p_id=>wwv_flow_imp.id(9990001100001002)
+,p_process_sequence=>5
+,p_process_point=>'AFTER_SUBMIT'
+,p_process_type=>'NATIVE_PLSQL'
+,p_process_name=>'Create Manual Topic'
+,p_static_id=>'create-manual-topic'
+,p_process_sql_clob=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'declare',
+'    l_topic_name tsk_topic_groups.topic_name%type := trim(:P11_TOPIC_GROUP_MANUAL);',
+'begin',
+'    if l_topic_name is not null then',
+'        begin',
+'            insert into tsk_topic_groups (',
+'                topic_name,',
+'                active_yn',
+'            ) values (',
+'                l_topic_name,',
+'                ''Y''',
+'            )',
+'            returning topic_group_id into :P11_TOPIC_GROUP_ID;',
+'        exception',
+'            when dup_val_on_index then',
+'                select topic_group_id',
+'                  into :P11_TOPIC_GROUP_ID',
+'                  from tsk_topic_groups',
+'                 where upper(topic_name) = upper(l_topic_name)',
+'                 fetch first 1 row only;',
+'',
+'                update tsk_topic_groups',
+'                   set active_yn = ''Y''',
+'                 where topic_group_id = :P11_TOPIC_GROUP_ID;',
+'        end;',
+'    end if;',
+'end;'))
+,p_process_clob_language=>'PLSQL'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_when=>'CREATE,SAVE'
+,p_process_when_type=>'REQUEST_IN_CONDITION'
+,p_internal_uid=>9990001100001002
 );
 wwv_flow_imp_page.create_page_process(
  p_id=>wwv_flow_imp.id(16508280552047762)

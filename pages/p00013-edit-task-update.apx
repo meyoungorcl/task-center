@@ -1,0 +1,253 @@
+page 13 (
+    name: Edit Task Update
+    alias: EDIT-TASK-UPDATE
+    title: Edit Task Update
+    appearance {
+        pageMode: modalDialog
+        dialogTemplate: @/drawer
+        templateOptions: [
+            #DEFAULT#
+            js-dialog-class-t-Drawer--pullOutEnd
+        ]
+    }
+    dialog {
+        chained: false
+        resizable: true
+    }
+    navigation {
+        warnOnUnsavedChanges: false
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region buttons (
+        name: Buttons
+        type: staticContent
+        layout {
+            sequence: 20
+            slot: dialogFooter
+        }
+        appearance {
+            template: @/buttons-container
+            templateOptions: #DEFAULT#
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    region edit-update (
+        name: Edit Update
+        type: staticContent
+        layout {
+            sequence: 10
+            slot: contentBody
+        }
+        appearance {
+            template: @/blank-with-attributes
+            templateOptions: #DEFAULT#
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    pageItem P13_TASK_ID (
+        type: hidden
+        layout {
+            sequence: 10
+            region: @edit-update
+            slot: regionBody
+        }
+        sessionState {
+            storage: request
+        }
+        security {
+            sessionStateProtection: checksumRequiredSessionLevel
+        }
+    )
+
+    pageItem P13_UPDATE_ID (
+        type: hidden
+        layout {
+            sequence: 20
+            region: @edit-update
+            slot: regionBody
+        }
+        sessionState {
+            storage: request
+        }
+        security {
+            sessionStateProtection: checksumRequiredSessionLevel
+        }
+    )
+
+    pageItem P13_UPDATE_TEXT (
+        type: richTextEditor
+        label {
+            label: Update
+            alignment: left
+        }
+        layout {
+            sequence: 30
+            region: @edit-update
+            slot: regionBody
+            alignment: left
+            columnSpan: 12
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            height: 12
+        }
+        validation {
+            maxLength: 4000
+        }
+        sessionState {
+            storage: request
+        }
+    )
+
+    button cancel (
+        buttonName: CANCEL
+        label: Cancel
+        layout {
+            sequence: 10
+            region: @buttons
+            slot: close
+        }
+        appearance {
+            buttonTemplate: @/text
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: definedByDynamicAction
+        }
+    )
+
+    button save (
+        buttonName: SAVE
+        label: Save Update
+        layout {
+            sequence: 20
+            region: @buttons
+            slot: next
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            warnOnUnsavedChanges: doNotCheck
+        }
+    )
+
+    dynamicAction cancel-dialog (
+        name: Cancel Dialog
+        execution {
+            sequence: 10
+        }
+        when {
+            event: click
+            selectionType: button
+            button: @cancel
+        }
+
+        action native-dialog-cancel (
+            action: cancelDialog
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+    )
+
+    process load-update (
+        name: Load Update
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                begin
+                    select dbms_lob.substr(update_text, 4000, 1)
+                      into :P13_UPDATE_TEXT
+                      from tsk_task_updates
+                     where update_id = :P13_UPDATE_ID
+                       and task_id = :P13_TASK_ID;
+                exception
+                    when no_data_found then
+                        raise_application_error(-20001, 'The selected update was not found.');
+                end;
+                ```
+        }
+        execution {
+            sequence: 10
+            point: beforeHeader
+        }
+    )
+
+    process save-update (
+        name: Save Update
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                declare
+                    l_update_text varchar2(4000) := trim(:P13_UPDATE_TEXT);
+                begin
+                    if l_update_text is null then
+                        raise_application_error(-20001, 'Enter update text before saving.');
+                    end if;
+                
+                    update tsk_task_updates
+                       set update_text = l_update_text
+                     where update_id = :P13_UPDATE_ID
+                       and task_id = :P13_TASK_ID;
+                
+                    if sql%rowcount = 0 then
+                        raise_application_error(-20001, 'The selected update was not found.');
+                    end if;
+                
+                    insert into tsk_change_log (
+                        entity_name,
+                        entity_pk,
+                        task_id,
+                        change_action,
+                        change_note,
+                        changed_by
+                    ) values (
+                        'TASK_UPDATE',
+                        :P13_UPDATE_ID,
+                        :P13_TASK_ID,
+                        'UPDATE',
+                        'Update edited: ' || l_update_text,
+                        :APP_USER
+                    );
+                end;
+                ```
+        }
+        execution {
+            sequence: 20
+        }
+        successMessage {
+            successMessage: Update saved
+        }
+        serverSideCondition {
+            whenButtonPressed: @save
+        }
+    )
+
+    process close-dialog (
+        name: Close Dialog
+        type: closeDialog
+        execution {
+            sequence: 50
+        }
+        serverSideCondition {
+            whenButtonPressed: @save
+        }
+    )
+)

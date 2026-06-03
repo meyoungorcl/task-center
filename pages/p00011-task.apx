@@ -129,6 +129,7 @@ page 11 (
         appearance {
             template: @/optional-floating
             templateOptions: #DEFAULT#
+            valuePlaceholder: Not Assigned
         }
         sessionState {
             storage: request
@@ -278,7 +279,7 @@ page 11 (
     )
 
     pageItem P11_TOPIC_GROUP_ID (
-        type: selectList
+        type: combobox
         label {
             label: Topic Group
             alignment: left
@@ -298,6 +299,9 @@ page 11 (
             displayNullValue: true
             nullDisplayValue: "- No topic -"
         }
+        settings {
+            manualEntriesItem: P11_TOPIC_GROUP_MANUAL
+        }
         layout {
             sequence: 118
             region: @task-form
@@ -314,6 +318,21 @@ page 11 (
             formRegion: @task-form
             column: TOPIC_GROUP_ID
             dataType: number
+        }
+    )
+
+    pageItem P11_TOPIC_GROUP_MANUAL (
+        type: hidden
+        settings {
+            valueProtected: false
+        }
+        layout {
+            sequence: 119
+            region: @task-form
+            slot: regionBody
+        }
+        sessionState {
+            storage: request
         }
     )
 
@@ -380,6 +399,7 @@ page 11 (
         }
         lov {
             type: sqlQuery
+            displayNullValue: false
             sqlQuery:
                 ```sql
                 select status_name as display_value,
@@ -704,6 +724,50 @@ page 11 (
         }
         serverSideCondition {
             whenButtonPressed: @create
+        }
+    )
+
+    process create-manual-topic (
+        name: Create Manual Topic
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                declare
+                    l_topic_name tsk_topic_groups.topic_name%type := trim(:P11_TOPIC_GROUP_MANUAL);
+                begin
+                    if l_topic_name is not null then
+                        begin
+                            insert into tsk_topic_groups (
+                                topic_name,
+                                active_yn
+                            ) values (
+                                l_topic_name,
+                                'Y'
+                            )
+                            returning topic_group_id into :P11_TOPIC_GROUP_ID;
+                        exception
+                            when dup_val_on_index then
+                                select topic_group_id
+                                  into :P11_TOPIC_GROUP_ID
+                                  from tsk_topic_groups
+                                 where upper(topic_name) = upper(l_topic_name)
+                                 fetch first 1 row only;
+                        
+                                update tsk_topic_groups
+                                   set active_yn = 'Y'
+                                 where topic_group_id = :P11_TOPIC_GROUP_ID;
+                        end;
+                    end if;
+                end;
+                ```
+        }
+        execution {
+            sequence: 5
+        }
+        serverSideCondition {
+            type: requestIsContainedInValue
+            value: CREATE,SAVE
         }
     )
 

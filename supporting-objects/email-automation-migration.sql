@@ -233,7 +233,7 @@ begin
         p_version_yyyy_mm_dd     => '2026.03.30',
         p_release                => '26.1.0',
         p_default_workspace_id   => 7097755211213275,
-        p_default_application_id => 132,
+        p_default_application_id => 12892,
         p_default_id_offset      => 0,
         p_default_owner          => 'WKSP_DBAPPDEV'
     );
@@ -246,7 +246,7 @@ begin
     select count(*)
       into l_count
       from apex_appl_automations
-     where application_id = 132
+     where application_id = 12892
        and static_id = 'task-center-email-schedule-runner';
 
     if l_count = 0 then

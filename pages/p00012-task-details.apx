@@ -30,10 +30,59 @@ page 12 (
                     }
                 };
 
+                const setEditUpdateText = (value) => {
+                    const item = apex.item("P12_EDIT_UPDATE_TEXT");
+                    if (item && item.setValue) {
+                        item.setValue(value || "", null, true);
+                    } else {
+                        $s("P12_EDIT_UPDATE_TEXT", value || "");
+                    }
+                };
+
+                const showEditUpdateDialog = () => {
+                    const region = apex.jQuery("#edit-update-dialog, #R9990001200000201").first();
+                    try {
+                        apex.theme.openRegion("edit-update-dialog");
+                    } catch (ignore) {
+                        try {
+                            apex.theme.openRegion(region.attr("id"));
+                        } catch (ignoreNested) {
+                            if (region.data("ui-dialog")) {
+                                region.dialog("open");
+                            } else {
+                                region.show();
+                            }
+                        }
+                    }
+                };
+
+                const openEditUpdateDialog = (updateId, updateText) => {
+                    $s("P12_EDIT_UPDATE_ID", updateId);
+                    setEditUpdateText(updateText);
+                    showEditUpdateDialog();
+                    setTimeout(() => {
+                        setEditUpdateText(updateText);
+                        sizeEditUpdateDialog();
+                    }, 0);
+                };
+
+                window.taskCenterEditUpdate = (link) => {
+                    openEditUpdateDialog(
+                        link.getAttribute("data-update-id"),
+                        link.getAttribute("data-update-text") || ""
+                    );
+                    return false;
+                };
+
+                apex.jQuery(document).on("click", "a.js-edit-update", function(event) {
+                    event.preventDefault();
+                    window.taskCenterEditUpdate(this);
+                });
+
                 if ($v("P12_EDIT_UPDATE_ID")) {
                     const dialog = apex.jQuery("#edit-update-dialog, #R9990001200000201").first();
                     if (dialog.length) {
-                        apex.theme.openRegion(dialog.attr("id"));
+                        showEditUpdateDialog();
                         dialog.attr("aria-modal", "true");
                         setTimeout(sizeEditUpdateDialog, 0);
                     }
@@ -542,11 +591,11 @@ page 12 (
                                     1
                                 )
                        end as comment_text,
+                       apex_escape.html_attribute(dbms_lob.substr(tu.update_text, 4000, 1)) as edit_text_attr,
                        tu.updated_at as comment_date,
                        apex_page.get_url(
-                           p_page => 12,
-                           p_request => 'EDIT_UPDATE',
-                           p_items => 'P12_TASK_ID,P12_EDIT_UPDATE_ID',
+                           p_page => 13,
+                           p_items => 'P13_TASK_ID,P13_UPDATE_ID',
                            p_values => :P12_TASK_ID || ',' || tu.update_id
                        ) as edit_url,
                        apex_page.get_url(
@@ -623,7 +672,7 @@ page 12 (
         )
 
         column COMMENT_DATE (
-            reportColumnQueryId: 7
+            reportColumnQueryId: 8
             derivedColumn: N
             type: hidden
             layout {
@@ -635,6 +684,15 @@ page 12 (
             }
             appearance {
                 formatMask: SINCE
+            }
+        )
+
+        column EDIT_TEXT_ATTR (
+            reportColumnQueryId: 7
+            derivedColumn: N
+            type: hidden
+            layout {
+                sequence: 75
             }
         )
 
@@ -652,7 +710,7 @@ page 12 (
         )
 
         column DELETE_URL (
-            reportColumnQueryId: 9
+            reportColumnQueryId: 10
             derivedColumn: N
             type: hidden
             layout {
@@ -661,7 +719,7 @@ page 12 (
         )
 
         column EDIT_URL (
-            reportColumnQueryId: 8
+            reportColumnQueryId: 9
             derivedColumn: N
             type: hidden
             layout {
@@ -786,6 +844,7 @@ page 12 (
         appearance {
             template: @/optional-floating
             templateOptions: #DEFAULT#
+            valuePlaceholder: Not Assigned
         }
         sessionState {
             storage: request
@@ -793,7 +852,7 @@ page 12 (
     )
 
     pageItem P12_TOPIC_GROUP_IDS (
-        type: selectMany
+        type: combobox
         label {
             label: Topic Groups
             alignment: left
@@ -815,6 +874,10 @@ page 12 (
                  order by topic_name
                 ```
         }
+        settings {
+            multiSelection: true
+            manualEntriesItem: P12_TOPIC_GROUP_MANUAL
+        }
         layout {
             sequence: 75
             region: @task-details
@@ -826,6 +889,21 @@ page 12 (
         appearance {
             template: @/optional-floating
             templateOptions: #DEFAULT#
+        }
+        sessionState {
+            storage: request
+        }
+    )
+
+    pageItem P12_TOPIC_GROUP_MANUAL (
+        type: hidden
+        settings {
+            valueProtected: false
+        }
+        layout {
+            sequence: 76
+            region: @task-details
+            slot: regionBody
         }
         sessionState {
             storage: request
@@ -1257,6 +1335,7 @@ page 12 (
         }
         lov {
             type: sqlQuery
+            displayNullValue: false
             sqlQuery:
                 ```sql
                 select status_name as display_value,
@@ -1274,9 +1353,12 @@ page 12 (
             startNewRow: false
         }
         appearance {
-            template: @/optional-floating
+            template: @/required-floating
             templateOptions: #DEFAULT#
             height: 1
+        }
+        validation {
+            valueRequired: true
         }
         source {
             formRegion: @task-details
@@ -1494,6 +1576,9 @@ page 12 (
 
     pageItem P12_EDIT_UPDATE_ID (
         type: hidden
+        settings {
+            valueProtected: false
+        }
         layout {
             sequence: 10
             region: @edit-update-dialog
@@ -1501,9 +1586,6 @@ page 12 (
         }
         sessionState {
             storage: request
-        }
-        security {
-            sessionStateProtection: checksumRequiredSessionLevel
         }
     )
 
@@ -1631,7 +1713,7 @@ page 12 (
         buttonName: SAVE_TASK
         label: Save
         layout {
-            sequence: 10
+            sequence: 20
             region: @task-details
             slot: edit
         }
@@ -1650,7 +1732,7 @@ page 12 (
         buttonName: DELETE_TASK
         label: Delete
         layout {
-            sequence: 20
+            sequence: 10
             region: @task-details
             slot: edit
         }
@@ -1726,6 +1808,43 @@ page 12 (
             }
             execution {
                 sequence: 10
+                fireOnInit: false
+            }
+        )
+
+    )
+
+    dynamicAction refresh-on-update-dialog-close (
+        name: Refresh on Update Dialog Close
+        execution {
+            sequence: 20
+        }
+        when {
+            event: apexafterclosedialog
+            selectionType: region
+            region: @updates
+        }
+
+        action refresh-updates-after-edit (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @updates
+            }
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+        action refresh-change-log-after-edit (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @change-log
+            }
+            execution {
+                sequence: 20
                 fireOnInit: false
             }
         )
@@ -2063,6 +2182,52 @@ page 12 (
         }
     )
 
+    process require-update-before-complete (
+        name: Require Update Before Complete
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                declare
+                    l_is_done_yn      tsk_statuses.is_done_yn%type;
+                    l_update_count    pls_integer;
+                    l_post_update_yn  varchar2(1) := 'N';
+                begin
+                    select nvl(max(is_done_yn), 'N')
+                      into l_is_done_yn
+                      from tsk_statuses
+                     where status_id = :P12_STATUS_ID;
+                
+                    if l_is_done_yn = 'Y' then
+                        select count(*)
+                          into l_update_count
+                          from tsk_task_updates
+                         where task_id = :P12_TASK_ID;
+                
+                        if :REQUEST = 'POST_UPDATE'
+                           and nullif(trim(:P12_UPDATE_TEXT), '') is not null then
+                            l_post_update_yn := 'Y';
+                        end if;
+                
+                        if l_update_count = 0 and l_post_update_yn = 'N' then
+                            raise_application_error(-20001, 'Add at least one update before completing this task.');
+                        end if;
+                    end if;
+                end;
+                ```
+        }
+        execution {
+            sequence: 6
+        }
+        advanced {
+            executionMappingIdentifier: 9990001200000910
+        }
+        serverSideCondition {
+            type: requestIsContainedInValue
+            value: SAVE_TASK,POST_UPDATE
+        }
+    )
+
     process post-update (
         name: Post Update
         type: executeCode
@@ -2211,6 +2376,33 @@ page 12 (
         }
         advanced {
             executionMappingIdentifier: 16537640910606193
+        }
+    )
+
+    process default-task-status (
+        name: Default Task Status
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                begin
+                    if :P12_STATUS_ID is null then
+                        select status_id
+                          into :P12_STATUS_ID
+                          from tsk_statuses
+                         where status_code = 'NOT_STARTED'
+                           and active_yn = 'Y'
+                         fetch first 1 row only;
+                    end if;
+                exception
+                    when no_data_found then
+                        null;
+                end;
+                ```
+        }
+        execution {
+            sequence: 11
+            point: beforeHeader
         }
     )
 
@@ -2380,7 +2572,8 @@ page 12 (
             executionMappingIdentifier: 17074785551394604
         }
         serverSideCondition {
-            whenButtonPressed: @save-task
+            type: requestIsContainedInValue
+            value: SAVE_TASK,POST_UPDATE
         }
     )
 
@@ -2460,7 +2653,67 @@ page 12 (
             sequence: 16
         }
         serverSideCondition {
-            whenButtonPressed: @save-task
+            type: requestIsContainedInValue
+            value: SAVE_TASK,POST_UPDATE
+        }
+    )
+
+    process create-manual-topics (
+        name: Create Manual Topics
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                declare
+                    l_topic_group_id tsk_topic_groups.topic_group_id%type;
+                    l_topic_ids      varchar2(32767) := :P12_TOPIC_GROUP_IDS;
+                begin
+                    for manual_topic in (
+                        select distinct trim(column_value) as topic_name
+                          from table(apex_string.split(:P12_TOPIC_GROUP_MANUAL, ':'))
+                         where trim(column_value) is not null
+                    ) loop
+                        begin
+                            insert into tsk_topic_groups (
+                                topic_name,
+                                active_yn
+                            ) values (
+                                manual_topic.topic_name,
+                                'Y'
+                            )
+                            returning topic_group_id into l_topic_group_id;
+                        exception
+                            when dup_val_on_index then
+                                select topic_group_id
+                                  into l_topic_group_id
+                                  from tsk_topic_groups
+                                 where upper(topic_name) = upper(manual_topic.topic_name)
+                                 fetch first 1 row only;
+                        
+                                update tsk_topic_groups
+                                   set active_yn = 'Y'
+                                 where topic_group_id = l_topic_group_id;
+                        end;
+                
+                        if instr(':' || nvl(l_topic_ids, '') || ':', ':' || l_topic_group_id || ':') = 0 then
+                            l_topic_ids :=
+                                case
+                                    when l_topic_ids is null then to_char(l_topic_group_id)
+                                    else l_topic_ids || ':' || l_topic_group_id
+                                end;
+                        end if;
+                    end loop;
+                
+                    :P12_TOPIC_GROUP_IDS := l_topic_ids;
+                end;
+                ```
+        }
+        execution {
+            sequence: 14
+        }
+        serverSideCondition {
+            type: requestIsContainedInValue
+            value: SAVE_TASK,POST_UPDATE
         }
     )
 

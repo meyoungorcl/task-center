@@ -535,7 +535,7 @@ end tsk_daily_email_pkg;
 
     c_workspace constant varchar2(30) := 'DBAPPDEV';
 
-    c_app_id    constant number := 132;
+    c_app_id    constant number := 12892;
 
 
     procedure set_apex_context is
@@ -603,9 +603,13 @@ end tsk_daily_email_pkg;
 
                    p_session     => 0,
 
+                   p_clear_cache => '12',
+
                    p_items       => 'P12_TASK_ID',
 
-                   p_values      => p_task_id
+                   p_values      => p_task_id,
+
+                   p_plain_url   => true
 
                );
 
