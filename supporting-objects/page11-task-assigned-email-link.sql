@@ -463,6 +463,7 @@ wwv_flow_imp_page.create_page_item(
 ,p_begin_on_new_line=>'N'
 ,p_field_template=>1610598304472262251
 ,p_item_template_options=>'#DEFAULT#'
+,p_help_text=>'You can select an existing topic group of type a new one which will add it to the topic group list for future tasks.'
 ,p_is_persistent=>'N'
 ,p_lov_display_extra=>'NO'
 ,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(

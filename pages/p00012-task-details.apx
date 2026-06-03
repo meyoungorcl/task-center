@@ -849,6 +849,9 @@ page 12 (
         sessionState {
             storage: request
         }
+        help {
+            helpText: You can select an existing topic group of type a new one which will add it to the topic group list for future tasks.
+        }
     )
 
     pageItem P12_TOPIC_GROUP_IDS (
