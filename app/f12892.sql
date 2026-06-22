@@ -114,7 +114,7 @@ wwv_imp_workspace.create_flow(
 ,p_pwa_is_installable=>'N'
 ,p_pwa_is_push_enabled=>'N'
 ,p_theme_id=>42
-,p_home_url=>'f?p=&APP_ID.:1:&APP_SESSION.::&DEBUG.:::'
+,p_home_url=>'f?p=&APP_ID.:70:&APP_SESSION.::&DEBUG.:::'
 ,p_login_url=>'f?p=&APP_ID.:9999:&APP_SESSION.::&DEBUG.:::'
 ,p_theme_style_by_user_pref=>false
 ,p_built_with_love=>false
@@ -347,7 +347,7 @@ wwv_flow_imp_shared.create_list_item(
 ,p_list_item_display_sequence=>10
 ,p_list_item_link_text=>'Home'
 ,p_static_id=>'home'
-,p_list_item_link_target=>'f?p=&APP_ID.:1:&APP_SESSION.::&DEBUG.:::'
+,p_list_item_link_target=>'f?p=&APP_ID.:70:&APP_SESSION.::&DEBUG.:::'
 ,p_list_item_icon=>'fa-home'
 ,p_list_item_current_type=>'TARGET_PAGE'
 );
@@ -5856,8 +5856,8 @@ wwv_flow_imp_shared.create_menu_option(
  p_id=>wwv_flow_imp.id(39327793215332675)
 ,p_short_name=>'Home'
 ,p_static_id=>'home'
-,p_link=>'f?p=&APP_ID.:1:&APP_SESSION.::&DEBUG.:::'
-,p_page_id=>1
+,p_link=>'f?p=&APP_ID.:70:&APP_SESSION.::&DEBUG.:::'
+,p_page_id=>70
 );
 wwv_flow_imp_shared.create_menu_option(
  p_id=>wwv_flow_imp.id(39427106412194195)
@@ -16851,6 +16851,7 @@ wwv_flow_imp_page.create_report_region(
 '           lower(u.username) = lower(:APP_USER)',
 '        or lower(u.email) = lower(:APP_USER)',
 '       )',
+'   and v.status_code in (''NOT_STARTED'', ''IN_PROGRESS'')',
 '   and (:P70_STATUS is null or v.status_name = :P70_STATUS)',
 '   and (:P70_PRIORITY is null or v.priority_code = :P70_PRIORITY)',
 '   and (:P70_OVERDUE is null or v.overdue_yn = :P70_OVERDUE)',
