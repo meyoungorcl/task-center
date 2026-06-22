@@ -33,16 +33,16 @@ prompt APPLICATION 12892 - Task Center
 -- Application Export:
 --   Application:     12892
 --   Name:            Task Center
---   Date and Time:   21:59 Wednesday June 3, 2026
---   Exported By:     MARCIE.YOUNG@ORACLE.COM
+--   Date and Time:   23:59 Wednesday June 3, 2026
+--   Exported By:     WKSP_DBAPPDEV
 --   Flashback:       0
 --   Export Type:     Application Export
---     Pages:                     22
---       Items:                  114
---       Processes:               53
---       Regions:                 63
---       Buttons:                 35
---       Dynamic Actions:         18
+--     Pages:                     23
+--       Items:                  125
+--       Processes:               58
+--       Regions:                 70
+--       Buttons:                 42
+--       Dynamic Actions:         21
 --     Shared Components:
 --       Logic:
 --         Build Options:          1
@@ -5961,11 +5961,6 @@ begin
 null;
 end;
 /
-prompt --application/shared_components/globalization/translations
-begin
-null;
-end;
-/
 prompt --application/shared_components/logic/build_options
 begin
 wwv_flow_imp_shared.create_build_option(
@@ -5994,7 +5989,7 @@ wwv_flow_imp_shared.create_automation(
 ,p_static_id=>'task-center-email-schedule-runner'
 ,p_trigger_type=>'POLLING'
 ,p_polling_interval=>'FREQ=MINUTELY;INTERVAL=5'
-,p_polling_status=>'DISABLED'
+,p_polling_status=>'ACTIVE'
 ,p_result_type=>'ALWAYS'
 ,p_location=>'LOCAL'
 ,p_error_handling_type=>'ABORT'
@@ -6027,10 +6022,6 @@ wwv_flow_imp_shared.create_authentication(
 ,p_invalid_session_type=>'LOGIN'
 ,p_use_secure_cookie_yn=>'N'
 ,p_ras_mode=>0
-,p_created_on=>wwv_flow_imp.dz('20260603142833Z')
-,p_updated_on=>wwv_flow_imp.dz('20260603142833Z')
-,p_created_by=>'WKSP_DBAPPDEV'
-,p_updated_by=>'WKSP_DBAPPDEV'
 );
 end;
 /
@@ -6066,7 +6057,20 @@ wwv_flow_imp_page.create_page(
 ,p_page_component_map=>'13'
 );
 wwv_flow_imp_page.create_page_plug(
- p_id=>wwv_flow_imp.id(39444180223405570)
+ p_id=>wwv_flow_imp.id(6100000100001001)
+,p_plug_name=>'Dashboard Filters'
+,p_static_id=>'dashboard-filters'
+,p_region_template_options=>'#DEFAULT#'
+,p_plug_template=>4073835273271169698
+,p_plug_display_sequence=>15
+,p_plug_item_display_point=>'ABOVE'
+,p_location=>null
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'output_as', 'TEXT',
+  'show_line_breaks', 'Y')).to_clob
+);
+wwv_flow_imp_page.create_page_plug(
+ p_id=>wwv_flow_imp.id(16551867018817547)
 ,p_plug_name=>'Dashboard'
 ,p_static_id=>'dashboard-title'
 ,p_title=>'Task Center Dashboard'
@@ -6081,7 +6085,7 @@ wwv_flow_imp_page.create_page_plug(
   'show_line_breaks', 'Y')).to_clob
 );
 wwv_flow_imp_page.create_page_plug(
- p_id=>wwv_flow_imp.id(39996783716246166)
+ p_id=>wwv_flow_imp.id(17104470511658143)
 ,p_plug_name=>'Task Aging'
 ,p_static_id=>'task-aging'
 ,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
@@ -6094,8 +6098,8 @@ wwv_flow_imp_page.create_page_plug(
 ,p_plug_source_type=>'NATIVE_JET_CHART'
 );
 wwv_flow_imp_page.create_jet_chart(
- p_id=>wwv_flow_imp.id(39996871911246166)
-,p_region_id=>wwv_flow_imp.id(39996783716246166)
+ p_id=>wwv_flow_imp.id(17104558706658143)
+,p_region_id=>wwv_flow_imp.id(17104470511658143)
 ,p_chart_type=>'bar'
 ,p_title=>'Not Started / In Progress Task Aging by User'
 ,p_animation_on_display=>'auto'
@@ -6120,8 +6124,8 @@ wwv_flow_imp_page.create_jet_chart(
 ,p_overview_rendered=>'off'
 );
 wwv_flow_imp_page.create_jet_chart_series(
- p_id=>wwv_flow_imp.id(39997026412246167)
-,p_chart_id=>wwv_flow_imp.id(39996871911246166)
+ p_id=>wwv_flow_imp.id(17104713207658144)
+,p_chart_id=>wwv_flow_imp.id(17104558706658143)
 ,p_static_id=>'one-to-three-months'
 ,p_seq=>20
 ,p_name=>'1-3 Months'
@@ -6145,6 +6149,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 ' where s.status_code in (''NOT_STARTED'', ''IN_PROGRESS'')',
 '   and t.updated_at < add_months(systimestamp, -1)',
 '   and t.updated_at >= add_months(systimestamp, -3)',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by nvl(u.display_name, ''Unassigned'')',
 ' order by nvl(u.display_name, ''Unassigned'')'))
 ,p_series_type=>'bar'
@@ -6159,8 +6164,8 @@ wwv_flow_imp_page.create_jet_chart_series(
 ,p_link_target_type=>'REDIRECT_URL'
 );
 wwv_flow_imp_page.create_jet_chart_series(
- p_id=>wwv_flow_imp.id(39997155613246167)
-,p_chart_id=>wwv_flow_imp.id(39996871911246166)
+ p_id=>wwv_flow_imp.id(17104842408658144)
+,p_chart_id=>wwv_flow_imp.id(17104558706658143)
 ,p_static_id=>'over-three-months'
 ,p_seq=>30
 ,p_name=>'Over 3 Months'
@@ -6183,6 +6188,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '    on u.user_id = tm.user_id',
 ' where s.status_code in (''NOT_STARTED'', ''IN_PROGRESS'')',
 '   and t.updated_at < add_months(systimestamp, -3)',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by nvl(u.display_name, ''Unassigned'')',
 ' order by nvl(u.display_name, ''Unassigned'')'))
 ,p_series_type=>'bar'
@@ -6197,8 +6203,8 @@ wwv_flow_imp_page.create_jet_chart_series(
 ,p_link_target_type=>'REDIRECT_URL'
 );
 wwv_flow_imp_page.create_jet_chart_series(
- p_id=>wwv_flow_imp.id(39996940532246166)
-,p_chart_id=>wwv_flow_imp.id(39996871911246166)
+ p_id=>wwv_flow_imp.id(17104627327658143)
+,p_chart_id=>wwv_flow_imp.id(17104558706658143)
 ,p_static_id=>'under-one-month'
 ,p_seq=>10
 ,p_name=>'Last 1 Month'
@@ -6221,6 +6227,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '    on u.user_id = tm.user_id',
 ' where s.status_code in (''NOT_STARTED'', ''IN_PROGRESS'')',
 '   and t.updated_at >= add_months(systimestamp, -1)',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by nvl(u.display_name, ''Unassigned'')',
 ' order by nvl(u.display_name, ''Unassigned'')'))
 ,p_series_type=>'bar'
@@ -6235,8 +6242,8 @@ wwv_flow_imp_page.create_jet_chart_series(
 ,p_link_target_type=>'REDIRECT_URL'
 );
 wwv_flow_imp_page.create_jet_chart_axis(
- p_id=>wwv_flow_imp.id(39997274941246167)
-,p_chart_id=>wwv_flow_imp.id(39996871911246166)
+ p_id=>wwv_flow_imp.id(17104961736658144)
+,p_chart_id=>wwv_flow_imp.id(17104558706658143)
 ,p_static_id=>'x'
 ,p_axis=>'x'
 ,p_is_rendered=>'on'
@@ -6250,8 +6257,8 @@ wwv_flow_imp_page.create_jet_chart_axis(
 ,p_tick_label_position=>'outside'
 );
 wwv_flow_imp_page.create_jet_chart_axis(
- p_id=>wwv_flow_imp.id(39997337361246167)
-,p_chart_id=>wwv_flow_imp.id(39996871911246166)
+ p_id=>wwv_flow_imp.id(17105024156658144)
+,p_chart_id=>wwv_flow_imp.id(17104558706658143)
 ,p_static_id=>'y'
 ,p_axis=>'y'
 ,p_is_rendered=>'on'
@@ -6266,7 +6273,7 @@ wwv_flow_imp_page.create_jet_chart_axis(
 ,p_tick_label_rendered=>'on'
 );
 wwv_flow_imp_page.create_report_region(
- p_id=>wwv_flow_imp.id(39444214488405570)
+ p_id=>wwv_flow_imp.id(16551901283817547)
 ,p_name=>'Task Overview'
 ,p_static_id=>'task-overview'
 ,p_template=>4073835273271169698
@@ -6295,7 +6302,8 @@ wwv_flow_imp_page.create_report_region(
 '       apex_page.get_url(p_page => 10, p_clear_cache => ''10'', p_items => ''P10_STATUS'', p_values => ''Backlog'') as backlog_tasks_url,',
 '       sum(case when status_code = ''ARCHIVE'' then 1 else 0 end) as archive_tasks,',
 '       apex_page.get_url(p_page => 10, p_clear_cache => ''10'', p_items => ''P10_STATUS'', p_values => ''Archive'') as archive_tasks_url',
-'  from tsk_v_task_list'))
+'  from tsk_v_task_list',
+' where (:P1_YEAR is null or to_char(created_at, ''YYYY'') = :P1_YEAR)'))
 ,p_ajax_enabled=>'Y'
 ,p_lazy_loading=>false
 ,p_query_row_template=>2540130677583398057
@@ -6308,7 +6316,7 @@ wwv_flow_imp_page.create_report_region(
 ,p_plug_query_strip_html=>'N'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(32882313304588124)
+ p_id=>wwv_flow_imp.id(9990000100000101)
 ,p_query_column_id=>18
 ,p_column_alias=>'ARCHIVE_TASKS'
 ,p_column_display_sequence=>180
@@ -6316,7 +6324,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_derived_column=>'N'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(32882313304588125)
+ p_id=>wwv_flow_imp.id(9990000100000102)
 ,p_query_column_id=>19
 ,p_column_alias=>'ARCHIVE_TASKS_URL'
 ,p_column_display_sequence=>190
@@ -6324,7 +6332,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_derived_column=>'N'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39924252927603409)
+ p_id=>wwv_flow_imp.id(17031939723015386)
 ,p_query_column_id=>16
 ,p_column_alias=>'BACKLOG_TASKS'
 ,p_column_display_sequence=>160
@@ -6332,7 +6340,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_derived_column=>'N'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39924384716603409)
+ p_id=>wwv_flow_imp.id(17032071512015386)
 ,p_query_column_id=>17
 ,p_column_alias=>'BACKLOG_TASKS_URL'
 ,p_column_display_sequence=>170
@@ -6340,7 +6348,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_derived_column=>'N'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39453240764496548)
+ p_id=>wwv_flow_imp.id(16560927559908525)
 ,p_query_column_id=>8
 ,p_column_alias=>'BLOCKED_TASKS'
 ,p_column_display_sequence=>80
@@ -6348,7 +6356,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_derived_column=>'N'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39804446548827622)
+ p_id=>wwv_flow_imp.id(16912133344239599)
 ,p_query_column_id=>15
 ,p_column_alias=>'BLOCKED_TASKS_URL'
 ,p_column_display_sequence=>150
@@ -6356,7 +6364,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_derived_column=>'N'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39789951201774420)
+ p_id=>wwv_flow_imp.id(16897637997186397)
 ,p_query_column_id=>1
 ,p_column_alias=>'CARD_LAYOUT'
 ,p_column_display_sequence=>10
@@ -6388,7 +6396,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_include_in_export=>'Y'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39452830295496548)
+ p_id=>wwv_flow_imp.id(16560517090908525)
 ,p_query_column_id=>4
 ,p_column_alias=>'COMPLETED_TASKS'
 ,p_column_display_sequence=>40
@@ -6396,7 +6404,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_derived_column=>'N'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39804059424827622)
+ p_id=>wwv_flow_imp.id(16911746220239599)
 ,p_query_column_id=>11
 ,p_column_alias=>'COMPLETED_TASKS_URL'
 ,p_column_display_sequence=>110
@@ -6404,7 +6412,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_derived_column=>'N'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39452733576496548)
+ p_id=>wwv_flow_imp.id(16560420371908525)
 ,p_query_column_id=>3
 ,p_column_alias=>'IN_PROGRESS_TASKS'
 ,p_column_display_sequence=>30
@@ -6412,7 +6420,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_derived_column=>'N'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39803996773827622)
+ p_id=>wwv_flow_imp.id(16911683569239599)
 ,p_query_column_id=>10
 ,p_column_alias=>'IN_PROGRESS_TASKS_URL'
 ,p_column_display_sequence=>100
@@ -6420,7 +6428,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_derived_column=>'N'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39453188697496548)
+ p_id=>wwv_flow_imp.id(16560875492908525)
 ,p_query_column_id=>7
 ,p_column_alias=>'IN_REVIEW_TASKS'
 ,p_column_display_sequence=>70
@@ -6428,7 +6436,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_derived_column=>'N'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39804383914827622)
+ p_id=>wwv_flow_imp.id(16912070710239599)
 ,p_query_column_id=>14
 ,p_column_alias=>'IN_REVIEW_TASKS_URL'
 ,p_column_display_sequence=>140
@@ -6436,7 +6444,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_derived_column=>'N'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39453097447496548)
+ p_id=>wwv_flow_imp.id(16560784242908525)
 ,p_query_column_id=>6
 ,p_column_alias=>'NOT_STARTED_TASKS'
 ,p_column_display_sequence=>60
@@ -6444,7 +6452,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_derived_column=>'N'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39804257924827622)
+ p_id=>wwv_flow_imp.id(16911944720239599)
 ,p_query_column_id=>13
 ,p_column_alias=>'NOT_STARTED_TASKS_URL'
 ,p_column_display_sequence=>130
@@ -6452,7 +6460,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_derived_column=>'N'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39453004257496548)
+ p_id=>wwv_flow_imp.id(16560691052908525)
 ,p_query_column_id=>5
 ,p_column_alias=>'OVERDUE_TASKS'
 ,p_column_display_sequence=>50
@@ -6460,7 +6468,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_derived_column=>'N'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39804200176827622)
+ p_id=>wwv_flow_imp.id(16911886972239599)
 ,p_query_column_id=>12
 ,p_column_alias=>'OVERDUE_TASKS_URL'
 ,p_column_display_sequence=>120
@@ -6468,7 +6476,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_derived_column=>'N'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39452625364496547)
+ p_id=>wwv_flow_imp.id(16560312159908524)
 ,p_query_column_id=>2
 ,p_column_alias=>'TOTAL_TASKS'
 ,p_column_display_sequence=>20
@@ -6476,7 +6484,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_derived_column=>'N'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39803893347827622)
+ p_id=>wwv_flow_imp.id(16911580143239599)
 ,p_query_column_id=>9
 ,p_column_alias=>'TOTAL_TASKS_URL'
 ,p_column_display_sequence=>90
@@ -6484,7 +6492,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_derived_column=>'N'
 );
 wwv_flow_imp_page.create_page_plug(
- p_id=>wwv_flow_imp.id(39446974312405575)
+ p_id=>wwv_flow_imp.id(16554661107817552)
 ,p_plug_name=>'Tasks by Application'
 ,p_static_id=>'tasks-by-application'
 ,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
@@ -6498,8 +6506,8 @@ wwv_flow_imp_page.create_page_plug(
 ,p_plug_source_type=>'NATIVE_JET_CHART'
 );
 wwv_flow_imp_page.create_jet_chart(
- p_id=>wwv_flow_imp.id(39447018581405575)
-,p_region_id=>wwv_flow_imp.id(39446974312405575)
+ p_id=>wwv_flow_imp.id(16554705376817552)
+,p_region_id=>wwv_flow_imp.id(16554661107817552)
 ,p_chart_type=>'bar'
 ,p_title=>'Tasks by Application'
 ,p_animation_on_display=>'auto'
@@ -6523,24 +6531,25 @@ wwv_flow_imp_page.create_jet_chart(
 ,p_overview_rendered=>'off'
 );
 wwv_flow_imp_page.create_jet_chart_series(
- p_id=>wwv_flow_imp.id(39447165172405576)
-,p_chart_id=>wwv_flow_imp.id(39447018581405575)
+ p_id=>wwv_flow_imp.id(16554851967817553)
+,p_chart_id=>wwv_flow_imp.id(16554705376817552)
 ,p_static_id=>'tasks-by-application'
 ,p_seq=>10
 ,p_name=>'Tasks by Application'
 ,p_data_source_type=>'SQL'
 ,p_data_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
 'select application_name as LABEL,',
-'       sum(task_count) as VALUE,',
+'       count(*) as VALUE,',
 '       apex_page.get_url(',
 '           p_page => 10,',
 '           p_clear_cache => ''10'',',
 '           p_items => ''P10_APPLICATION'',',
 '           p_values => application_name',
 '       ) as LINK',
-'  from tsk_v_tasks_by_application',
+'  from tsk_v_task_list',
+' where (:P1_YEAR is null or to_char(created_at, ''YYYY'') = :P1_YEAR)',
 ' group by application_name',
-' order by sum(task_count) desc, application_name'))
+' order by count(*) desc, application_name'))
 ,p_series_type=>'bar'
 ,p_items_value_column_name=>'VALUE'
 ,p_items_label_column_name=>'LABEL'
@@ -6552,8 +6561,8 @@ wwv_flow_imp_page.create_jet_chart_series(
 ,p_link_target_type=>'REDIRECT_URL'
 );
 wwv_flow_imp_page.create_jet_chart_axis(
- p_id=>wwv_flow_imp.id(39447213269405576)
-,p_chart_id=>wwv_flow_imp.id(39447018581405575)
+ p_id=>wwv_flow_imp.id(16554900064817553)
+,p_chart_id=>wwv_flow_imp.id(16554705376817552)
 ,p_static_id=>'x'
 ,p_axis=>'x'
 ,p_is_rendered=>'on'
@@ -6567,8 +6576,8 @@ wwv_flow_imp_page.create_jet_chart_axis(
 ,p_tick_label_position=>'outside'
 );
 wwv_flow_imp_page.create_jet_chart_axis(
- p_id=>wwv_flow_imp.id(39447344018405576)
-,p_chart_id=>wwv_flow_imp.id(39447018581405575)
+ p_id=>wwv_flow_imp.id(16555030813817553)
+,p_chart_id=>wwv_flow_imp.id(16554705376817552)
 ,p_static_id=>'y'
 ,p_axis=>'y'
 ,p_is_rendered=>'on'
@@ -6583,7 +6592,7 @@ wwv_flow_imp_page.create_jet_chart_axis(
 ,p_tick_label_rendered=>'on'
 );
 wwv_flow_imp_page.create_page_plug(
- p_id=>wwv_flow_imp.id(39444524619405570)
+ p_id=>wwv_flow_imp.id(16552211414817547)
 ,p_plug_name=>'Tasks by Status'
 ,p_static_id=>'tasks-by-status'
 ,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
@@ -6596,8 +6605,8 @@ wwv_flow_imp_page.create_page_plug(
 ,p_plug_source_type=>'NATIVE_JET_CHART'
 );
 wwv_flow_imp_page.create_jet_chart(
- p_id=>wwv_flow_imp.id(39444706195405571)
-,p_region_id=>wwv_flow_imp.id(39444524619405570)
+ p_id=>wwv_flow_imp.id(16552392990817548)
+,p_region_id=>wwv_flow_imp.id(16552211414817547)
 ,p_chart_type=>'donut'
 ,p_title=>'Tasks by Status'
 ,p_animation_on_display=>'auto'
@@ -6623,8 +6632,8 @@ wwv_flow_imp_page.create_jet_chart(
 ,p_pie_selection_effect=>'highlight'
 );
 wwv_flow_imp_page.create_jet_chart_series(
- p_id=>wwv_flow_imp.id(39444767839405571)
-,p_chart_id=>wwv_flow_imp.id(39444706195405571)
+ p_id=>wwv_flow_imp.id(16552454634817548)
+,p_chart_id=>wwv_flow_imp.id(16552392990817548)
 ,p_static_id=>'tasks-by-status'
 ,p_seq=>10
 ,p_name=>'Tasks by Status'
@@ -6639,6 +6648,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '           p_values => status_name',
 '       ) as LINK',
 '  from tsk_v_task_list',
+' where (:P1_YEAR is null or to_char(created_at, ''YYYY'') = :P1_YEAR)',
 ' group by status_name',
 ' order by status_name'))
 ,p_series_type=>'donut'
@@ -6652,7 +6662,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 ,p_link_target_type=>'REDIRECT_URL'
 );
 wwv_flow_imp_page.create_page_plug(
- p_id=>wwv_flow_imp.id(39444863580405573)
+ p_id=>wwv_flow_imp.id(16552550375817550)
 ,p_plug_name=>'Tasks by Type'
 ,p_static_id=>'tasks-by-type'
 ,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
@@ -6666,8 +6676,8 @@ wwv_flow_imp_page.create_page_plug(
 ,p_plug_source_type=>'NATIVE_JET_CHART'
 );
 wwv_flow_imp_page.create_jet_chart(
- p_id=>wwv_flow_imp.id(39444933603405573)
-,p_region_id=>wwv_flow_imp.id(39444863580405573)
+ p_id=>wwv_flow_imp.id(16552620398817550)
+,p_region_id=>wwv_flow_imp.id(16552550375817550)
 ,p_chart_type=>'donut'
 ,p_title=>'Tasks by Type'
 ,p_animation_on_display=>'auto'
@@ -6693,8 +6703,8 @@ wwv_flow_imp_page.create_jet_chart(
 ,p_pie_selection_effect=>'highlight'
 );
 wwv_flow_imp_page.create_jet_chart_series(
- p_id=>wwv_flow_imp.id(39445029073405573)
-,p_chart_id=>wwv_flow_imp.id(39444933603405573)
+ p_id=>wwv_flow_imp.id(16552715868817550)
+,p_chart_id=>wwv_flow_imp.id(16552620398817550)
 ,p_static_id=>'tasks-by-type'
 ,p_seq=>10
 ,p_name=>'Tasks by Type'
@@ -6709,6 +6719,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '           p_values => type_name',
 '       ) as LINK',
 '  from tsk_v_task_list',
+' where (:P1_YEAR is null or to_char(created_at, ''YYYY'') = :P1_YEAR)',
 ' group by type_name',
 ' order by type_name'))
 ,p_series_type=>'donut'
@@ -6722,7 +6733,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 ,p_link_target_type=>'REDIRECT_URL'
 );
 wwv_flow_imp_page.create_page_plug(
- p_id=>wwv_flow_imp.id(40257965879190271)
+ p_id=>wwv_flow_imp.id(17365652674602248)
 ,p_plug_name=>'Tasks by Priority by User'
 ,p_static_id=>'tasks-priority-by-user'
 ,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
@@ -6736,8 +6747,8 @@ wwv_flow_imp_page.create_page_plug(
 ,p_plug_source_type=>'NATIVE_JET_CHART'
 );
 wwv_flow_imp_page.create_jet_chart(
- p_id=>wwv_flow_imp.id(40258096524190271)
-,p_region_id=>wwv_flow_imp.id(40257965879190271)
+ p_id=>wwv_flow_imp.id(17365783319602248)
+,p_region_id=>wwv_flow_imp.id(17365652674602248)
 ,p_chart_type=>'bar'
 ,p_title=>'Tasks by Priority by User'
 ,p_animation_on_display=>'auto'
@@ -6762,8 +6773,8 @@ wwv_flow_imp_page.create_jet_chart(
 ,p_overview_rendered=>'off'
 );
 wwv_flow_imp_page.create_jet_chart_series(
- p_id=>wwv_flow_imp.id(40258171079190271)
-,p_chart_id=>wwv_flow_imp.id(40258096524190271)
+ p_id=>wwv_flow_imp.id(17365857874602248)
+,p_chart_id=>wwv_flow_imp.id(17365783319602248)
 ,p_static_id=>'priority-critical'
 ,p_seq=>10
 ,p_name=>'Critical'
@@ -6791,6 +6802,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '    on u.user_id = tm.user_id',
 '   and u.active_yn = ''Y''',
 ' where t.priority_code = ''CRITICAL''',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by u.display_name',
 ' order by u.display_name'))
 ,p_series_type=>'bar'
@@ -6805,8 +6817,8 @@ wwv_flow_imp_page.create_jet_chart_series(
 ,p_link_target_type=>'REDIRECT_URL'
 );
 wwv_flow_imp_page.create_jet_chart_series(
- p_id=>wwv_flow_imp.id(40258225819190271)
-,p_chart_id=>wwv_flow_imp.id(40258096524190271)
+ p_id=>wwv_flow_imp.id(17365912614602248)
+,p_chart_id=>wwv_flow_imp.id(17365783319602248)
 ,p_static_id=>'priority-high'
 ,p_seq=>20
 ,p_name=>'High'
@@ -6834,6 +6846,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '    on u.user_id = tm.user_id',
 '   and u.active_yn = ''Y''',
 ' where t.priority_code = ''HIGH''',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by u.display_name',
 ' order by u.display_name'))
 ,p_series_type=>'bar'
@@ -6848,8 +6861,8 @@ wwv_flow_imp_page.create_jet_chart_series(
 ,p_link_target_type=>'REDIRECT_URL'
 );
 wwv_flow_imp_page.create_jet_chart_series(
- p_id=>wwv_flow_imp.id(40258493654190271)
-,p_chart_id=>wwv_flow_imp.id(40258096524190271)
+ p_id=>wwv_flow_imp.id(17366180449602248)
+,p_chart_id=>wwv_flow_imp.id(17365783319602248)
 ,p_static_id=>'priority-low'
 ,p_seq=>40
 ,p_name=>'Low'
@@ -6877,6 +6890,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '    on u.user_id = tm.user_id',
 '   and u.active_yn = ''Y''',
 ' where t.priority_code = ''LOW''',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by u.display_name',
 ' order by u.display_name'))
 ,p_series_type=>'bar'
@@ -6891,8 +6905,8 @@ wwv_flow_imp_page.create_jet_chart_series(
 ,p_link_target_type=>'REDIRECT_URL'
 );
 wwv_flow_imp_page.create_jet_chart_series(
- p_id=>wwv_flow_imp.id(40258394141190271)
-,p_chart_id=>wwv_flow_imp.id(40258096524190271)
+ p_id=>wwv_flow_imp.id(17366080936602248)
+,p_chart_id=>wwv_flow_imp.id(17365783319602248)
 ,p_static_id=>'priority-medium'
 ,p_seq=>30
 ,p_name=>'Medium'
@@ -6920,6 +6934,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '    on u.user_id = tm.user_id',
 '   and u.active_yn = ''Y''',
 ' where t.priority_code = ''MEDIUM''',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by u.display_name',
 ' order by u.display_name'))
 ,p_series_type=>'bar'
@@ -6934,8 +6949,8 @@ wwv_flow_imp_page.create_jet_chart_series(
 ,p_link_target_type=>'REDIRECT_URL'
 );
 wwv_flow_imp_page.create_jet_chart_axis(
- p_id=>wwv_flow_imp.id(40258541519190271)
-,p_chart_id=>wwv_flow_imp.id(40258096524190271)
+ p_id=>wwv_flow_imp.id(17366228314602248)
+,p_chart_id=>wwv_flow_imp.id(17365783319602248)
 ,p_static_id=>'x'
 ,p_axis=>'x'
 ,p_is_rendered=>'on'
@@ -6949,8 +6964,8 @@ wwv_flow_imp_page.create_jet_chart_axis(
 ,p_tick_label_position=>'outside'
 );
 wwv_flow_imp_page.create_jet_chart_axis(
- p_id=>wwv_flow_imp.id(40258658596190271)
-,p_chart_id=>wwv_flow_imp.id(40258096524190271)
+ p_id=>wwv_flow_imp.id(17366345391602248)
+,p_chart_id=>wwv_flow_imp.id(17365783319602248)
 ,p_static_id=>'y'
 ,p_axis=>'y'
 ,p_is_rendered=>'on'
@@ -6965,7 +6980,7 @@ wwv_flow_imp_page.create_jet_chart_axis(
 ,p_tick_label_rendered=>'on'
 );
 wwv_flow_imp_page.create_page_plug(
- p_id=>wwv_flow_imp.id(39456789837586680)
+ p_id=>wwv_flow_imp.id(16564476632998657)
 ,p_plug_name=>'Team Member by Status'
 ,p_static_id=>'team-member-by-status'
 ,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
@@ -6978,8 +6993,8 @@ wwv_flow_imp_page.create_page_plug(
 ,p_plug_source_type=>'NATIVE_JET_CHART'
 );
 wwv_flow_imp_page.create_jet_chart(
- p_id=>wwv_flow_imp.id(39456841820586680)
-,p_region_id=>wwv_flow_imp.id(39456789837586680)
+ p_id=>wwv_flow_imp.id(16564528615998657)
+,p_region_id=>wwv_flow_imp.id(16564476632998657)
 ,p_chart_type=>'bar'
 ,p_title=>'Team Member by Status'
 ,p_animation_on_display=>'auto'
@@ -7004,8 +7019,8 @@ wwv_flow_imp_page.create_jet_chart(
 ,p_overview_rendered=>'off'
 );
 wwv_flow_imp_page.create_jet_chart_series(
- p_id=>wwv_flow_imp.id(39924476034603410)
-,p_chart_id=>wwv_flow_imp.id(39456841820586680)
+ p_id=>wwv_flow_imp.id(17032162830015387)
+,p_chart_id=>wwv_flow_imp.id(16564528615998657)
 ,p_static_id=>'backlog'
 ,p_seq=>5
 ,p_name=>'Backlog'
@@ -7027,6 +7042,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '  left join tsk_users u',
 '    on u.user_id = tm.user_id',
 ' where s.status_code = ''BACKLOG''',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by nvl(u.display_name, ''Unassigned'')',
 ' order by nvl(u.display_name, ''Unassigned'')'))
 ,p_series_type=>'bar'
@@ -7040,8 +7056,8 @@ wwv_flow_imp_page.create_jet_chart_series(
 ,p_link_target_type=>'REDIRECT_URL'
 );
 wwv_flow_imp_page.create_jet_chart_series(
- p_id=>wwv_flow_imp.id(39457238453586680)
-,p_chart_id=>wwv_flow_imp.id(39456841820586680)
+ p_id=>wwv_flow_imp.id(16564925248998657)
+,p_chart_id=>wwv_flow_imp.id(16564528615998657)
 ,p_static_id=>'blocked'
 ,p_seq=>40
 ,p_name=>'Blocked'
@@ -7063,6 +7079,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '  left join tsk_users u',
 '    on u.user_id = tm.user_id',
 ' where s.status_code = ''BLOCKED''',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by nvl(u.display_name, ''Unassigned'')',
 ' order by nvl(u.display_name, ''Unassigned'')'))
 ,p_series_type=>'bar'
@@ -7076,8 +7093,8 @@ wwv_flow_imp_page.create_jet_chart_series(
 ,p_link_target_type=>'REDIRECT_URL'
 );
 wwv_flow_imp_page.create_jet_chart_series(
- p_id=>wwv_flow_imp.id(39457404555586681)
-,p_chart_id=>wwv_flow_imp.id(39456841820586680)
+ p_id=>wwv_flow_imp.id(16565091350998658)
+,p_chart_id=>wwv_flow_imp.id(16564528615998657)
 ,p_static_id=>'completed'
 ,p_seq=>50
 ,p_name=>'Completed'
@@ -7099,6 +7116,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '  left join tsk_users u',
 '    on u.user_id = tm.user_id',
 ' where s.status_code = ''COMPLETED''',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by nvl(u.display_name, ''Unassigned'')',
 ' order by nvl(u.display_name, ''Unassigned'')'))
 ,p_series_type=>'bar'
@@ -7112,8 +7130,8 @@ wwv_flow_imp_page.create_jet_chart_series(
 ,p_link_target_type=>'REDIRECT_URL'
 );
 wwv_flow_imp_page.create_jet_chart_series(
- p_id=>wwv_flow_imp.id(39457085774586680)
-,p_chart_id=>wwv_flow_imp.id(39456841820586680)
+ p_id=>wwv_flow_imp.id(16564772569998657)
+,p_chart_id=>wwv_flow_imp.id(16564528615998657)
 ,p_static_id=>'in-progress'
 ,p_seq=>20
 ,p_name=>'In Progress'
@@ -7135,6 +7153,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '  left join tsk_users u',
 '    on u.user_id = tm.user_id',
 ' where s.status_code = ''IN_PROGRESS''',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by nvl(u.display_name, ''Unassigned'')',
 ' order by nvl(u.display_name, ''Unassigned'')'))
 ,p_series_type=>'bar'
@@ -7148,8 +7167,8 @@ wwv_flow_imp_page.create_jet_chart_series(
 ,p_link_target_type=>'REDIRECT_URL'
 );
 wwv_flow_imp_page.create_jet_chart_series(
- p_id=>wwv_flow_imp.id(39457205358586680)
-,p_chart_id=>wwv_flow_imp.id(39456841820586680)
+ p_id=>wwv_flow_imp.id(16564892153998657)
+,p_chart_id=>wwv_flow_imp.id(16564528615998657)
 ,p_static_id=>'in-review'
 ,p_seq=>30
 ,p_name=>'In Review'
@@ -7171,6 +7190,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '  left join tsk_users u',
 '    on u.user_id = tm.user_id',
 ' where s.status_code = ''IN_REVIEW''',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by nvl(u.display_name, ''Unassigned'')',
 ' order by nvl(u.display_name, ''Unassigned'')'))
 ,p_series_type=>'bar'
@@ -7184,8 +7204,8 @@ wwv_flow_imp_page.create_jet_chart_series(
 ,p_link_target_type=>'REDIRECT_URL'
 );
 wwv_flow_imp_page.create_jet_chart_series(
- p_id=>wwv_flow_imp.id(39456920550586680)
-,p_chart_id=>wwv_flow_imp.id(39456841820586680)
+ p_id=>wwv_flow_imp.id(16564607345998657)
+,p_chart_id=>wwv_flow_imp.id(16564528615998657)
 ,p_static_id=>'not-started'
 ,p_seq=>10
 ,p_name=>'Not Started'
@@ -7207,6 +7227,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '  left join tsk_users u',
 '    on u.user_id = tm.user_id',
 ' where s.status_code = ''NOT_STARTED''',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by nvl(u.display_name, ''Unassigned'')',
 ' order by nvl(u.display_name, ''Unassigned'')'))
 ,p_series_type=>'bar'
@@ -7220,8 +7241,8 @@ wwv_flow_imp_page.create_jet_chart_series(
 ,p_link_target_type=>'REDIRECT_URL'
 );
 wwv_flow_imp_page.create_jet_chart_axis(
- p_id=>wwv_flow_imp.id(39457445956586681)
-,p_chart_id=>wwv_flow_imp.id(39456841820586680)
+ p_id=>wwv_flow_imp.id(16565132751998658)
+,p_chart_id=>wwv_flow_imp.id(16564528615998657)
 ,p_static_id=>'x'
 ,p_axis=>'x'
 ,p_is_rendered=>'on'
@@ -7235,8 +7256,8 @@ wwv_flow_imp_page.create_jet_chart_axis(
 ,p_tick_label_position=>'outside'
 );
 wwv_flow_imp_page.create_jet_chart_axis(
- p_id=>wwv_flow_imp.id(39457610403586681)
-,p_chart_id=>wwv_flow_imp.id(39456841820586680)
+ p_id=>wwv_flow_imp.id(16565297198998658)
+,p_chart_id=>wwv_flow_imp.id(16564528615998657)
 ,p_static_id=>'y'
 ,p_axis=>'y'
 ,p_is_rendered=>'on'
@@ -7251,7 +7272,7 @@ wwv_flow_imp_page.create_jet_chart_axis(
 ,p_tick_label_rendered=>'on'
 );
 wwv_flow_imp_page.create_report_region(
- p_id=>wwv_flow_imp.id(39445130203405573)
+ p_id=>wwv_flow_imp.id(16552816998817550)
 ,p_name=>'Upcoming Due Dates'
 ,p_static_id=>'upcoming-due-dates'
 ,p_template=>4073835273271169698
@@ -7276,7 +7297,8 @@ wwv_flow_imp_page.create_report_region(
 '           p_values => task_id',
 '       ) as task_url',
 '  from tsk_v_task_list',
-' where due_date is not null',
+' where (:P1_YEAR is null or to_char(created_at, ''YYYY'') = :P1_YEAR)',
+'   and due_date is not null',
 '   and due_date >= trunc(sysdate)',
 '   and nvl(is_done_yn, ''N'') = ''N''',
 ' order by due_date, priority_code desc, task_key',
@@ -7293,7 +7315,7 @@ wwv_flow_imp_page.create_report_region(
 ,p_plug_query_strip_html=>'N'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39445874996405573)
+ p_id=>wwv_flow_imp.id(16553561791817550)
 ,p_query_column_id=>7
 ,p_column_alias=>'APPLICATION_NAME'
 ,p_column_display_sequence=>70
@@ -7304,7 +7326,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_include_in_export=>'Y'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39445915839405573)
+ p_id=>wwv_flow_imp.id(16553602634817550)
 ,p_query_column_id=>8
 ,p_column_alias=>'ASSIGNEES'
 ,p_column_display_sequence=>80
@@ -7315,7 +7337,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_include_in_export=>'Y'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39445227596405573)
+ p_id=>wwv_flow_imp.id(16552914391817550)
 ,p_query_column_id=>1
 ,p_column_alias=>'DUE_DATE'
 ,p_column_display_sequence=>10
@@ -7327,7 +7349,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_include_in_export=>'Y'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39445676939405573)
+ p_id=>wwv_flow_imp.id(16553363734817550)
 ,p_query_column_id=>5
 ,p_column_alias=>'PRIORITY_CODE'
 ,p_column_display_sequence=>50
@@ -7338,7 +7360,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_include_in_export=>'Y'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39445545067405573)
+ p_id=>wwv_flow_imp.id(16553231862817550)
 ,p_query_column_id=>4
 ,p_column_alias=>'STATUS_NAME'
 ,p_column_display_sequence=>40
@@ -7349,7 +7371,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_include_in_export=>'Y'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39975776864044207)
+ p_id=>wwv_flow_imp.id(17083463659456184)
 ,p_query_column_id=>10
 ,p_column_alias=>'TASK_ID'
 ,p_column_display_sequence=>5
@@ -7357,7 +7379,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_derived_column=>'N'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39445381543405573)
+ p_id=>wwv_flow_imp.id(16553068338817550)
 ,p_query_column_id=>2
 ,p_column_alias=>'TASK_KEY'
 ,p_column_display_sequence=>20
@@ -7369,7 +7391,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_include_in_export=>'Y'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39960098495915686)
+ p_id=>wwv_flow_imp.id(17067785291327663)
 ,p_query_column_id=>9
 ,p_column_alias=>'TASK_URL'
 ,p_column_display_sequence=>90
@@ -7377,7 +7399,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_derived_column=>'N'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39445788215405573)
+ p_id=>wwv_flow_imp.id(16553475010817550)
 ,p_query_column_id=>6
 ,p_column_alias=>'TEAM_NAME'
 ,p_column_display_sequence=>60
@@ -7388,7 +7410,7 @@ wwv_flow_imp_page.create_report_columns(
 ,p_include_in_export=>'Y'
 );
 wwv_flow_imp_page.create_report_columns(
- p_id=>wwv_flow_imp.id(39445487362405573)
+ p_id=>wwv_flow_imp.id(16553174157817550)
 ,p_query_column_id=>3
 ,p_column_alias=>'TITLE'
 ,p_column_display_sequence=>30
@@ -7397,6 +7419,33 @@ wwv_flow_imp_page.create_report_columns(
 ,p_disable_sort_column=>'N'
 ,p_derived_column=>'N'
 ,p_include_in_export=>'Y'
+);
+wwv_flow_imp_page.create_page_item(
+ p_id=>wwv_flow_imp.id(6100000100001002)
+,p_name=>'P1_YEAR'
+,p_item_sequence=>10
+,p_item_plug_id=>wwv_flow_imp.id(6100000100001001)
+,p_prompt=>'Year'
+,p_source_type=>'ALWAYS_NULL'
+,p_display_as=>'NATIVE_SELECT_LIST'
+,p_lov=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'select to_char(task_year) as display_value,',
+'       to_char(task_year) as return_value',
+'  from (',
+'        select distinct extract(year from cast(created_at as date)) as task_year',
+'          from tsk_tasks',
+'         where created_at is not null',
+'       )',
+' order by task_year desc'))
+,p_lov_display_null=>'YES'
+,p_lov_null_text=>'All Years'
+,p_cHeight=>1
+,p_field_template=>1610598304472262251
+,p_item_template_options=>'#DEFAULT#'
+,p_lov_display_extra=>'NO'
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'execute_validations', 'N',
+  'page_action_on_selection', 'SUBMIT')).to_clob
 );
 end;
 /
@@ -8549,7 +8598,7 @@ wwv_flow_imp_page.create_page_item(
 ,p_item_template_options=>'#DEFAULT#'
 ,p_is_persistent=>'N'
 ,p_lov_display_extra=>'NO'
-,p_help_text=>'You can select an existing topic group of type a new one which will add it to the topic group list for future tasks.'
+,p_help_text=>'You can select an existing topic group or type a new topic group name. The new topic group will be added to the topic group list for future tasks.'
 ,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
   'case_sensitive', 'N',
   'fetch_on_search', 'N',
@@ -8623,105 +8672,229 @@ wwv_flow_imp_page.create_page_process(
 ,p_process_name=>'Assign and Email Assignees'
 ,p_static_id=>'assign-and-email-assignees'
 ,p_process_sql_clob=>wwv_flow_string.join(wwv_flow_t_varchar2(
-'declare',
-'    l_assignee_names varchar2(32767);',
-'    l_task_url       varchar2(4000);',
-'    l_email_count    pls_integer := 0;',
-'begin',
-'    if :P11_ASSIGNEES is null then',
-'        return;',
-'    end if;',
-'',
-'    l_task_url := apex_mail.get_instance_url ||',
-'                  apex_page.get_url(',
-'                      p_application => :APP_ID,',
-'                      p_page        => 12,',
-'                      p_session     => 0,',
-'                      p_clear_cache => ''12'',',
-'                      p_items       => ''P12_TASK_ID'',',
-'                      p_values      => :P11_TASK_ID,',
-'                      p_plain_url   => true',
-'                  );',
-'',
-'    for m in (',
-'        select distinct to_number(s.column_value) as team_member_id,',
-'               u.display_name,',
-'               u.email,',
-'               tm.role_name',
-'          from table(apex_string.split(:P11_ASSIGNEES, '':'')) s',
-'          join tsk_team_members tm',
-'            on tm.team_member_id = to_number(s.column_value)',
-'          join tsk_users u',
-'            on u.user_id = tm.user_id',
-'         where regexp_like(s.column_value, ''^[0-9]+$'')',
-'           and tm.active_yn = ''Y''',
-'           and u.active_yn = ''Y''',
-'    ) loop',
-'        insert into tsk_task_assignees (',
-'            task_id,',
-'            team_member_id,',
-'            assignment_role,',
-'            allocated_pct',
-'        )',
-'        select :P11_TASK_ID,',
-'               m.team_member_id,',
-'               m.role_name,',
-'               null',
-'          from dual',
-'         where not exists (',
-'                 select 1',
-'                   from tsk_task_assignees ta',
-'                  where ta.task_id = :P11_TASK_ID',
-'                    and ta.team_member_id = m.team_member_id',
-'               );',
-'',
-'        l_assignee_names :=',
-'            case',
-'                when l_assignee_names is null then m.display_name',
-'                else l_assignee_names || '', '' || m.display_name',
-'            end;',
-'',
-'        if m.email is not null then',
-'            apex_mail.send(',
-'                p_to        => m.email,',
-'                p_from      => ''no-reply@oracle.com'',',
-'                p_subj      => ''Task assigned: '' || :P11_TITLE,',
-'                p_body      => ''You have been assigned a task in Task Center.'' || chr(10) || chr(10) ||',
-'                               ''Task: '' || :P11_TITLE || chr(10) ||',
-'                               ''Due Date: '' || :P11_DUE_DATE || chr(10) ||',
-'                               ''Open Task: '' || l_task_url,',
-'                p_body_html => ''<p>You have been assigned a task in Task Center.</p>'' ||',
-'                               ''<p><strong>Task:</strong> '' || apex_escape.html(:P11_TITLE) || ''<br>'' ||',
-'                               ''<strong>Due Date:</strong> '' || apex_escape.html(:P11_DUE_DATE) || ''</p>'' ||',
-'                               ''<p><a href="'' || apex_escape.html_attribute(l_task_url) || ''">Open Task</a></p>''',
-'            );',
-'',
-'            l_email_count := l_email_count + 1;',
-'        end if;',
-'    end loop;',
-'',
-'    if l_assignee_names is not null then',
-'        insert into tsk_change_log (',
-'            entity_name,',
-'            entity_pk,',
-'            task_id,',
-'            change_action,',
-'            change_note,',
-'            changed_by',
-'        ) values (',
-'            ''TASK'',',
-'            :P11_TASK_ID,',
-'            :P11_TASK_ID,',
-'            ''ASSIGN'',',
-'            ''Task assigned to: '' || l_assignee_names,',
-'            :APP_USER',
-'        );',
-'    end if;',
-'',
-'    if l_email_count > 0 then',
-'        apex_mail.push_queue;',
-'    end if;',
-'end;'))
+'                declare',
+'                    l_assignee_names varchar2(32767);',
+'                    l_task_url       varchar2(4000);',
+'                    l_email_count    pls_integer := 0;',
+'                ',
+'                    cursor c_task is',
+'                        select v.task_key,',
+'                               v.title,',
+'                               v.team_name,',
+'                               v.type_name,',
+'                               v.application_name,',
+'                               v.complexity_name,',
+'                               v.status_name,',
+'                               v.priority_code,',
+'                               v.start_date,',
+'                               v.due_date,',
+'                               v.estimated_hours,',
+'                               v.percent_complete,',
+'                               v.assignees,',
+'                               tg.topic_name,',
+'                               dbms_lob.substr(t.description, 4000, 1) as description_text',
+'                          from tsk_tasks t',
+'                          join tsk_v_task_list v',
+'                            on v.task_id = t.task_id',
+'                          left join tsk_topic_groups tg',
+'                            on tg.topic_group_id = t.topic_group_id',
+'                         where t.task_id = :P11_TASK_ID;',
+'                ',
+'                    l_task c_task%rowtype;',
+'                ',
+'                    function display_value (',
+'                        p_value in varchar2',
+'                    ) return varchar2 is',
+'                    begin',
+'                        return coalesce(p_value, ''Not specified'');',
+'                    end display_value;',
+'                ',
+'                    function text_line (',
+'                        p_label in varchar2,',
+'                        p_value in varchar2',
+'                    ) return varchar2 is',
+'                    begin',
+'                        return p_label || '': '' || display_value(p_value) || chr(10);',
+'                    end text_line;',
+'                ',
+'                    function html_row (',
+'                        p_label in varchar2,',
+'                        p_value in varchar2',
+'                    ) return varchar2 is',
+'                    begin',
+'                        return ''<tr><th align="left" style="padding:6px 10px;border-bottom:1px solid #e5e7eb;color:#374151;white-space:nowrap">'' ||',
+'                               apex_escape.html(p_label) ||',
+'                               ''</th><td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">'' ||',
+'                               apex_escape.html(display_value(p_value)) ||',
+'                               ''</td></tr>'';',
+'                    end html_row;',
+'                begin',
+'                    l_task_url := apex_mail.get_instance_url ||',
+'                                  apex_page.get_url(',
+'                                      p_application => :APP_ID,',
+'                                      p_page        => 12,',
+'                                      p_session     => 0,',
+'                                      p_clear_cache => ''12'',',
+'                                      p_items       => ''P12_TASK_ID'',',
+'                                      p_values      => :P11_TASK_ID,',
+'                                      p_plain_url   => true',
+'                                  );',
+'                ',
+'                    for m in (',
+'                        select distinct to_number(s.column_value) as team_member_id,',
+'                               u.display_name,',
+'                               tm.role_name',
+'                          from table(apex_string.split(:P11_ASSIGNEES, '':'')) s',
+'                          join tsk_team_members tm',
+'                            on tm.team_member_id = to_number(s.column_value)',
+'                          join tsk_users u',
+'                            on u.user_id = tm.user_id',
+'                         where regexp_like(s.column_value, ''^[0-9]+$'')',
+'                           and tm.active_yn = ''Y''',
+'                           and u.active_yn = ''Y''',
+'                    ) loop',
+'                        insert into tsk_task_assignees (',
+'                            task_id,',
+'                            team_member_id,',
+'                            assignment_role,',
+'                            allocated_pct',
+'                        )',
+'                        select :P11_TASK_ID,',
+'                               m.team_member_id,',
+'                               m.role_name,',
+'                               null',
+'                          from dual',
+'                         where not exists (',
+'                                 select 1',
+'                                   from tsk_task_assignees ta',
+'                                  where ta.task_id = :P11_TASK_ID',
+'                                    and ta.team_member_id = m.team_member_id',
+'                               );',
+'                ',
+'                        l_assignee_names :=',
+'                            case',
+'                                when l_assignee_names is null then m.display_name',
+'                                else l_assignee_names || '', '' || m.display_name',
+'                            end;',
+'                    end loop;',
+'                ',
+'                    open c_task;',
+'                    fetch c_task into l_task;',
+'                    close c_task;',
+'                ',
+'                    for m in (',
+'                        select max(display_name) as display_name,',
+'                               max(email) as email',
+'                          from (',
+'                                select u.display_name,',
+'                                       u.email',
+'                                  from (',
+'                                        select to_number(s.column_value) as team_member_id',
+'                                          from table(apex_string.split(:P11_ASSIGNEES, '':'')) s',
+'                                         where regexp_like(s.column_value, ''^[0-9]+$'')',
+'                                        union',
+'                                        select coalesce(t.created_by_member_id, t.owner_member_id)',
+'                                          from tsk_tasks t',
+'                                         where t.task_id = :P11_TASK_ID',
+'                                           and coalesce(t.created_by_member_id, t.owner_member_id) is not null',
+'                                        union',
+'                                        select min(tm_current.team_member_id)',
+'                                          from tsk_team_members tm_current',
+'                                          join tsk_users u_current',
+'                                            on u_current.user_id = tm_current.user_id',
+'                                         where tm_current.active_yn = ''Y''',
+'                                           and u_current.active_yn = ''Y''',
+'                                           and (',
+'                                               lower(u_current.username) = lower(:APP_USER)',
+'                                               or lower(u_current.email) = lower(:APP_USER)',
+'                                           )',
+'                                       ) r',
+'                                  join tsk_team_members tm',
+'                                    on tm.team_member_id = r.team_member_id',
+'                                  join tsk_users u',
+'                                    on u.user_id = tm.user_id',
+'                                 where r.team_member_id is not null',
+'                                   and tm.active_yn = ''Y''',
+'                                   and u.active_yn = ''Y''',
+'                                   and u.email is not null',
+'                               )',
+'                         group by lower(email)',
+'                    ) loop',
+'                        if m.email is not null then',
+'                            apex_mail.send(',
+'                                p_to        => m.email,',
+'                                p_from      => ''no-reply@oracle.com'',',
+'                                p_subj      => ''Task Created: '' || :P11_TITLE,',
+'                                p_body      => ''A task has been created in the Task Center.'' || chr(10) || chr(10) ||',
+'                                               text_line(''Task'', l_task.task_key || '' - '' || l_task.title) ||',
+'                                               text_line(''Team'', l_task.team_name) ||',
+'                                               text_line(''Assignees'', coalesce(l_task.assignees, l_assignee_names, ''Not Assigned'')) ||',
+'                                               text_line(''Application'', l_task.application_name) ||',
+'                                               text_line(''Status'', l_task.status_name) ||',
+'                                               text_line(''Task Type'', l_task.type_name) ||',
+'                                               text_line(''Priority'', l_task.priority_code) ||',
+'                                               text_line(''Complexity'', l_task.complexity_name) ||',
+'                                               text_line(''Topic Group'', l_task.topic_name) ||',
+'                                               text_line(''Start Date'', case when l_task.start_date is not null then to_char(l_task.start_date, ''DD-MON-YYYY'') end) ||',
+'                                               text_line(''Due Date'', case when l_task.due_date is not null then to_char(l_task.due_date, ''DD-MON-YYYY'') end) ||',
+'                                               text_line(''Estimated Hours'', case when l_task.estimated_hours is not null then to_char(l_task.estimated_hours) end) ||',
+'                                               text_line(''Percent Complete'', to_char(l_task.percent_complete) || ''%'') ||',
+'                                               case when l_task.description_text is not null',
+'                                                    then chr(10) || ''Description:'' || chr(10) || l_task.description_text || chr(10) || chr(10)',
+'                                               end ||',
+'                                               ''Open Task: '' || l_task_url,',
+'                                p_body_html => ''<div style="font-family:Arial,sans-serif;color:#172033;line-height:1.45">'' ||',
+'                                               ''<p>A task has been created in the Task Center.</p>'' ||',
+'                                               ''<table role="presentation" style="border-collapse:collapse;margin:12px 0;width:100%;max-width:720px">'' ||',
+'                                               html_row(''Task'', l_task.task_key || '' - '' || l_task.title) ||',
+'                                               html_row(''Team'', l_task.team_name) ||',
+'                                               html_row(''Assignees'', coalesce(l_task.assignees, l_assignee_names, ''Not Assigned'')) ||',
+'                                               html_row(''Application'', l_task.application_name) ||',
+'                                               html_row(''Status'', l_task.status_name) ||',
+'                                               html_row(''Task Type'', l_task.type_name) ||',
+'                                               html_row(''Priority'', l_task.priority_code) ||',
+'                                               html_row(''Complexity'', l_task.complexity_name) ||',
+'                                               html_row(''Topic Group'', l_task.topic_name) ||',
+'                                               html_row(''Start Date'', case when l_task.start_date is not null then to_char(l_task.start_date, ''DD-MON-YYYY'') end) ||',
+'                                               html_row(''Due Date'', case when l_task.due_date is not null then to_char(l_task.due_date, ''DD-MON-YYYY'') end) ||',
+'                                               html_row(''Estimated Hours'', case when l_task.estimated_hours is not null then to_char(l_task.estimated_hours) end) ||',
+'                                               html_row(''Percent Complete'', to_char(l_task.percent_complete) || ''%'') ||',
+'                                               ''</table>'' ||',
+'                                               case when l_task.description_text is not null',
+'                                                    then ''<div style="margin:12px 0"><strong>Description</strong><div style="margin-top:4px;padding:10px;border:1px solid #e5e7eb;background:#f9fafb">'' ||',
+'                                                         apex_escape.html(l_task.description_text) ||',
+'                                                         ''</div></div>''',
+'                                               end ||',
+'                                               ''<p><a href="'' || apex_escape.html_attribute(l_task_url) || ''">Open Task</a></p>''',
+'                                               || ''</div>''',
+'                            );',
+'                ',
+'                            l_email_count := l_email_count + 1;',
+'                        end if;',
+'                    end loop;',
+'                ',
+'                    if l_assignee_names is not null then',
+'                        insert into tsk_change_log (',
+'                            entity_name,',
+'                            entity_pk,',
+'                            task_id,',
+'                            change_action,',
+'                            change_note,',
+'                            changed_by',
+'                        ) values (',
+'                            ''TASK'',',
+'                            :P11_TASK_ID,',
+'                            :P11_TASK_ID,',
+'                            ''ASSIGN'',',
+'                            ''Task assigned to: '' || l_assignee_names,',
+'                            :APP_USER',
+'                        );',
+'                    end if;',
+'                ',
+'                    if l_email_count > 0 then',
+'                        apex_mail.push_queue;',
+'                    end if;',
+'                end;'))
 ,p_process_clob_language=>'PLSQL'
 ,p_error_display_location=>'INLINE_IN_NOTIFICATION'
 ,p_process_when_button_id=>wwv_flow_imp.id(16507626179047762)
@@ -8749,33 +8922,53 @@ wwv_flow_imp_page.create_page_process(
 ,p_process_name=>'Create Manual Topic'
 ,p_static_id=>'create-manual-topic'
 ,p_process_sql_clob=>wwv_flow_string.join(wwv_flow_t_varchar2(
-'declare',
-'    l_topic_name tsk_topic_groups.topic_name%type := trim(:P11_TOPIC_GROUP_MANUAL);',
-'begin',
-'    if l_topic_name is not null then',
-'        begin',
-'            insert into tsk_topic_groups (',
-'                topic_name,',
-'                active_yn',
-'            ) values (',
-'                l_topic_name,',
-'                ''Y''',
-'            )',
-'            returning topic_group_id into :P11_TOPIC_GROUP_ID;',
-'        exception',
-'            when dup_val_on_index then',
-'                select topic_group_id',
-'                  into :P11_TOPIC_GROUP_ID',
-'                  from tsk_topic_groups',
-'                 where upper(topic_name) = upper(l_topic_name)',
-'                 fetch first 1 row only;',
-'',
-'                update tsk_topic_groups',
-'                   set active_yn = ''Y''',
-'                 where topic_group_id = :P11_TOPIC_GROUP_ID;',
-'        end;',
-'    end if;',
-'end;'))
+'                declare',
+'                    l_topic_name tsk_topic_groups.topic_name%type;',
+'                begin',
+'                    l_topic_name := coalesce(',
+'                        nullif(trim(:P11_TOPIC_GROUP_MANUAL), ''''),',
+'                        case',
+'                            when :P11_TOPIC_GROUP_ID is not null',
+'                             and not regexp_like(:P11_TOPIC_GROUP_ID, ''^[0-9]+$'')',
+'                            then trim(:P11_TOPIC_GROUP_ID)',
+'                        end',
+'                    );',
+'                ',
+'                    if l_topic_name is not null then',
+'                        begin',
+'                            select topic_group_id',
+'                              into :P11_TOPIC_GROUP_ID',
+'                              from tsk_topic_groups',
+'                             where upper(topic_name) = upper(l_topic_name)',
+'                             fetch first 1 row only;',
+'                        exception',
+'                            when no_data_found then',
+'                                begin',
+'                                    insert into tsk_topic_groups (',
+'                                        topic_name,',
+'                                        active_yn',
+'                                    ) values (',
+'                                        l_topic_name,',
+'                                        ''Y''',
+'                                    )',
+'                                    returning topic_group_id into :P11_TOPIC_GROUP_ID;',
+'                                exception',
+'                                    when dup_val_on_index then',
+'                                        select topic_group_id',
+'                                          into :P11_TOPIC_GROUP_ID',
+'                                          from tsk_topic_groups',
+'                                         where upper(topic_name) = upper(l_topic_name)',
+'                                         fetch first 1 row only;',
+'                                end;',
+'                        end;',
+'                ',
+'                        update tsk_topic_groups',
+'                           set active_yn = ''Y''',
+'                         where topic_group_id = :P11_TOPIC_GROUP_ID;',
+'                ',
+'                        :P11_TOPIC_GROUP_MANUAL := null;',
+'                    end if;',
+'                end;'))
 ,p_process_clob_language=>'PLSQL'
 ,p_error_display_location=>'INLINE_IN_NOTIFICATION'
 ,p_process_when=>'CREATE,SAVE'
@@ -10147,7 +10340,7 @@ wwv_flow_imp_page.create_page_item(
 ,p_field_template=>1610598304472262251
 ,p_item_template_options=>'#DEFAULT#'
 ,p_is_persistent=>'N'
-,p_help_text=>'You can select an existing topic group of type a new one which will add it to the topic group list for future tasks.'
+,p_help_text=>'You can select an existing topic group or type a new topic group name. The new topic group will be added to the topic group list for future tasks.'
 ,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
   'case_sensitive', 'N',
   'fetch_on_search', 'N',
@@ -10953,83 +11146,185 @@ wwv_flow_imp_page.create_page_process(
 ,p_process_name=>'Sync Assignees'
 ,p_static_id=>'sync-assignees'
 ,p_process_sql_clob=>wwv_flow_string.join(wwv_flow_t_varchar2(
-'declare',
-'    l_added_count   pls_integer := 0;',
-'    l_removed_count pls_integer := 0;',
-'begin',
-'    update tsk_task_assignees ta',
-'       set active_yn = ''N'',',
-'           unassigned_on = trunc(sysdate),',
-'           updated_at = systimestamp,',
-'           updated_by = :APP_USER',
-'     where ta.task_id = :P12_TASK_ID',
-'       and ta.active_yn = ''Y''',
-'       and not exists (',
-'               select 1',
-'                 from table(apex_string.split(nvl(:P12_ASSIGNEES, ''~''), '':'')) s',
-'                where s.column_value = to_char(ta.team_member_id)',
-'           );',
-'',
-'    l_removed_count := sql%rowcount;',
-'',
-'    for m in (',
-'        select distinct to_number(column_value) as team_member_id',
-'          from table(apex_string.split(:P12_ASSIGNEES, '':''))',
-'         where regexp_like(column_value, ''^[0-9]+$'')',
-'    ) loop',
-'        update tsk_task_assignees',
-'           set active_yn = ''Y'',',
-'               unassigned_on = null,',
-'               updated_at = systimestamp,',
-'               updated_by = :APP_USER',
-'         where task_id = :P12_TASK_ID',
-'           and team_member_id = m.team_member_id',
-'           and active_yn = ''N'';',
-'',
-'        if sql%rowcount = 0 then',
-'            insert into tsk_task_assignees (',
-'                task_id,',
-'                team_member_id,',
-'                assignment_role,',
-'                allocated_pct',
-'            )',
-'            select :P12_TASK_ID,',
-'                   tm.team_member_id,',
-'                   tm.role_name,',
-'                   null',
-'              from tsk_team_members tm',
-'             where tm.team_member_id = m.team_member_id',
-'               and not exists (',
-'                       select 1',
-'                         from tsk_task_assignees ta',
-'                        where ta.task_id = :P12_TASK_ID',
-'                          and ta.team_member_id = m.team_member_id',
-'                   );',
-'',
-'            l_added_count := l_added_count + sql%rowcount;',
-'        else',
-'            l_added_count := l_added_count + sql%rowcount;',
-'        end if;',
-'    end loop;',
-'',
-'    if l_added_count > 0 or l_removed_count > 0 then',
-'        insert into tsk_change_log (',
-'            entity_name,',
-'            entity_pk,',
-'            task_id,',
-'            change_action,',
-'            change_note,',
-'            changed_by',
-'        ) values (',
-'            ''TASK'',',
-'            :P12_TASK_ID,',
-'            :P12_TASK_ID,',
-'            ''UPDATE'',',
-'            ''Assignees updated: '' || l_added_count || '' added, '' || l_removed_count || '' removed'',',
-'            :APP_USER',
-'        );',
-'    end if;',
-'end;'))
+'                declare',
+'                    l_added_count   pls_integer := 0;',
+'                    l_removed_count pls_integer := 0;',
+'                    l_previous_assignee_ids varchar2(32767);',
+'                    l_previous_assignees varchar2(32767);',
+'                    l_new_assignees      varchar2(32767);',
+'                    l_task_title         tsk_tasks.title%type;',
+'                    l_task_key           tsk_tasks.task_key%type;',
+'                    l_task_url           varchar2(4000);',
+'                begin',
+'                    select listagg(u.display_name, '', '') within group (order by u.display_name)',
+'                      into l_previous_assignees',
+'                      from tsk_task_assignees ta',
+'                      join tsk_team_members tm',
+'                        on tm.team_member_id = ta.team_member_id',
+'                      join tsk_users u',
+'                        on u.user_id = tm.user_id',
+'                     where ta.task_id = :P12_TASK_ID',
+'                       and ta.active_yn = ''Y''',
+'                       and tm.active_yn = ''Y''',
+'                       and u.active_yn = ''Y'';',
+'                ',
+'                    select listagg(ta.team_member_id, '':'') within group (order by ta.team_member_id)',
+'                      into l_previous_assignee_ids',
+'                      from tsk_task_assignees ta',
+'                     where ta.task_id = :P12_TASK_ID',
+'                       and ta.active_yn = ''Y'';',
+'                ',
+'                    select listagg(u.display_name, '', '') within group (order by u.display_name)',
+'                      into l_new_assignees',
+'                      from (',
+'                            select distinct to_number(column_value) as team_member_id',
+'                              from table(apex_string.split(nvl(:P12_ASSIGNEES, ''~''), '':''))',
+'                             where regexp_like(column_value, ''^[0-9]+$'')',
+'                           ) s',
+'                      join tsk_team_members tm',
+'                        on tm.team_member_id = s.team_member_id',
+'                      join tsk_users u',
+'                        on u.user_id = tm.user_id',
+'                     where tm.active_yn = ''Y''',
+'                       and u.active_yn = ''Y'';',
+'                ',
+'                    select task_key,',
+'                           title',
+'                      into l_task_key,',
+'                           l_task_title',
+'                      from tsk_tasks',
+'                     where task_id = :P12_TASK_ID;',
+'                ',
+'                    l_task_url := apex_mail.get_instance_url ||',
+'                                  apex_page.get_url(',
+'                                      p_application => :APP_ID,',
+'                                      p_page        => 12,',
+'                                      p_session     => 0,',
+'                                      p_clear_cache => ''12'',',
+'                                      p_items       => ''P12_TASK_ID'',',
+'                                      p_values      => :P12_TASK_ID,',
+'                                      p_plain_url   => true',
+'                                  );',
+'                ',
+'                    update tsk_task_assignees ta',
+'                       set active_yn = ''N'',',
+'                           unassigned_on = trunc(sysdate),',
+'                           updated_at = systimestamp,',
+'                           updated_by = :APP_USER',
+'                     where ta.task_id = :P12_TASK_ID',
+'                       and ta.active_yn = ''Y''',
+'                       and not exists (',
+'                               select 1',
+'                                 from table(apex_string.split(nvl(:P12_ASSIGNEES, ''~''), '':'')) s',
+'                                where s.column_value = to_char(ta.team_member_id)',
+'                           );',
+'                ',
+'                    l_removed_count := sql%rowcount;',
+'                ',
+'                    for m in (',
+'                        select distinct to_number(column_value) as team_member_id',
+'                          from table(apex_string.split(:P12_ASSIGNEES, '':''))',
+'                         where regexp_like(column_value, ''^[0-9]+$'')',
+'                    ) loop',
+'                        update tsk_task_assignees',
+'                           set active_yn = ''Y'',',
+'                               unassigned_on = null,',
+'                               updated_at = systimestamp,',
+'                               updated_by = :APP_USER',
+'                         where task_id = :P12_TASK_ID',
+'                           and team_member_id = m.team_member_id',
+'                           and active_yn = ''N'';',
+'                ',
+'                        if sql%rowcount = 0 then',
+'                            insert into tsk_task_assignees (',
+'                                task_id,',
+'                                team_member_id,',
+'                                assignment_role,',
+'                                allocated_pct',
+'                            )',
+'                            select :P12_TASK_ID,',
+'                                   tm.team_member_id,',
+'                                   tm.role_name,',
+'                                   null',
+'                              from tsk_team_members tm',
+'                             where tm.team_member_id = m.team_member_id',
+'                               and not exists (',
+'                                       select 1',
+'                                         from tsk_task_assignees ta',
+'                                        where ta.task_id = :P12_TASK_ID',
+'                                          and ta.team_member_id = m.team_member_id',
+'                                   );',
+'                ',
+'                            l_added_count := l_added_count + sql%rowcount;',
+'                        else',
+'                            l_added_count := l_added_count + sql%rowcount;',
+'                        end if;',
+'                    end loop;',
+'                ',
+'                    if l_added_count > 0 or l_removed_count > 0 then',
+'                        insert into tsk_change_log (',
+'                            entity_name,',
+'                            entity_pk,',
+'                            task_id,',
+'                            change_action,',
+'                            change_note,',
+'                            changed_by',
+'                        ) values (',
+'                            ''TASK'',',
+'                            :P12_TASK_ID,',
+'                            :P12_TASK_ID,',
+'                            ''UPDATE'',',
+'                            ''Assignees updated: '' || l_added_count || '' added, '' || l_removed_count || '' removed'',',
+'                            :APP_USER',
+'                        );',
+'                ',
+'                        if nvl(l_previous_assignees, ''Not Assigned'') <> nvl(l_new_assignees, ''Not Assigned'') then',
+'                            for r in (',
+'                                select distinct u.email,',
+'                                       u.display_name',
+'                                  from (',
+'                                        select distinct to_number(column_value) as team_member_id',
+'                                          from table(apex_string.split(nvl(l_previous_assignee_ids, ''~''), '':''))',
+'                                         where regexp_like(column_value, ''^[0-9]+$'')',
+'                                        union',
+'                                        select distinct to_number(column_value) as team_member_id',
+'                                          from table(apex_string.split(nvl(:P12_ASSIGNEES, ''~''), '':''))',
+'                                         where regexp_like(column_value, ''^[0-9]+$'')',
+'                                       ) recipients',
+'                                  join tsk_team_members tm',
+'                                    on tm.team_member_id = recipients.team_member_id',
+'                                  join tsk_users u',
+'                                    on u.user_id = tm.user_id',
+'                                 where tm.active_yn = ''Y''',
+'                                   and u.active_yn = ''Y''',
+'                                   and u.email is not null',
+'                            ) loop',
+'                                apex_mail.send(',
+'                                    p_to        => r.email,',
+'                                    p_from      => ''no-reply@oracle.com'',',
+'                                    p_subj      => ''Task has been reassigned'',',
+'                                    p_body      => ''The task "'' || l_task_title || ''" has been reassigned from '' ||',
+'                                                   nvl(l_previous_assignees, ''Not Assigned'') ||',
+'                                                   '' to '' || nvl(l_new_assignees, ''Not Assigned'') || ''.'' ||',
+'                                                   chr(10) || chr(10) ||',
+'                                                   ''Open Task: '' || l_task_url,',
+'                                    p_body_html => ''<div style="font-family:Arial,sans-serif;color:#172033;line-height:1.45">'' ||',
+'                                                   ''<p>The task <a href="'' || apex_escape.html_attribute(l_task_url) || ''">'' ||',
+'                                                   apex_escape.html(l_task_key || '' - '' || l_task_title) ||',
+'                                                   ''</a> has been reassigned from <strong>'' ||',
+'                                                   apex_escape.html(nvl(l_previous_assignees, ''Not Assigned'')) ||',
+'                                                   ''</strong> to <strong>'' ||',
+'                                                   apex_escape.html(nvl(l_new_assignees, ''Not Assigned'')) ||',
+'                                                   ''</strong>.</p>'' ||',
+'                                                   ''<p><a href="'' || apex_escape.html_attribute(l_task_url) || ''">Open Task</a></p>'' ||',
+'                                                   ''</div>''',
+'                                );',
+'                            end loop;',
+'                ',
+'                            apex_mail.push_queue;',
+'                        end if;',
+'                    end if;',
+'                end;'))
 ,p_process_clob_language=>'PLSQL'
 ,p_error_display_location=>'INLINE_IN_NOTIFICATION'
 ,p_process_when=>'SAVE_TASK,POST_UPDATE'
@@ -13538,8 +13833,9 @@ wwv_flow_imp_page.create_report_region(
 '  cross join selected_schedule ss',
 ' order by case es.schedule_code',
 '              when ''DAILY_MEMBER_STATUS'' then 1',
-'              when ''MONTHLY_TEAM_PROGRESS'' then 2',
-'              when ''WEEKLY_TEAM_SUMMARY'' then 3',
+'              when ''DAILY_UNASSIGNED_SUBMITTER'' then 2',
+'              when ''MONTHLY_TEAM_PROGRESS'' then 3',
+'              when ''WEEKLY_TEAM_SUMMARY'' then 4',
 '              else 9',
 '          end,',
 '          es.schedule_name'))
@@ -13663,7 +13959,7 @@ wwv_flow_imp_page.create_page_plug(
 ,p_parent_plug_id=>wwv_flow_imp.id(40520886906990472)
 ,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
 ,p_plug_template=>4073835273271169698
-,p_plug_display_sequence=>30
+,p_plug_display_sequence=>50
 ,p_plug_display_point=>'SUB_REGIONS'
 ,p_plug_item_display_point=>'ABOVE'
 ,p_location=>null
@@ -13681,7 +13977,7 @@ wwv_flow_imp_page.create_page_plug(
 ,p_parent_plug_id=>wwv_flow_imp.id(40520886906990472)
 ,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
 ,p_plug_template=>4073835273271169698
-,p_plug_display_sequence=>40
+,p_plug_display_sequence=>60
 ,p_plug_display_point=>'SUB_REGIONS'
 ,p_plug_item_display_point=>'ABOVE'
 ,p_location=>null
@@ -13716,6 +14012,50 @@ wwv_flow_imp_page.create_page_plug(
 ,p_ajax_items_to_submit=>'P40_EMAIL_SCHEDULE_ID,P40_PREVIEW_TEAM_ID'
 ,p_plug_display_condition_type=>'EXPRESSION'
 ,p_plug_display_when_condition=>'tsk_daily_email_pkg.selected_schedule_is(:P40_EMAIL_SCHEDULE_ID, ''MONTHLY_TEAM_PROGRESS'')'
+,p_plug_display_when_cond2=>'PLSQL'
+);
+wwv_flow_imp_page.create_page_plug(
+ p_id=>wwv_flow_imp.id(9994001001)
+,p_plug_name=>'Daily Unassigned Task Submitter Reminder'
+,p_static_id=>'unassigned-submitter-controls'
+,p_parent_plug_id=>wwv_flow_imp.id(40520886906990472)
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_plug_template=>4073835273271169698
+,p_plug_display_sequence=>30
+,p_plug_display_point=>'SUB_REGIONS'
+,p_plug_item_display_point=>'ABOVE'
+,p_location=>null
+,p_plug_display_condition_type=>'EXPRESSION'
+,p_plug_display_when_condition=>'tsk_daily_email_pkg.selected_schedule_is(:P40_EMAIL_SCHEDULE_ID, ''DAILY_UNASSIGNED_SUBMITTER'')'
+,p_plug_display_when_cond2=>'PLSQL'
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'output_as', 'TEXT',
+  'show_line_breaks', 'Y')).to_clob
+);
+wwv_flow_imp_page.create_page_plug(
+ p_id=>wwv_flow_imp.id(9994001002)
+,p_plug_name=>'Submitter Reminder Preview'
+,p_static_id=>'unassigned-submitter-email-preview'
+,p_parent_plug_id=>wwv_flow_imp.id(40520886906990472)
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_plug_template=>4073835273271169698
+,p_plug_display_sequence=>40
+,p_plug_display_point=>'SUB_REGIONS'
+,p_plug_item_display_point=>'ABOVE'
+,p_location=>null
+,p_function_body_language=>'PLSQL'
+,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'begin',
+'    return tsk_daily_email_pkg.unassigned_submitter_reminder_html(',
+'        :P40_EMAIL_SCHEDULE_ID,',
+'        :P40_PREVIEW_SUBMITTER_MEMBER_ID',
+'    );',
+'end;'))
+,p_lazy_loading=>false
+,p_plug_source_type=>'NATIVE_DYNAMIC_CONTENT'
+,p_ajax_items_to_submit=>'P40_EMAIL_SCHEDULE_ID,P40_PREVIEW_SUBMITTER_MEMBER_ID'
+,p_plug_display_condition_type=>'EXPRESSION'
+,p_plug_display_when_condition=>'tsk_daily_email_pkg.selected_schedule_is(:P40_EMAIL_SCHEDULE_ID, ''DAILY_UNASSIGNED_SUBMITTER'')'
 ,p_plug_display_when_cond2=>'PLSQL'
 );
 wwv_flow_imp_page.create_page_button(
@@ -13785,6 +14125,77 @@ wwv_flow_imp_page.create_page_item(
 '           )',
 '       )',
 ' order by u.display_name'))
+,p_colspan=>6
+,p_field_alignment=>'LEFT-CENTER'
+,p_field_template=>1610598304472262251
+,p_item_template_options=>'#DEFAULT#'
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'case_sensitive', 'N',
+  'fetch_on_search', 'N',
+  'infinite_scroll', 'Y',
+  'match_type', 'CONTAINS',
+  'min_chars', '0')).to_clob
+);
+wwv_flow_imp_page.create_page_item(
+ p_id=>wwv_flow_imp.id(9994001003)
+,p_name=>'P40_PREVIEW_SUBMITTER_MEMBER_ID'
+,p_item_sequence=>10
+,p_item_plug_id=>wwv_flow_imp.id(9994001001)
+,p_prompt=>'Preview Submitter'
+,p_source_type=>'ALWAYS_NULL'
+,p_display_as=>'NATIVE_SELECT_ONE'
+,p_lov=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'select display_name || '' ('' || recipient_email || '')'' as display_value,',
+'       team_member_id as return_value',
+'  from (',
+'        select max(display_name) as display_name,',
+'               recipient_email,',
+'               min(team_member_id) as team_member_id',
+'          from (',
+'                select distinct',
+'                       t.task_id,',
+'                       coalesce(',
+'                           case when u_submitter.active_yn = ''Y'' then u_submitter.email end,',
+'                           case when u_created.active_yn = ''Y'' then u_created.email end',
+'                       ) as recipient_email,',
+'                       coalesce(',
+'                           case when u_submitter.active_yn = ''Y'' then u_submitter.display_name end,',
+'                           case when u_created.active_yn = ''Y'' then u_created.display_name end,',
+'                           t.created_by',
+'                       ) as display_name,',
+'                       coalesce(',
+'                           case when u_submitter.active_yn = ''Y'' then tm_submitter.team_member_id end,',
+'                           case when u_created.active_yn = ''Y'' then tm_created.team_member_id end',
+'                       ) as team_member_id',
+'                  from tsk_tasks t',
+'                  join tsk_statuses st',
+'                    on st.status_id = t.status_id',
+'                  join tsk_email_schedules es',
+'                    on es.team_id = t.team_id',
+'                  left join tsk_team_members tm_submitter',
+'                    on tm_submitter.team_member_id = t.created_by_member_id',
+'                  left join tsk_users u_submitter',
+'                    on u_submitter.user_id = tm_submitter.user_id',
+'                  left join tsk_users u_created',
+'                    on lower(u_created.email) = lower(t.created_by)',
+'                  left join tsk_team_members tm_created',
+'                    on tm_created.user_id = u_created.user_id',
+'                   and tm_created.team_id = t.team_id',
+'                   and tm_created.active_yn = ''Y''',
+'                 where es.email_schedule_id = :P40_EMAIL_SCHEDULE_ID',
+'                   and st.is_done_yn = ''N''',
+'                   and not exists (',
+'                           select 1',
+'                             from tsk_task_assignees ta',
+'                            where ta.task_id = t.task_id',
+'                              and ta.active_yn = ''Y''',
+'                       )',
+'               )',
+'         where recipient_email is not null',
+'           and team_member_id is not null',
+'         group by recipient_email',
+'       )',
+' order by display_name'))
 ,p_colspan=>6
 ,p_field_alignment=>'LEFT-CENTER'
 ,p_field_template=>1610598304472262251
@@ -13919,6 +14330,43 @@ wwv_flow_imp_page.create_page_da_action(
 ,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
   'maintain_pagination', 'N')).to_clob
 );
+wwv_flow_imp_page.create_page_da_action(
+ p_id=>wwv_flow_imp.id(9994001006)
+,p_event_id=>wwv_flow_imp.id(40521709445990474)
+,p_event_result=>'TRUE'
+,p_action_sequence=>25
+,p_execute_on_page_init=>'N'
+,p_static_id=>'refresh-unassigned-submitter-preview'
+,p_action=>'NATIVE_REFRESH'
+,p_affected_elements_type=>'REGION'
+,p_affected_region_id=>wwv_flow_imp.id(9994001002)
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'maintain_pagination', 'N')).to_clob
+);
+wwv_flow_imp_page.create_page_da_event(
+ p_id=>wwv_flow_imp.id(9994001004)
+,p_name=>'Refresh Unassigned Submitter Email Preview'
+,p_static_id=>'refresh-unassigned-submitter-email-preview'
+,p_event_sequence=>15
+,p_triggering_element_type=>'ITEM'
+,p_triggering_element=>'P40_PREVIEW_SUBMITTER_MEMBER_ID'
+,p_bind_type=>'bind'
+,p_execution_type=>'IMMEDIATE'
+,p_bind_event_type=>'change'
+);
+wwv_flow_imp_page.create_page_da_action(
+ p_id=>wwv_flow_imp.id(9994001005)
+,p_event_id=>wwv_flow_imp.id(9994001004)
+,p_event_result=>'TRUE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'N'
+,p_static_id=>'refresh-preview'
+,p_action=>'NATIVE_REFRESH'
+,p_affected_elements_type=>'REGION'
+,p_affected_region_id=>wwv_flow_imp.id(9994001002)
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'maintain_pagination', 'N')).to_clob
+);
 end;
 /
 prompt --application/pages/page_00041
@@ -14013,7 +14461,7 @@ wwv_flow_imp_page.create_page_button(
 ,p_button_image_alt=>'Send Now'
 ,p_button_position=>'NEXT'
 ,p_warn_on_unsaved_changes=>null
-,p_button_condition=>':P41_SCHEDULE_CODE = ''DAILY_MEMBER_STATUS'''
+,p_button_condition=>':P41_SCHEDULE_CODE in (''DAILY_MEMBER_STATUS'',''DAILY_UNASSIGNED_SUBMITTER'')'
 ,p_button_condition2=>'PLSQL'
 ,p_button_condition_type=>'EXPRESSION'
 ,p_grid_new_row=>'Y'
@@ -14157,7 +14605,7 @@ wwv_flow_imp_page.create_page_item(
 ,p_begin_on_new_line=>'N'
 ,p_colspan=>6
 ,p_field_alignment=>'LEFT-CENTER'
-,p_display_when=>':P41_SCHEDULE_CODE <> ''DAILY_MEMBER_STATUS'''
+,p_display_when=>':P41_SCHEDULE_CODE not in (''DAILY_MEMBER_STATUS'',''DAILY_UNASSIGNED_SUBMITTER'')'
 ,p_display_when2=>'PLSQL'
 ,p_display_when_type=>'EXPRESSION'
 ,p_field_template=>1610598484065263269
@@ -14468,13 +14916,17 @@ wwv_flow_imp_page.create_page_process(
 ,p_static_id=>'send-daily-email-now'
 ,p_process_sql_clob=>wwv_flow_string.join(wwv_flow_t_varchar2(
 'begin',
-'    tsk_daily_email_pkg.send_daily_schedule(:P41_EMAIL_SCHEDULE_ID);',
+'    if :P41_SCHEDULE_CODE = ''DAILY_UNASSIGNED_SUBMITTER'' then',
+'        tsk_daily_email_pkg.send_unassigned_submitter_reminders(:P41_EMAIL_SCHEDULE_ID);',
+'    else',
+'        tsk_daily_email_pkg.send_daily_schedule(:P41_EMAIL_SCHEDULE_ID);',
+'    end if;',
 'end;'))
 ,p_process_clob_language=>'PLSQL'
 ,p_error_display_location=>'INLINE_IN_NOTIFICATION'
 ,p_process_when=>'SEND_NOW'
 ,p_process_when_type=>'REQUEST_IN_CONDITION'
-,p_process_success_message=>'Daily email queued'
+,p_process_success_message=>'Email queued'
 ,p_internal_uid=>9990004100000002
 );
 wwv_flow_imp_page.create_page_process(
@@ -14988,7 +15440,14 @@ wwv_flow_imp_page.create_page_plug(
 ,p_plug_item_display_point=>'ABOVE'
 ,p_query_type=>'SQL'
 ,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
-'select ''STATUS'' ref_type,',
+'select apex_page.get_url(',
+'           p_page => 61,',
+'           p_clear_cache => ''61'',',
+'           p_items => ''P61_REF_TYPE,P61_REF_ID'',',
+'           p_values => ''STATUS,'' || status_id',
+'       ) edit_url,',
+'       ''STATUS'' ref_type,',
+'       status_id ref_id,',
 '       status_code code,',
 '       status_name name,',
 '       display_seq,',
@@ -14997,7 +15456,14 @@ wwv_flow_imp_page.create_page_plug(
 '       is_done_yn flag_2',
 '  from tsk_statuses',
 'union all',
-'select ''TASK_TYPE'' ref_type,',
+'select apex_page.get_url(',
+'           p_page => 61,',
+'           p_clear_cache => ''61'',',
+'           p_items => ''P61_REF_TYPE,P61_REF_ID'',',
+'           p_values => ''TASK_TYPE,'' || type_id',
+'       ) edit_url,',
+'       ''TASK_TYPE'' ref_type,',
+'       type_id ref_id,',
 '       type_code code,',
 '       type_name name,',
 '       display_seq,',
@@ -15006,7 +15472,14 @@ wwv_flow_imp_page.create_page_plug(
 '       cast(null as varchar2(1)) flag_2',
 '  from tsk_task_types',
 'union all',
-'select ''COMPLEXITY'' ref_type,',
+'select apex_page.get_url(',
+'           p_page => 61,',
+'           p_clear_cache => ''61'',',
+'           p_items => ''P61_REF_TYPE,P61_REF_ID'',',
+'           p_values => ''COMPLEXITY,'' || complexity_id',
+'       ) edit_url,',
+'       ''COMPLEXITY'' ref_type,',
+'       complexity_id ref_id,',
 '       complexity_code code,',
 '       complexity_name name,',
 '       display_seq,',
@@ -15050,10 +15523,12 @@ wwv_flow_imp_page.create_worksheet(
 ,p_pagination_display_pos=>'BOTTOM_RIGHT'
 ,p_report_list_mode=>'TABS'
 ,p_lazy_loading=>false
-,p_show_detail_link=>'N'
+,p_show_detail_link=>'C'
 ,p_show_notify=>'Y'
 ,p_download_formats=>'CSV:HTML:XLSX:PDF'
 ,p_enable_mail_download=>'Y'
+,p_detail_link=>'f?p=&APP_ID.:61:&SESSION.::&DEBUG.:61:P61_REF_TYPE,P61_REF_ID:#REF_TYPE#,#REF_ID#'
+,p_detail_link_text=>'<span role="img" aria-label="Edit" class="fa fa-edit" title="Edit"></span>'
 ,p_internal_uid=>16437324696744654
 );
 wwv_flow_imp_page.create_worksheet_column(
@@ -15091,6 +15566,19 @@ wwv_flow_imp_page.create_worksheet_column(
 ,p_available_clientside=>'N'
 );
 wwv_flow_imp_page.create_worksheet_column(
+ p_id=>wwv_flow_imp.id(6100006000004001)
+,p_db_column_name=>'EDIT_URL'
+,p_display_order=>5
+,p_column_identifier=>'H'
+,p_column_label=>' '
+,p_column_html_expression=>'<a href="#EDIT_URL#" class="t-Button t-Button--noLabel t-Button--icon t-Button--tiny" title="Edit reference data" aria-label="Edit reference data"><span class="fa fa-edit" aria-hidden="true"></span></a>'
+,p_column_type=>'STRING'
+,p_display_text_as=>'HIDDEN_ESCAPE_SC'
+,p_heading_alignment=>'LEFT'
+,p_use_as_row_header=>'N'
+,p_available_clientside=>'N'
+);
+wwv_flow_imp_page.create_worksheet_column(
  p_id=>wwv_flow_imp.id(39330281815332678)
 ,p_db_column_name=>'FLAG_1'
 ,p_display_order=>60
@@ -15124,6 +15612,19 @@ wwv_flow_imp_page.create_worksheet_column(
 ,p_available_clientside=>'N'
 );
 wwv_flow_imp_page.create_worksheet_column(
+ p_id=>wwv_flow_imp.id(6100006000004002)
+,p_db_column_name=>'REF_ID'
+,p_display_order=>6
+,p_column_identifier=>'I'
+,p_column_label=>'Reference Id'
+,p_column_type=>'NUMBER'
+,p_display_text_as=>'HIDDEN_ESCAPE_SC'
+,p_heading_alignment=>'RIGHT'
+,p_column_alignment=>'RIGHT'
+,p_use_as_row_header=>'N'
+,p_available_clientside=>'N'
+);
+wwv_flow_imp_page.create_worksheet_column(
  p_id=>wwv_flow_imp.id(39329760961332677)
 ,p_db_column_name=>'REF_TYPE'
 ,p_display_order=>10
@@ -15142,6 +15643,655 @@ wwv_flow_imp_page.create_worksheet_rpt(
 ,p_status=>'PUBLIC'
 ,p_is_default=>'Y'
 ,p_report_columns=>'REF_TYPE:CODE:NAME:DISPLAY_SEQ:ACTIVE_YN:FLAG_1:FLAG_2'
+);
+wwv_flow_imp_page.create_page_plug(
+ p_id=>wwv_flow_imp.id(6100006000003002)
+,p_plug_name=>'Reference Data Actions'
+,p_static_id=>'reference-data-actions'
+,p_region_template_options=>'#DEFAULT#'
+,p_plug_template=>2127905476394690047
+,p_plug_display_sequence=>5
+,p_plug_item_display_point=>'ABOVE'
+,p_location=>null
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'output_as', 'TEXT',
+  'show_line_breaks', 'Y')).to_clob
+);
+wwv_flow_imp_page.create_page_plug(
+ p_id=>wwv_flow_imp.id(6100006000003001)
+,p_plug_name=>'Reference Data Title'
+,p_static_id=>'reference-data-title'
+,p_title=>'Reference Data'
+,p_region_template_options=>'#DEFAULT#'
+,p_plug_template=>2532939663579242476
+,p_plug_display_sequence=>10
+,p_plug_display_point=>'REGION_POSITION_01'
+,p_plug_item_display_point=>'ABOVE'
+,p_location=>null
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'output_as', 'TEXT',
+  'show_line_breaks', 'Y')).to_clob
+);
+wwv_flow_imp_page.create_page_button(
+ p_id=>wwv_flow_imp.id(6100006000001003)
+,p_button_sequence=>30
+,p_button_plug_id=>wwv_flow_imp.id(6100006000003002)
+,p_button_name=>'ADD_COMPLEXITY'
+,p_static_id=>'add-complexity'
+,p_show_as_disabled=>false
+,p_button_action=>'REDIRECT_PAGE'
+,p_button_template_options=>'#DEFAULT#'
+,p_button_template_id=>4073839297780169708
+,p_button_is_hot=>'Y'
+,p_button_image_alt=>'Add Complexity'
+,p_button_position=>'NEXT'
+,p_button_redirect_url=>'f?p=&APP_ID.:61:&SESSION.::&DEBUG.:61:P61_REF_TYPE:COMPLEXITY'
+,p_warn_on_unsaved_changes=>null
+);
+wwv_flow_imp_page.create_page_button(
+ p_id=>wwv_flow_imp.id(6100006000001001)
+,p_button_sequence=>10
+,p_button_plug_id=>wwv_flow_imp.id(6100006000003002)
+,p_button_name=>'ADD_STATUS'
+,p_static_id=>'add-status'
+,p_show_as_disabled=>false
+,p_button_action=>'REDIRECT_PAGE'
+,p_button_template_options=>'#DEFAULT#'
+,p_button_template_id=>4073839297780169708
+,p_button_is_hot=>'Y'
+,p_button_image_alt=>'Add Status'
+,p_button_position=>'NEXT'
+,p_button_redirect_url=>'f?p=&APP_ID.:61:&SESSION.::&DEBUG.:61:P61_REF_TYPE:STATUS'
+,p_warn_on_unsaved_changes=>null
+);
+wwv_flow_imp_page.create_page_button(
+ p_id=>wwv_flow_imp.id(6100006000001002)
+,p_button_sequence=>20
+,p_button_plug_id=>wwv_flow_imp.id(6100006000003002)
+,p_button_name=>'ADD_TASK_TYPE'
+,p_static_id=>'add-task-type'
+,p_show_as_disabled=>false
+,p_button_action=>'REDIRECT_PAGE'
+,p_button_template_options=>'#DEFAULT#'
+,p_button_template_id=>4073839297780169708
+,p_button_is_hot=>'Y'
+,p_button_image_alt=>'Add Task Type'
+,p_button_position=>'NEXT'
+,p_button_redirect_url=>'f?p=&APP_ID.:61:&SESSION.::&DEBUG.:61:P61_REF_TYPE:TASK_TYPE'
+,p_warn_on_unsaved_changes=>null
+);
+wwv_flow_imp_page.create_page_da_event(
+ p_id=>wwv_flow_imp.id(6100006000002001)
+,p_name=>'Refresh on Reference Data Dialog Close'
+,p_static_id=>'refresh-on-reference-data-dialog-close'
+,p_event_sequence=>10
+,p_triggering_element_type=>'REGION'
+,p_triggering_region_id=>wwv_flow_imp.id(39329548844332677)
+,p_bind_type=>'bind'
+,p_execution_type=>'IMMEDIATE'
+,p_bind_event_type=>'apexafterclosedialog'
+);
+wwv_flow_imp_page.create_page_da_action(
+ p_id=>wwv_flow_imp.id(6100006000002002)
+,p_event_id=>wwv_flow_imp.id(6100006000002001)
+,p_event_result=>'TRUE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'N'
+,p_static_id=>'refresh-reference-data'
+,p_action=>'NATIVE_REFRESH'
+,p_affected_elements_type=>'REGION'
+,p_affected_region_id=>wwv_flow_imp.id(39329548844332677)
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'maintain_pagination', 'N')).to_clob
+);
+end;
+/
+prompt --application/pages/page_00061
+begin
+wwv_flow_imp_page.create_page(
+ p_id=>61
+,p_name=>'Create Reference Data'
+,p_alias=>'CREATE-REFERENCE-DATA'
+,p_page_mode=>'MODAL'
+,p_step_title=>'Create Reference Data'
+,p_warn_on_unsaved_changes=>'N'
+,p_autocomplete_on_off=>'OFF'
+,p_step_template=>1662662927374504442
+,p_page_template_options=>'#DEFAULT#:js-dialog-class-t-Drawer--pullOutEnd'
+,p_dialog_chained=>'N'
+,p_dialog_resizable=>'Y'
+,p_protection_level=>'C'
+,p_page_component_map=>'18'
+);
+wwv_flow_imp_page.create_page_plug(
+ p_id=>wwv_flow_imp.id(6100006100001001)
+,p_plug_name=>'Buttons'
+,p_static_id=>'buttons'
+,p_region_template_options=>'#DEFAULT#'
+,p_plug_template=>2127905476394690047
+,p_plug_display_sequence=>20
+,p_plug_display_point=>'REGION_POSITION_03'
+,p_plug_item_display_point=>'ABOVE'
+,p_location=>null
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'output_as', 'TEXT',
+  'show_line_breaks', 'Y')).to_clob
+);
+wwv_flow_imp_page.create_page_plug(
+ p_id=>wwv_flow_imp.id(6100006100001002)
+,p_plug_name=>'Reference Data'
+,p_static_id=>'reference-data-form'
+,p_region_template_options=>'#DEFAULT#'
+,p_plug_template=>4502917002193490937
+,p_plug_display_sequence=>10
+,p_plug_item_display_point=>'ABOVE'
+,p_location=>null
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'output_as', 'TEXT',
+  'show_line_breaks', 'Y')).to_clob
+);
+wwv_flow_imp_page.create_page_button(
+ p_id=>wwv_flow_imp.id(6100006100002001)
+,p_button_sequence=>10
+,p_button_plug_id=>wwv_flow_imp.id(6100006100001001)
+,p_button_name=>'CANCEL'
+,p_static_id=>'cancel'
+,p_show_as_disabled=>false
+,p_button_action=>'DEFINED_BY_DA'
+,p_button_template_options=>'#DEFAULT#'
+,p_button_template_id=>4073839297780169708
+,p_button_image_alt=>'Cancel'
+,p_button_position=>'CLOSE'
+,p_warn_on_unsaved_changes=>null
+);
+wwv_flow_imp_page.create_page_button(
+ p_id=>wwv_flow_imp.id(6100006100002002)
+,p_button_sequence=>20
+,p_button_plug_id=>wwv_flow_imp.id(6100006100001001)
+,p_button_name=>'CREATE'
+,p_static_id=>'create'
+,p_show_as_disabled=>false
+,p_button_action=>'SUBMIT'
+,p_button_template_options=>'#DEFAULT#'
+,p_button_template_id=>4073839297780169708
+,p_button_is_hot=>'Y'
+,p_button_image_alt=>'Create Reference Data'
+,p_button_position=>'NEXT'
+,p_warn_on_unsaved_changes=>null
+,p_button_condition=>'P61_REF_ID'
+,p_button_condition_type=>'ITEM_IS_NULL'
+);
+wwv_flow_imp_page.create_page_button(
+ p_id=>wwv_flow_imp.id(6100006100002004)
+,p_button_sequence=>40
+,p_button_plug_id=>wwv_flow_imp.id(6100006100001001)
+,p_button_name=>'DELETE'
+,p_static_id=>'delete'
+,p_show_as_disabled=>false
+,p_button_action=>'SUBMIT'
+,p_button_template_options=>'#DEFAULT#'
+,p_button_template_id=>4073839297780169708
+,p_button_image_alt=>'Delete Reference Data'
+,p_button_position=>'NEXT'
+,p_warn_on_unsaved_changes=>null
+,p_button_condition=>'P61_REF_ID'
+,p_button_condition_type=>'ITEM_IS_NOT_NULL'
+);
+wwv_flow_imp_page.create_page_button(
+ p_id=>wwv_flow_imp.id(6100006100002003)
+,p_button_sequence=>30
+,p_button_plug_id=>wwv_flow_imp.id(6100006100001001)
+,p_button_name=>'SAVE'
+,p_static_id=>'save'
+,p_show_as_disabled=>false
+,p_button_action=>'SUBMIT'
+,p_button_template_options=>'#DEFAULT#'
+,p_button_template_id=>4073839297780169708
+,p_button_is_hot=>'Y'
+,p_button_image_alt=>'Save Reference Data'
+,p_button_position=>'NEXT'
+,p_warn_on_unsaved_changes=>null
+,p_button_condition=>'P61_REF_ID'
+,p_button_condition_type=>'ITEM_IS_NOT_NULL'
+);
+wwv_flow_imp_page.create_page_item(
+ p_id=>wwv_flow_imp.id(6100006100003005)
+,p_name=>'P61_ACTIVE_YN'
+,p_is_required=>true
+,p_item_sequence=>50
+,p_item_plug_id=>wwv_flow_imp.id(6100006100001002)
+,p_item_default=>'Y'
+,p_prompt=>'Active'
+,p_source_type=>'ALWAYS_NULL'
+,p_display_as=>'NATIVE_SELECT_LIST'
+,p_lov=>'STATIC2:Yes;Y,No;N'
+,p_cHeight=>1
+,p_begin_on_new_line=>'N'
+,p_field_template=>1610598484065263269
+,p_item_template_options=>'#DEFAULT#'
+,p_is_persistent=>'N'
+,p_lov_display_extra=>'NO'
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'execute_validations', 'N',
+  'page_action_on_selection', 'NONE')).to_clob
+);
+wwv_flow_imp_page.create_page_item(
+ p_id=>wwv_flow_imp.id(6100006100003003)
+,p_name=>'P61_CODE'
+,p_is_required=>true
+,p_item_sequence=>30
+,p_item_plug_id=>wwv_flow_imp.id(6100006100001002)
+,p_prompt=>'Code'
+,p_source_type=>'ALWAYS_NULL'
+,p_display_as=>'NATIVE_TEXT_FIELD'
+,p_cSize=>60
+,p_cMaxlength=>100
+,p_field_template=>1610598484065263269
+,p_item_template_options=>'#DEFAULT#'
+,p_is_persistent=>'N'
+,p_help_text=>'Use a unique uppercase code such as TASK or NEW_FEATURE.'
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'disabled', 'N',
+  'submit_when_enter_pressed', 'N',
+  'subtype', 'TEXT',
+  'trim_spaces', 'BOTH')).to_clob
+);
+wwv_flow_imp_page.create_page_item(
+ p_id=>wwv_flow_imp.id(6100006100003008)
+,p_name=>'P61_COMPLEXITY_WEIGHT'
+,p_item_sequence=>80
+,p_item_plug_id=>wwv_flow_imp.id(6100006100001002)
+,p_item_default=>'1'
+,p_prompt=>'Complexity Weight'
+,p_source_type=>'ALWAYS_NULL'
+,p_display_as=>'NATIVE_NUMBER_FIELD'
+,p_cSize=>10
+,p_field_template=>1610598304472262251
+,p_item_template_options=>'#DEFAULT#'
+,p_is_persistent=>'N'
+,p_help_text=>'Used only when Reference Type is Complexity.'
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'number_alignment', 'left',
+  'virtual_keyboard', 'decimal')).to_clob
+);
+wwv_flow_imp_page.create_page_item(
+ p_id=>wwv_flow_imp.id(6100006100003004)
+,p_name=>'P61_DISPLAY_SEQ'
+,p_is_required=>true
+,p_item_sequence=>40
+,p_item_plug_id=>wwv_flow_imp.id(6100006100001002)
+,p_item_default=>'10'
+,p_prompt=>'Display Sequence'
+,p_source_type=>'ALWAYS_NULL'
+,p_display_as=>'NATIVE_NUMBER_FIELD'
+,p_cSize=>10
+,p_field_template=>1610598484065263269
+,p_item_template_options=>'#DEFAULT#'
+,p_is_persistent=>'N'
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'number_alignment', 'left',
+  'virtual_keyboard', 'decimal')).to_clob
+);
+wwv_flow_imp_page.create_page_item(
+ p_id=>wwv_flow_imp.id(6100006100003007)
+,p_name=>'P61_IS_DONE_YN'
+,p_item_sequence=>70
+,p_item_plug_id=>wwv_flow_imp.id(6100006100001002)
+,p_item_default=>'N'
+,p_prompt=>'Done Status'
+,p_source_type=>'ALWAYS_NULL'
+,p_display_as=>'NATIVE_SELECT_LIST'
+,p_lov=>'STATIC2:Yes;Y,No;N'
+,p_cHeight=>1
+,p_begin_on_new_line=>'N'
+,p_field_template=>1610598304472262251
+,p_item_template_options=>'#DEFAULT#'
+,p_is_persistent=>'N'
+,p_lov_display_extra=>'NO'
+,p_help_text=>'Used only when Reference Type is Status.'
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'execute_validations', 'N',
+  'page_action_on_selection', 'NONE')).to_clob
+);
+wwv_flow_imp_page.create_page_item(
+ p_id=>wwv_flow_imp.id(6100006100003006)
+,p_name=>'P61_IS_OPEN_YN'
+,p_item_sequence=>60
+,p_item_plug_id=>wwv_flow_imp.id(6100006100001002)
+,p_item_default=>'Y'
+,p_prompt=>'Open Status'
+,p_source_type=>'ALWAYS_NULL'
+,p_display_as=>'NATIVE_SELECT_LIST'
+,p_lov=>'STATIC2:Yes;Y,No;N'
+,p_cHeight=>1
+,p_field_template=>1610598304472262251
+,p_item_template_options=>'#DEFAULT#'
+,p_is_persistent=>'N'
+,p_lov_display_extra=>'NO'
+,p_help_text=>'Used only when Reference Type is Status.'
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'execute_validations', 'N',
+  'page_action_on_selection', 'NONE')).to_clob
+);
+wwv_flow_imp_page.create_page_item(
+ p_id=>wwv_flow_imp.id(6100006100003002)
+,p_name=>'P61_NAME'
+,p_is_required=>true
+,p_item_sequence=>20
+,p_item_plug_id=>wwv_flow_imp.id(6100006100001002)
+,p_prompt=>'Name'
+,p_source_type=>'ALWAYS_NULL'
+,p_display_as=>'NATIVE_TEXT_FIELD'
+,p_cSize=>60
+,p_cMaxlength=>255
+,p_field_template=>1610598484065263269
+,p_item_template_options=>'#DEFAULT#'
+,p_is_persistent=>'N'
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'disabled', 'N',
+  'submit_when_enter_pressed', 'N',
+  'subtype', 'TEXT',
+  'trim_spaces', 'BOTH')).to_clob
+);
+wwv_flow_imp_page.create_page_item(
+ p_id=>wwv_flow_imp.id(6100006100003009)
+,p_name=>'P61_REF_ID'
+,p_item_sequence=>15
+,p_item_plug_id=>wwv_flow_imp.id(6100006100001002)
+,p_source_type=>'ALWAYS_NULL'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_is_persistent=>'N'
+,p_protection_level=>'S'
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'value_protected', 'Y')).to_clob
+);
+wwv_flow_imp_page.create_page_item(
+ p_id=>wwv_flow_imp.id(6100006100003001)
+,p_name=>'P61_REF_TYPE'
+,p_is_required=>true
+,p_item_sequence=>10
+,p_item_plug_id=>wwv_flow_imp.id(6100006100001002)
+,p_item_default=>'TASK_TYPE'
+,p_prompt=>'Reference Type'
+,p_source_type=>'ALWAYS_NULL'
+,p_display_as=>'NATIVE_SELECT_LIST'
+,p_lov=>'STATIC2:Status;STATUS,Task Type;TASK_TYPE,Complexity;COMPLEXITY'
+,p_cHeight=>1
+,p_field_template=>1610598484065263269
+,p_item_template_options=>'#DEFAULT#'
+,p_is_persistent=>'N'
+,p_lov_display_extra=>'NO'
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'execute_validations', 'N',
+  'page_action_on_selection', 'NONE')).to_clob
+);
+wwv_flow_imp_page.create_page_da_event(
+ p_id=>wwv_flow_imp.id(6100006100004001)
+,p_name=>'Cancel Dialog'
+,p_static_id=>'cancel-dialog'
+,p_event_sequence=>10
+,p_triggering_element_type=>'BUTTON'
+,p_triggering_button_id=>wwv_flow_imp.id(6100006100002001)
+,p_bind_type=>'bind'
+,p_execution_type=>'IMMEDIATE'
+,p_bind_event_type=>'click'
+);
+wwv_flow_imp_page.create_page_da_action(
+ p_id=>wwv_flow_imp.id(6100006100004002)
+,p_event_id=>wwv_flow_imp.id(6100006100004001)
+,p_event_result=>'TRUE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'N'
+,p_static_id=>'native-dialog-cancel'
+,p_action=>'NATIVE_DIALOG_CANCEL'
+);
+wwv_flow_imp_page.create_page_process(
+ p_id=>wwv_flow_imp.id(6100006100005002)
+,p_process_sequence=>50
+,p_process_point=>'AFTER_SUBMIT'
+,p_process_type=>'NATIVE_CLOSE_WINDOW'
+,p_process_name=>'Close Dialog'
+,p_static_id=>'close-dialog'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_when=>'CREATE,SAVE,DELETE'
+,p_process_when_type=>'REQUEST_IN_CONDITION'
+,p_internal_uid=>6100006100005002
+);
+wwv_flow_imp_page.create_page_process(
+ p_id=>wwv_flow_imp.id(6100006100005001)
+,p_process_sequence=>10
+,p_process_point=>'AFTER_SUBMIT'
+,p_process_type=>'NATIVE_PLSQL'
+,p_process_name=>'Create Reference Data'
+,p_static_id=>'create-reference-data'
+,p_process_sql_clob=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'declare',
+'    l_code varchar2(100) := upper(regexp_replace(trim(:P61_CODE), ''[^[:alnum:]]+'', ''_''));',
+'    l_name varchar2(255) := trim(:P61_NAME);',
+'begin',
+'    if l_code is null or l_name is null then',
+'        raise_application_error(-20000, ''Name and Code are required.'');',
+'    end if;',
+'',
+'    if :P61_REF_TYPE = ''STATUS'' then',
+'        insert into tsk_statuses (',
+'            status_code,',
+'            status_name,',
+'            is_open_yn,',
+'            is_done_yn,',
+'            display_seq,',
+'            active_yn',
+'        ) values (',
+'            l_code,',
+'            l_name,',
+'            nvl(:P61_IS_OPEN_YN, ''Y''),',
+'            nvl(:P61_IS_DONE_YN, ''N''),',
+'            to_number(:P61_DISPLAY_SEQ),',
+'            nvl(:P61_ACTIVE_YN, ''Y'')',
+'        );',
+'    elsif :P61_REF_TYPE = ''TASK_TYPE'' then',
+'        insert into tsk_task_types (',
+'            type_code,',
+'            type_name,',
+'            display_seq,',
+'            active_yn',
+'        ) values (',
+'            l_code,',
+'            l_name,',
+'            to_number(:P61_DISPLAY_SEQ),',
+'            nvl(:P61_ACTIVE_YN, ''Y'')',
+'        );',
+'    elsif :P61_REF_TYPE = ''COMPLEXITY'' then',
+'        insert into tsk_complexities (',
+'            complexity_code,',
+'            complexity_name,',
+'            complexity_weight,',
+'            display_seq,',
+'            active_yn',
+'        ) values (',
+'            l_code,',
+'            l_name,',
+'            nvl(to_number(:P61_COMPLEXITY_WEIGHT), 1),',
+'            to_number(:P61_DISPLAY_SEQ),',
+'            nvl(:P61_ACTIVE_YN, ''Y'')',
+'        );',
+'    else',
+'        raise_application_error(-20000, ''Select a valid reference type.'');',
+'    end if;',
+'exception',
+'    when dup_val_on_index then',
+'        raise_application_error(-20001, ''A reference data value with this code already exists.'');',
+'end;'))
+,p_process_clob_language=>'PLSQL'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_when_button_id=>wwv_flow_imp.id(6100006100002002)
+,p_internal_uid=>6100006100005001
+);
+wwv_flow_imp_page.create_page_process(
+ p_id=>wwv_flow_imp.id(6100006100005005)
+,p_process_sequence=>30
+,p_process_point=>'AFTER_SUBMIT'
+,p_process_type=>'NATIVE_PLSQL'
+,p_process_name=>'Delete Reference Data'
+,p_static_id=>'delete-reference-data'
+,p_process_sql_clob=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'begin',
+'    if :P61_REF_ID is null then',
+'        raise_application_error(-20000, ''Select a reference data row to delete.'');',
+'    end if;',
+'',
+'    if :P61_REF_TYPE = ''STATUS'' then',
+'        delete from tsk_statuses',
+'         where status_id = to_number(:P61_REF_ID);',
+'    elsif :P61_REF_TYPE = ''TASK_TYPE'' then',
+'        delete from tsk_task_types',
+'         where type_id = to_number(:P61_REF_ID);',
+'    elsif :P61_REF_TYPE = ''COMPLEXITY'' then',
+'        delete from tsk_complexities',
+'         where complexity_id = to_number(:P61_REF_ID);',
+'    else',
+'        raise_application_error(-20000, ''Select a valid reference type.'');',
+'    end if;',
+'',
+'    if sql%rowcount = 0 then',
+'        raise_application_error(-20002, ''The selected reference data row no longer exists.'');',
+'    end if;',
+'end;'))
+,p_process_clob_language=>'PLSQL'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_when_button_id=>wwv_flow_imp.id(6100006100002004)
+,p_internal_uid=>6100006100005005
+);
+wwv_flow_imp_page.create_page_process(
+ p_id=>wwv_flow_imp.id(6100006100005003)
+,p_process_sequence=>10
+,p_process_point=>'BEFORE_HEADER'
+,p_process_type=>'NATIVE_PLSQL'
+,p_process_name=>'Load Reference Data'
+,p_static_id=>'load-reference-data'
+,p_process_sql_clob=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'begin',
+'    if :P61_REF_ID is null then',
+'        return;',
+'    end if;',
+'',
+'    if :P61_REF_TYPE = ''STATUS'' then',
+'        select status_name,',
+'               status_code,',
+'               display_seq,',
+'               active_yn,',
+'               is_open_yn,',
+'               is_done_yn,',
+'               null',
+'          into :P61_NAME,',
+'               :P61_CODE,',
+'               :P61_DISPLAY_SEQ,',
+'               :P61_ACTIVE_YN,',
+'               :P61_IS_OPEN_YN,',
+'               :P61_IS_DONE_YN,',
+'               :P61_COMPLEXITY_WEIGHT',
+'          from tsk_statuses',
+'         where status_id = to_number(:P61_REF_ID);',
+'    elsif :P61_REF_TYPE = ''TASK_TYPE'' then',
+'        select type_name,',
+'               type_code,',
+'               display_seq,',
+'               active_yn,',
+'               null,',
+'               null,',
+'               null',
+'          into :P61_NAME,',
+'               :P61_CODE,',
+'               :P61_DISPLAY_SEQ,',
+'               :P61_ACTIVE_YN,',
+'               :P61_IS_OPEN_YN,',
+'               :P61_IS_DONE_YN,',
+'               :P61_COMPLEXITY_WEIGHT',
+'          from tsk_task_types',
+'         where type_id = to_number(:P61_REF_ID);',
+'    elsif :P61_REF_TYPE = ''COMPLEXITY'' then',
+'        select complexity_name,',
+'               complexity_code,',
+'               display_seq,',
+'               active_yn,',
+'               null,',
+'               null,',
+'               complexity_weight',
+'          into :P61_NAME,',
+'               :P61_CODE,',
+'               :P61_DISPLAY_SEQ,',
+'               :P61_ACTIVE_YN,',
+'               :P61_IS_OPEN_YN,',
+'               :P61_IS_DONE_YN,',
+'               :P61_COMPLEXITY_WEIGHT',
+'          from tsk_complexities',
+'         where complexity_id = to_number(:P61_REF_ID);',
+'    else',
+'        raise_application_error(-20000, ''Select a valid reference type.'');',
+'    end if;',
+'end;'))
+,p_process_clob_language=>'PLSQL'
+,p_internal_uid=>6100006100005003
+);
+wwv_flow_imp_page.create_page_process(
+ p_id=>wwv_flow_imp.id(6100006100005004)
+,p_process_sequence=>20
+,p_process_point=>'AFTER_SUBMIT'
+,p_process_type=>'NATIVE_PLSQL'
+,p_process_name=>'Save Reference Data'
+,p_static_id=>'save-reference-data'
+,p_process_sql_clob=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'declare',
+'    l_code varchar2(100) := upper(regexp_replace(trim(:P61_CODE), ''[^[:alnum:]]+'', ''_''));',
+'    l_name varchar2(255) := trim(:P61_NAME);',
+'begin',
+'    if :P61_REF_ID is null then',
+'        raise_application_error(-20000, ''Select a reference data row to update.'');',
+'    end if;',
+'',
+'    if l_code is null or l_name is null then',
+'        raise_application_error(-20000, ''Name and Code are required.'');',
+'    end if;',
+'',
+'    if :P61_REF_TYPE = ''STATUS'' then',
+'        update tsk_statuses',
+'           set status_code = l_code,',
+'               status_name = l_name,',
+'               is_open_yn = nvl(:P61_IS_OPEN_YN, ''Y''),',
+'               is_done_yn = nvl(:P61_IS_DONE_YN, ''N''),',
+'               display_seq = to_number(:P61_DISPLAY_SEQ),',
+'               active_yn = nvl(:P61_ACTIVE_YN, ''Y'')',
+'         where status_id = to_number(:P61_REF_ID);',
+'    elsif :P61_REF_TYPE = ''TASK_TYPE'' then',
+'        update tsk_task_types',
+'           set type_code = l_code,',
+'               type_name = l_name,',
+'               display_seq = to_number(:P61_DISPLAY_SEQ),',
+'               active_yn = nvl(:P61_ACTIVE_YN, ''Y'')',
+'         where type_id = to_number(:P61_REF_ID);',
+'    elsif :P61_REF_TYPE = ''COMPLEXITY'' then',
+'        update tsk_complexities',
+'           set complexity_code = l_code,',
+'               complexity_name = l_name,',
+'               complexity_weight = nvl(to_number(:P61_COMPLEXITY_WEIGHT), 1),',
+'               display_seq = to_number(:P61_DISPLAY_SEQ),',
+'               active_yn = nvl(:P61_ACTIVE_YN, ''Y'')',
+'         where complexity_id = to_number(:P61_REF_ID);',
+'    else',
+'        raise_application_error(-20000, ''Select a valid reference type.'');',
+'    end if;',
+'',
+'    if sql%rowcount = 0 then',
+'        raise_application_error(-20002, ''The selected reference data row no longer exists.'');',
+'    end if;',
+'exception',
+'    when dup_val_on_index then',
+'        raise_application_error(-20001, ''A reference data value with this code already exists.'');',
+'end;'))
+,p_process_clob_language=>'PLSQL'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_when_button_id=>wwv_flow_imp.id(6100006100002003)
+,p_internal_uid=>6100006100005004
 );
 end;
 /

@@ -116,6 +116,66 @@ page 40 (
         }
     )
 
+    region unassigned-submitter-controls (
+        name: Daily Unassigned Task Submitter Reminder
+        type: staticContent
+        layout {
+            sequence: 30
+            parentRegion: @email-preview-panel
+            slot: subRegions
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        serverSideCondition {
+            type: expression
+            plsqlExpression: tsk_daily_email_pkg.selected_schedule_is(:P40_EMAIL_SCHEDULE_ID, 'DAILY_UNASSIGNED_SUBMITTER')
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    region unassigned-submitter-email-preview (
+        name: Submitter Reminder Preview
+        type: dynamicContent
+        source {
+            plsqlFunctionBody:
+                ```plsql
+                begin
+                    return tsk_daily_email_pkg.unassigned_submitter_reminder_html(
+                        :P40_EMAIL_SCHEDULE_ID,
+                        :P40_PREVIEW_SUBMITTER_MEMBER_ID
+                    );
+                end;
+                ```
+            pageItemsToSubmit: [
+                P40_EMAIL_SCHEDULE_ID
+                P40_PREVIEW_SUBMITTER_MEMBER_ID
+            ]
+        }
+        layout {
+            sequence: 40
+            parentRegion: @email-preview-panel
+            slot: subRegions
+        }
+        appearance {
+            template: @/standard
+            templateOptions: [
+                #DEFAULT#
+                t-Region--scrollBody
+            ]
+        }
+        serverSideCondition {
+            type: expression
+            plsqlExpression: tsk_daily_email_pkg.selected_schedule_is(:P40_EMAIL_SCHEDULE_ID, 'DAILY_UNASSIGNED_SUBMITTER')
+        }
+    )
+
     region email-preview-panel (
         name: Email Preview
         type: staticContent
@@ -187,8 +247,9 @@ page 40 (
                   cross join selected_schedule ss
                  order by case es.schedule_code
                               when 'DAILY_MEMBER_STATUS' then 1
-                              when 'MONTHLY_TEAM_PROGRESS' then 2
-                              when 'WEEKLY_TEAM_SUMMARY' then 3
+                              when 'DAILY_UNASSIGNED_SUBMITTER' then 2
+                              when 'MONTHLY_TEAM_PROGRESS' then 3
+                              when 'WEEKLY_TEAM_SUMMARY' then 4
                               else 9
                           end,
                           es.schedule_name
@@ -343,7 +404,7 @@ page 40 (
         name: Monthly Team Progress Summary
         type: staticContent
         layout {
-            sequence: 30
+            sequence: 50
             parentRegion: @email-preview-panel
             slot: subRegions
         }
@@ -400,7 +461,7 @@ page 40 (
             ]
         }
         layout {
-            sequence: 40
+            sequence: 60
             parentRegion: @email-preview-panel
             slot: subRegions
         }
@@ -485,6 +546,82 @@ page 40 (
         }
     )
 
+    pageItem P40_PREVIEW_SUBMITTER_MEMBER_ID (
+        type: selectOne
+        label {
+            label: Preview Submitter
+            alignment: left
+        }
+        lov {
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select display_name || ' (' || recipient_email || ')' as display_value,
+                       team_member_id as return_value
+                  from (
+                        select max(display_name) as display_name,
+                               recipient_email,
+                               min(team_member_id) as team_member_id,
+                               count(*) as task_count
+                          from (
+                                select distinct
+                                       t.task_id,
+                                       coalesce(
+                                           case when u_submitter.active_yn = 'Y' then u_submitter.email end,
+                                           case when u_created.active_yn = 'Y' then u_created.email end
+                                       ) as recipient_email,
+                                       coalesce(
+                                           case when u_submitter.active_yn = 'Y' then u_submitter.display_name end,
+                                           case when u_created.active_yn = 'Y' then u_created.display_name end,
+                                           t.created_by
+                                       ) as display_name,
+                                       coalesce(
+                                           case when u_submitter.active_yn = 'Y' then tm_submitter.team_member_id end,
+                                           case when u_created.active_yn = 'Y' then tm_created.team_member_id end
+                                       ) as team_member_id
+                                  from tsk_tasks t
+                                  join tsk_statuses st
+                                    on st.status_id = t.status_id
+                                  join tsk_email_schedules es
+                                    on es.team_id = t.team_id
+                                  left join tsk_team_members tm_submitter
+                                    on tm_submitter.team_member_id = t.created_by_member_id
+                                  left join tsk_users u_submitter
+                                    on u_submitter.user_id = tm_submitter.user_id
+                                  left join tsk_users u_created
+                                    on lower(u_created.email) = lower(t.created_by)
+                                  left join tsk_team_members tm_created
+                                    on tm_created.user_id = u_created.user_id
+                                   and tm_created.team_id = t.team_id
+                                   and tm_created.active_yn = 'Y'
+                                 where es.email_schedule_id = :P40_EMAIL_SCHEDULE_ID
+                                   and st.is_done_yn = 'N'
+                                   and not exists (
+                                           select 1
+                                             from tsk_task_assignees ta
+                                            where ta.task_id = t.task_id
+                                              and ta.active_yn = 'Y'
+                                       )
+                               )
+                         where recipient_email is not null
+                           and team_member_id is not null
+                         group by recipient_email
+                       )
+                 order by display_name
+                ```
+        }
+        layout {
+            sequence: 10
+            region: @unassigned-submitter-controls
+            slot: regionBody
+            columnSpan: 6
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+        }
+    )
+
     pageItem P40_PREVIEW_TEAM_ID (
         type: selectOne
         label {
@@ -560,6 +697,30 @@ page 40 (
 
     )
 
+    dynamicAction refresh-unassigned-submitter-email-preview (
+        name: Refresh Unassigned Submitter Email Preview
+        execution {
+            sequence: 15
+        }
+        when {
+            selectionType: items
+            items: P40_PREVIEW_SUBMITTER_MEMBER_ID
+        }
+
+        action refresh-preview (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @unassigned-submitter-email-preview
+            }
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+    )
+
     dynamicAction refresh-monthly-email-preview (
         name: Refresh Monthly Email Preview
         execution {
@@ -615,6 +776,18 @@ page 40 (
             }
             execution {
                 sequence: 30
+                fireOnInit: false
+            }
+        )
+
+        action refresh-unassigned-submitter-preview (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @unassigned-submitter-email-preview
+            }
+            execution {
+                sequence: 25
                 fireOnInit: false
             }
         )

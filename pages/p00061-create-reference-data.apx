@@ -1,0 +1,676 @@
+page 61 (
+    name: Create Reference Data
+    alias: CREATE-REFERENCE-DATA
+    title: Create Reference Data
+    appearance {
+        pageMode: modalDialog
+        dialogTemplate: @/drawer
+        templateOptions: [
+            #DEFAULT#
+            js-dialog-class-t-Drawer--pullOutEnd
+        ]
+    }
+    dialog {
+        chained: false
+    }
+    navigation {
+        warnOnUnsavedChanges: false
+    }
+    security {
+        pageAccessProtection: argumentsMustHaveChecksum
+        formAutoComplete: false
+    }
+
+    region reference-data-form (
+        name: Reference Data
+        type: staticContent
+        layout {
+            sequence: 10
+            slot: contentBody
+        }
+        appearance {
+            template: @/blank-with-attributes
+            templateOptions: #DEFAULT#
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    region buttons (
+        name: Buttons
+        type: staticContent
+        layout {
+            sequence: 20
+            slot: dialogFooter
+        }
+        appearance {
+            template: @/buttons-container
+            templateOptions: #DEFAULT#
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    pageItem P61_REF_TYPE (
+        type: selectList
+        label {
+            label: Reference Type
+            alignment: left
+        }
+        lov {
+            type: staticValues
+            staticValues: STATIC2:Status;STATUS,Task Type;TASK_TYPE,Complexity;COMPLEXITY
+            displayExtraValues: false
+            displayNullValue: false
+        }
+        layout {
+            sequence: 10
+            region: @reference-data-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        default {
+            type: static
+            staticValue: TASK_TYPE
+        }
+        validation {
+            valueRequired: true
+        }
+    )
+
+    pageItem P61_NAME (
+        type: textField
+        label {
+            label: Name
+            alignment: left
+        }
+        layout {
+            sequence: 20
+            region: @reference-data-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            width: 60
+        }
+        validation {
+            maxLength: 255
+            valueRequired: true
+        }
+    )
+
+    pageItem P61_CODE (
+        type: textField
+        label {
+            label: Code
+            alignment: left
+        }
+        layout {
+            sequence: 30
+            region: @reference-data-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            width: 60
+        }
+        validation {
+            maxLength: 100
+            valueRequired: true
+        }
+        help {
+            helpText: Use a unique uppercase code such as TASK or NEW_FEATURE.
+        }
+    )
+
+    pageItem P61_DISPLAY_SEQ (
+        type: numberField
+        label {
+            label: Display Sequence
+            alignment: left
+        }
+        layout {
+            sequence: 40
+            region: @reference-data-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            width: 10
+        }
+        default {
+            type: static
+            staticValue: 10
+        }
+        validation {
+            valueRequired: true
+        }
+    )
+
+    pageItem P61_ACTIVE_YN (
+        type: selectList
+        label {
+            label: Active
+            alignment: left
+        }
+        lov {
+            type: staticValues
+            staticValues: STATIC2:Yes;Y,No;N
+            displayExtraValues: false
+            displayNullValue: false
+        }
+        layout {
+            sequence: 50
+            region: @reference-data-form
+            slot: regionBody
+            alignment: left
+            startNewRow: false
+        }
+        appearance {
+            template: @/required-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        default {
+            type: static
+            staticValue: Y
+        }
+        validation {
+            valueRequired: true
+        }
+    )
+
+    pageItem P61_IS_OPEN_YN (
+        type: selectList
+        label {
+            label: Open Status
+            alignment: left
+        }
+        lov {
+            type: staticValues
+            staticValues: STATIC2:Yes;Y,No;N
+            displayExtraValues: false
+            displayNullValue: false
+        }
+        layout {
+            sequence: 60
+            region: @reference-data-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        default {
+            type: static
+            staticValue: Y
+        }
+        help {
+            helpText: Used only when Reference Type is Status.
+        }
+    )
+
+    pageItem P61_IS_DONE_YN (
+        type: selectList
+        label {
+            label: Done Status
+            alignment: left
+        }
+        lov {
+            type: staticValues
+            staticValues: STATIC2:Yes;Y,No;N
+            displayExtraValues: false
+            displayNullValue: false
+        }
+        layout {
+            sequence: 70
+            region: @reference-data-form
+            slot: regionBody
+            alignment: left
+            startNewRow: false
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        default {
+            type: static
+            staticValue: N
+        }
+        help {
+            helpText: Used only when Reference Type is Status.
+        }
+    )
+
+    pageItem P61_COMPLEXITY_WEIGHT (
+        type: numberField
+        label {
+            label: Complexity Weight
+            alignment: left
+        }
+        layout {
+            sequence: 80
+            region: @reference-data-form
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            width: 10
+        }
+        default {
+            type: static
+            staticValue: 1
+        }
+        help {
+            helpText: Used only when Reference Type is Complexity.
+        }
+    )
+
+    button cancel (
+        buttonName: CANCEL
+        label: Cancel
+        layout {
+            sequence: 10
+            region: @buttons
+            slot: close
+        }
+        appearance {
+            buttonTemplate: @/text
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: definedByDynamicAction
+        }
+    )
+
+    button create (
+        buttonName: CREATE
+        label: Create Reference Data
+        layout {
+            sequence: 20
+            region: @buttons
+            slot: next
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: submitPage
+            warnOnUnsavedChanges: doNotCheck
+        }
+        serverSideCondition {
+            type: itemIsNull
+            item: P61_REF_ID
+        }
+    )
+
+    button save (
+        buttonName: SAVE
+        label: Save Reference Data
+        layout {
+            sequence: 30
+            region: @buttons
+            slot: next
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: submitPage
+            warnOnUnsavedChanges: doNotCheck
+        }
+        serverSideCondition {
+            type: itemIsNotNull
+            item: P61_REF_ID
+        }
+    )
+
+    button delete (
+        buttonName: DELETE
+        label: Delete Reference Data
+        layout {
+            sequence: 40
+            region: @buttons
+            slot: next
+        }
+        appearance {
+            buttonTemplate: @/text
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: submitPage
+            warnOnUnsavedChanges: doNotCheck
+        }
+        serverSideCondition {
+            type: itemIsNotNull
+            item: P61_REF_ID
+        }
+    )
+
+    pageItem P61_REF_ID (
+        type: hidden
+        layout {
+            sequence: 15
+            region: @reference-data-form
+            slot: regionBody
+        }
+        security {
+            sessionStateProtection: checksumRequiredSessionLevel
+        }
+    )
+
+    dynamicAction cancel-dialog (
+        name: Cancel Dialog
+        execution {
+            sequence: 10
+        }
+        when {
+            event: click
+            selectionType: button
+            button: @cancel
+        }
+
+        action native-dialog-cancel (
+            action: cancelDialog
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+    )
+
+    process load-reference-data (
+        name: Load Reference Data
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                begin
+                    if :P61_REF_ID is null then
+                        return;
+                    end if;
+                
+                    if :P61_REF_TYPE = 'STATUS' then
+                        select status_name,
+                               status_code,
+                               display_seq,
+                               active_yn,
+                               is_open_yn,
+                               is_done_yn,
+                               null
+                          into :P61_NAME,
+                               :P61_CODE,
+                               :P61_DISPLAY_SEQ,
+                               :P61_ACTIVE_YN,
+                               :P61_IS_OPEN_YN,
+                               :P61_IS_DONE_YN,
+                               :P61_COMPLEXITY_WEIGHT
+                          from tsk_statuses
+                         where status_id = to_number(:P61_REF_ID);
+                    elsif :P61_REF_TYPE = 'TASK_TYPE' then
+                        select type_name,
+                               type_code,
+                               display_seq,
+                               active_yn,
+                               null,
+                               null,
+                               null
+                          into :P61_NAME,
+                               :P61_CODE,
+                               :P61_DISPLAY_SEQ,
+                               :P61_ACTIVE_YN,
+                               :P61_IS_OPEN_YN,
+                               :P61_IS_DONE_YN,
+                               :P61_COMPLEXITY_WEIGHT
+                          from tsk_task_types
+                         where type_id = to_number(:P61_REF_ID);
+                    elsif :P61_REF_TYPE = 'COMPLEXITY' then
+                        select complexity_name,
+                               complexity_code,
+                               display_seq,
+                               active_yn,
+                               null,
+                               null,
+                               complexity_weight
+                          into :P61_NAME,
+                               :P61_CODE,
+                               :P61_DISPLAY_SEQ,
+                               :P61_ACTIVE_YN,
+                               :P61_IS_OPEN_YN,
+                               :P61_IS_DONE_YN,
+                               :P61_COMPLEXITY_WEIGHT
+                          from tsk_complexities
+                         where complexity_id = to_number(:P61_REF_ID);
+                    else
+                        raise_application_error(-20000, 'Select a valid reference type.');
+                    end if;
+                end;
+                ```
+        }
+        execution {
+            sequence: 10
+            point: beforeHeader
+        }
+        error {
+            displayLocation: inlineInNotification
+        }
+    )
+
+    process create-reference-data (
+        name: Create Reference Data
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                declare
+                    l_code varchar2(100) := upper(regexp_replace(trim(:P61_CODE), '[^[:alnum:]]+', '_'));
+                    l_name varchar2(255) := trim(:P61_NAME);
+                begin
+                    if :P61_REF_TYPE = 'STATUS' then
+                        insert into tsk_statuses (
+                            status_code,
+                            status_name,
+                            is_open_yn,
+                            is_done_yn,
+                            display_seq,
+                            active_yn
+                        ) values (
+                            l_code,
+                            l_name,
+                            nvl(:P61_IS_OPEN_YN, 'Y'),
+                            nvl(:P61_IS_DONE_YN, 'N'),
+                            to_number(:P61_DISPLAY_SEQ),
+                            nvl(:P61_ACTIVE_YN, 'Y')
+                        );
+                    elsif :P61_REF_TYPE = 'TASK_TYPE' then
+                        insert into tsk_task_types (
+                            type_code,
+                            type_name,
+                            display_seq,
+                            active_yn
+                        ) values (
+                            l_code,
+                            l_name,
+                            to_number(:P61_DISPLAY_SEQ),
+                            nvl(:P61_ACTIVE_YN, 'Y')
+                        );
+                    elsif :P61_REF_TYPE = 'COMPLEXITY' then
+                        insert into tsk_complexities (
+                            complexity_code,
+                            complexity_name,
+                            complexity_weight,
+                            display_seq,
+                            active_yn
+                        ) values (
+                            l_code,
+                            l_name,
+                            nvl(to_number(:P61_COMPLEXITY_WEIGHT), 1),
+                            to_number(:P61_DISPLAY_SEQ),
+                            nvl(:P61_ACTIVE_YN, 'Y')
+                        );
+                    else
+                        raise_application_error(-20000, 'Select a valid reference type.');
+                    end if;
+                exception
+                    when dup_val_on_index then
+                        raise_application_error(-20001, 'A reference data value with this code already exists.');
+                end;
+                ```
+        }
+        execution {
+            sequence: 10
+        }
+        error {
+            displayLocation: inlineInNotification
+        }
+        serverSideCondition {
+            type: requestIsContainedInValue
+            value: CREATE
+        }
+    )
+
+    process save-reference-data (
+        name: Save Reference Data
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                declare
+                    l_code varchar2(100) := upper(regexp_replace(trim(:P61_CODE), '[^[:alnum:]]+', '_'));
+                    l_name varchar2(255) := trim(:P61_NAME);
+                begin
+                    if :P61_REF_ID is null then
+                        raise_application_error(-20000, 'Select a reference data row to update.');
+                    end if;
+                
+                    if l_code is null or l_name is null then
+                        raise_application_error(-20000, 'Name and Code are required.');
+                    end if;
+                
+                    if :P61_REF_TYPE = 'STATUS' then
+                        update tsk_statuses
+                           set status_code = l_code,
+                               status_name = l_name,
+                               is_open_yn = nvl(:P61_IS_OPEN_YN, 'Y'),
+                               is_done_yn = nvl(:P61_IS_DONE_YN, 'N'),
+                               display_seq = to_number(:P61_DISPLAY_SEQ),
+                               active_yn = nvl(:P61_ACTIVE_YN, 'Y')
+                         where status_id = to_number(:P61_REF_ID);
+                    elsif :P61_REF_TYPE = 'TASK_TYPE' then
+                        update tsk_task_types
+                           set type_code = l_code,
+                               type_name = l_name,
+                               display_seq = to_number(:P61_DISPLAY_SEQ),
+                               active_yn = nvl(:P61_ACTIVE_YN, 'Y')
+                         where type_id = to_number(:P61_REF_ID);
+                    elsif :P61_REF_TYPE = 'COMPLEXITY' then
+                        update tsk_complexities
+                           set complexity_code = l_code,
+                               complexity_name = l_name,
+                               complexity_weight = nvl(to_number(:P61_COMPLEXITY_WEIGHT), 1),
+                               display_seq = to_number(:P61_DISPLAY_SEQ),
+                               active_yn = nvl(:P61_ACTIVE_YN, 'Y')
+                         where complexity_id = to_number(:P61_REF_ID);
+                    else
+                        raise_application_error(-20000, 'Select a valid reference type.');
+                    end if;
+                
+                    if sql%rowcount = 0 then
+                        raise_application_error(-20002, 'The selected reference data row no longer exists.');
+                    end if;
+                exception
+                    when dup_val_on_index then
+                        raise_application_error(-20001, 'A reference data value with this code already exists.');
+                end;
+                ```
+        }
+        execution {
+            sequence: 20
+        }
+        error {
+            displayLocation: inlineInNotification
+        }
+        serverSideCondition {
+            type: requestIsContainedInValue
+            value: SAVE
+        }
+    )
+
+    process delete-reference-data (
+        name: Delete Reference Data
+        type: executeCode
+        source {
+            plsqlCode:
+                ```plsql
+                begin
+                    if :P61_REF_ID is null then
+                        raise_application_error(-20000, 'Select a reference data row to delete.');
+                    end if;
+                
+                    if :P61_REF_TYPE = 'STATUS' then
+                        delete from tsk_statuses
+                         where status_id = to_number(:P61_REF_ID);
+                    elsif :P61_REF_TYPE = 'TASK_TYPE' then
+                        delete from tsk_task_types
+                         where type_id = to_number(:P61_REF_ID);
+                    elsif :P61_REF_TYPE = 'COMPLEXITY' then
+                        delete from tsk_complexities
+                         where complexity_id = to_number(:P61_REF_ID);
+                    else
+                        raise_application_error(-20000, 'Select a valid reference type.');
+                    end if;
+                
+                    if sql%rowcount = 0 then
+                        raise_application_error(-20002, 'The selected reference data row no longer exists.');
+                    end if;
+                end;
+                ```
+        }
+        execution {
+            sequence: 30
+        }
+        error {
+            displayLocation: inlineInNotification
+        }
+        serverSideCondition {
+            type: requestIsContainedInValue
+            value: DELETE
+        }
+    )
+
+    process close-dialog (
+        name: Close Dialog
+        type: closeDialog
+        execution {
+            sequence: 50
+        }
+        serverSideCondition {
+            type: requestIsContainedInValue
+            value: CREATE,SAVE,DELETE
+        }
+    )
+
+)

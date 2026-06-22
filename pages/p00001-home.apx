@@ -31,6 +31,66 @@ page 1 (
         }
     )
 
+
+    region dashboard-filters (
+        name: Dashboard Filters
+        type: staticContent
+        layout {
+            sequence: 15
+            slot: body
+        }
+        appearance {
+            template: @/standard
+            templateOptions: #DEFAULT#
+        }
+        settings {
+            outputAs: text
+        }
+    )
+
+    pageItem P1_YEAR (
+        type: selectList
+        label {
+            label: Year
+            alignment: left
+        }
+        lov {
+            type: sqlQuery
+            sqlQuery:
+                ```sql
+                select to_char(task_year) as display_value,
+                       to_char(task_year) as return_value
+                  from (
+                        select distinct extract(year from cast(created_at as date)) as task_year
+                          from tsk_tasks
+                         where created_at is not null
+                       )
+                 order by task_year desc
+                ```
+            displayExtraValues: false
+            displayNullValue: true
+            nullDisplayValue: All Years
+        }
+        layout {
+            sequence: 10
+            region: @dashboard-filters
+            slot: regionBody
+            alignment: left
+        }
+        appearance {
+            template: @/optional-floating
+            templateOptions: #DEFAULT#
+            height: 1
+        }
+        settings {
+            pageActionOnSelection: submit
+        }
+        sessionState {
+            storage: user
+        }
+    )
+
+
     region task-aging (
         name: Task Aging
         type: chart
@@ -81,6 +141,8 @@ page 1 (
                      where s.status_code in ('NOT_STARTED', 'IN_PROGRESS')
                        and t.updated_at < add_months(systimestamp, -1)
                        and t.updated_at >= add_months(systimestamp, -3)
+
+                     and (:P1_YEAR is null or to_char(t.created_at, 'YYYY') = :P1_YEAR)
                      group by nvl(u.display_name, 'Unassigned')
                      order by nvl(u.display_name, 'Unassigned')
                     ```
@@ -124,6 +186,8 @@ page 1 (
                         on u.user_id = tm.user_id
                      where s.status_code in ('NOT_STARTED', 'IN_PROGRESS')
                        and t.updated_at < add_months(systimestamp, -3)
+
+                     and (:P1_YEAR is null or to_char(t.created_at, 'YYYY') = :P1_YEAR)
                      group by nvl(u.display_name, 'Unassigned')
                      order by nvl(u.display_name, 'Unassigned')
                     ```
@@ -167,6 +231,8 @@ page 1 (
                         on u.user_id = tm.user_id
                      where s.status_code in ('NOT_STARTED', 'IN_PROGRESS')
                        and t.updated_at >= add_months(systimestamp, -1)
+
+                     and (:P1_YEAR is null or to_char(t.created_at, 'YYYY') = :P1_YEAR)
                      group by nvl(u.display_name, 'Unassigned')
                      order by nvl(u.display_name, 'Unassigned')
                     ```
@@ -230,6 +296,7 @@ page 1 (
                        sum(case when status_code = 'ARCHIVE' then 1 else 0 end) as archive_tasks,
                        apex_page.get_url(p_page => 10, p_clear_cache => '10', p_items => 'P10_STATUS', p_values => 'Archive') as archive_tasks_url
                   from tsk_v_task_list
+                 where (:P1_YEAR is null or to_char(created_at, 'YYYY') = :P1_YEAR)
                 ```
         }
         layout {
@@ -482,16 +549,17 @@ page 1 (
                 sqlQuery:
                     ```sql
                     select application_name as LABEL,
-                           sum(task_count) as VALUE,
+                           count(*) as VALUE,
                            apex_page.get_url(
                                p_page => 10,
                                p_clear_cache => '10',
                                p_items => 'P10_APPLICATION',
                                p_values => application_name
                            ) as LINK
-                      from tsk_v_tasks_by_application
+                      from tsk_v_task_list
+                     where (:P1_YEAR is null or to_char(created_at, 'YYYY') = :P1_YEAR)
                      group by application_name
-                     order by sum(task_count) desc, application_name
+                     order by count(*) desc, application_name
                     ```
             }
             columnMapping {
@@ -562,6 +630,7 @@ page 1 (
                                p_values => status_name
                            ) as LINK
                       from tsk_v_task_list
+                     where (:P1_YEAR is null or to_char(created_at, 'YYYY') = :P1_YEAR)
                      group by status_name
                      order by status_name
                     ```
@@ -622,6 +691,7 @@ page 1 (
                                p_values => type_name
                            ) as LINK
                       from tsk_v_task_list
+                     where (:P1_YEAR is null or to_char(created_at, 'YYYY') = :P1_YEAR)
                      group by type_name
                      order by type_name
                     ```
@@ -695,6 +765,8 @@ page 1 (
                         on u.user_id = tm.user_id
                        and u.active_yn = 'Y'
                      where t.priority_code = 'CRITICAL'
+
+                     and (:P1_YEAR is null or to_char(t.created_at, 'YYYY') = :P1_YEAR)
                      group by u.display_name
                      order by u.display_name
                     ```
@@ -743,6 +815,8 @@ page 1 (
                         on u.user_id = tm.user_id
                        and u.active_yn = 'Y'
                      where t.priority_code = 'HIGH'
+
+                     and (:P1_YEAR is null or to_char(t.created_at, 'YYYY') = :P1_YEAR)
                      group by u.display_name
                      order by u.display_name
                     ```
@@ -791,6 +865,8 @@ page 1 (
                         on u.user_id = tm.user_id
                        and u.active_yn = 'Y'
                      where t.priority_code = 'LOW'
+
+                     and (:P1_YEAR is null or to_char(t.created_at, 'YYYY') = :P1_YEAR)
                      group by u.display_name
                      order by u.display_name
                     ```
@@ -839,6 +915,8 @@ page 1 (
                         on u.user_id = tm.user_id
                        and u.active_yn = 'Y'
                      where t.priority_code = 'MEDIUM'
+
+                     and (:P1_YEAR is null or to_char(t.created_at, 'YYYY') = :P1_YEAR)
                      group by u.display_name
                      order by u.display_name
                     ```
@@ -922,6 +1000,8 @@ page 1 (
                       left join tsk_users u
                         on u.user_id = tm.user_id
                      where s.status_code = 'BACKLOG'
+
+                     and (:P1_YEAR is null or to_char(t.created_at, 'YYYY') = :P1_YEAR)
                      group by nvl(u.display_name, 'Unassigned')
                      order by nvl(u.display_name, 'Unassigned')
                     ```
@@ -961,6 +1041,8 @@ page 1 (
                       left join tsk_users u
                         on u.user_id = tm.user_id
                      where s.status_code = 'BLOCKED'
+
+                     and (:P1_YEAR is null or to_char(t.created_at, 'YYYY') = :P1_YEAR)
                      group by nvl(u.display_name, 'Unassigned')
                      order by nvl(u.display_name, 'Unassigned')
                     ```
@@ -1000,6 +1082,8 @@ page 1 (
                       left join tsk_users u
                         on u.user_id = tm.user_id
                      where s.status_code = 'COMPLETED'
+
+                     and (:P1_YEAR is null or to_char(t.created_at, 'YYYY') = :P1_YEAR)
                      group by nvl(u.display_name, 'Unassigned')
                      order by nvl(u.display_name, 'Unassigned')
                     ```
@@ -1039,6 +1123,8 @@ page 1 (
                       left join tsk_users u
                         on u.user_id = tm.user_id
                      where s.status_code = 'IN_PROGRESS'
+
+                     and (:P1_YEAR is null or to_char(t.created_at, 'YYYY') = :P1_YEAR)
                      group by nvl(u.display_name, 'Unassigned')
                      order by nvl(u.display_name, 'Unassigned')
                     ```
@@ -1078,6 +1164,8 @@ page 1 (
                       left join tsk_users u
                         on u.user_id = tm.user_id
                      where s.status_code = 'IN_REVIEW'
+
+                     and (:P1_YEAR is null or to_char(t.created_at, 'YYYY') = :P1_YEAR)
                      group by nvl(u.display_name, 'Unassigned')
                      order by nvl(u.display_name, 'Unassigned')
                     ```
@@ -1117,6 +1205,8 @@ page 1 (
                       left join tsk_users u
                         on u.user_id = tm.user_id
                      where s.status_code = 'NOT_STARTED'
+
+                     and (:P1_YEAR is null or to_char(t.created_at, 'YYYY') = :P1_YEAR)
                      group by nvl(u.display_name, 'Unassigned')
                      order by nvl(u.display_name, 'Unassigned')
                     ```
@@ -1172,7 +1262,8 @@ page 1 (
                            p_values => task_id
                        ) as task_url
                   from tsk_v_task_list
-                 where due_date is not null
+                 where (:P1_YEAR is null or to_char(created_at, 'YYYY') = :P1_YEAR)
+                   and due_date is not null
                    and due_date >= trunc(sysdate)
                    and nvl(is_done_yn, 'N') = 'N'
                  order by due_date, priority_code desc, task_key

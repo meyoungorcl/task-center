@@ -164,11 +164,12 @@ create or replace package body tsk_email_automation_pkg as
 
         for s in (
             select email_schedule_id,
+                   schedule_code,
                    send_hour,
                    send_minute,
                    send_at
               from tsk_email_schedules
-             where schedule_code = 'DAILY_MEMBER_STATUS'
+             where schedule_code in ('DAILY_MEMBER_STATUS','DAILY_UNASSIGNED_SUBMITTER')
                and enabled_yn = 'Y'
         ) loop
             l_hour := coalesce(to_number(to_char(s.send_at, 'HH24')), s.send_hour, 8);
@@ -180,7 +181,11 @@ create or replace package body tsk_email_automation_pkg as
                and (l_first_run_at is null or l_now >= l_first_run_at)
                and not already_ran(s.email_schedule_id, l_today)
             then
-                tsk_daily_email_pkg.send_daily_schedule(s.email_schedule_id);
+                if s.schedule_code = 'DAILY_UNASSIGNED_SUBMITTER' then
+                    tsk_daily_email_pkg.send_unassigned_submitter_reminders(s.email_schedule_id);
+                else
+                    tsk_daily_email_pkg.send_daily_schedule(s.email_schedule_id);
+                end if;
             end if;
         end loop;
 
@@ -256,7 +261,7 @@ begin
             p_static_id=>'task-center-email-schedule-runner',
             p_trigger_type=>'POLLING',
             p_polling_interval=>'FREQ=MINUTELY;INTERVAL=5',
-            p_polling_status=>'DISABLED',
+            p_polling_status=>'ACTIVE',
             p_result_type=>'ALWAYS',
             p_location=>'LOCAL',
             p_use_local_sync_table=>false,

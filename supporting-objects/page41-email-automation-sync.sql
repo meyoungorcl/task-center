@@ -145,7 +145,7 @@ wwv_flow_imp_page.create_page_button(
 ,p_button_image_alt=>'Send Now'
 ,p_button_position=>'NEXT'
 ,p_warn_on_unsaved_changes=>null
-,p_button_condition=>':P41_SCHEDULE_CODE = ''DAILY_MEMBER_STATUS'''
+,p_button_condition=>':P41_SCHEDULE_CODE in (''DAILY_MEMBER_STATUS'',''DAILY_UNASSIGNED_SUBMITTER'')'
 ,p_button_condition2=>'PLSQL'
 ,p_button_condition_type=>'EXPRESSION'
 ,p_grid_new_row=>'Y'
@@ -289,7 +289,7 @@ wwv_flow_imp_page.create_page_item(
 ,p_begin_on_new_line=>'N'
 ,p_colspan=>6
 ,p_field_alignment=>'LEFT-CENTER'
-,p_display_when=>':P41_SCHEDULE_CODE <> ''DAILY_MEMBER_STATUS'''
+,p_display_when=>':P41_SCHEDULE_CODE not in (''DAILY_MEMBER_STATUS'',''DAILY_UNASSIGNED_SUBMITTER'')'
 ,p_display_when2=>'PLSQL'
 ,p_display_when_type=>'EXPRESSION'
 ,p_field_template=>1610598484065263269
@@ -600,13 +600,17 @@ wwv_flow_imp_page.create_page_process(
 ,p_static_id=>'send-daily-email-now'
 ,p_process_sql_clob=>wwv_flow_string.join(wwv_flow_t_varchar2(
 'begin',
-'    tsk_daily_email_pkg.send_daily_schedule(:P41_EMAIL_SCHEDULE_ID);',
+'    if :P41_SCHEDULE_CODE = ''DAILY_UNASSIGNED_SUBMITTER'' then',
+'        tsk_daily_email_pkg.send_unassigned_submitter_reminders(:P41_EMAIL_SCHEDULE_ID);',
+'    else',
+'        tsk_daily_email_pkg.send_daily_schedule(:P41_EMAIL_SCHEDULE_ID);',
+'    end if;',
 'end;'))
 ,p_process_clob_language=>'PLSQL'
 ,p_error_display_location=>'INLINE_IN_NOTIFICATION'
 ,p_process_when=>'SEND_NOW'
 ,p_process_when_type=>'REQUEST_IN_CONDITION'
-,p_process_success_message=>'Daily email queued'
+,p_process_success_message=>'Email queued'
 ,p_internal_uid=>9990004100000002
 );
 wwv_flow_imp_page.create_page_process(

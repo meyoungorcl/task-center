@@ -260,7 +260,7 @@ page 41 (
         }
         serverSideCondition {
             type: expression
-            plsqlExpression: :P41_SCHEDULE_CODE <> 'DAILY_MEMBER_STATUS'
+            plsqlExpression: :P41_SCHEDULE_CODE not in ('DAILY_MEMBER_STATUS','DAILY_UNASSIGNED_SUBMITTER')
         }
     )
 
@@ -500,7 +500,7 @@ page 41 (
         }
         serverSideCondition {
             type: expression
-            plsqlExpression: :P41_SCHEDULE_CODE = 'DAILY_MEMBER_STATUS'
+            plsqlExpression: :P41_SCHEDULE_CODE in ('DAILY_MEMBER_STATUS','DAILY_UNASSIGNED_SUBMITTER')
         }
     )
 
@@ -676,7 +676,11 @@ page 41 (
             plsqlCode:
                 ```plsql
                 begin
-                    tsk_daily_email_pkg.send_daily_schedule(:P41_EMAIL_SCHEDULE_ID);
+                    if :P41_SCHEDULE_CODE = 'DAILY_UNASSIGNED_SUBMITTER' then
+                        tsk_daily_email_pkg.send_unassigned_submitter_reminders(:P41_EMAIL_SCHEDULE_ID);
+                    else
+                        tsk_daily_email_pkg.send_daily_schedule(:P41_EMAIL_SCHEDULE_ID);
+                    end if;
                 end;
                 ```
         }
@@ -684,7 +688,7 @@ page 41 (
             sequence: 30
         }
         successMessage {
-            successMessage: Daily email queued
+            successMessage: Email queued
         }
         advanced {
             executionMappingIdentifier: 9990004100000002

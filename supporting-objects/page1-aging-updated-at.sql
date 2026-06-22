@@ -82,6 +82,46 @@ wwv_flow_imp_page.create_page_plug(
   'show_line_breaks', 'Y')).to_clob
 );
 wwv_flow_imp_page.create_page_plug(
+ p_id=>wwv_flow_imp.id(6100000100001001)
+,p_plug_name=>'Dashboard Filters'
+,p_static_id=>'dashboard-filters'
+,p_region_template_options=>'#DEFAULT#'
+,p_plug_template=>4073835273271169698
+,p_plug_display_sequence=>15
+,p_plug_item_display_point=>'ABOVE'
+,p_location=>null
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'output_as', 'TEXT',
+  'show_line_breaks', 'Y')).to_clob
+);
+wwv_flow_imp_page.create_page_item(
+ p_id=>wwv_flow_imp.id(6100000100001002)
+,p_name=>'P1_YEAR'
+,p_item_sequence=>10
+,p_item_plug_id=>wwv_flow_imp.id(6100000100001001)
+,p_prompt=>'Year'
+,p_display_as=>'NATIVE_SELECT_LIST'
+,p_lov=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'select to_char(task_year) as display_value,',
+'       to_char(task_year) as return_value',
+'  from (',
+'        select distinct extract(year from cast(created_at as date)) as task_year',
+'          from tsk_tasks',
+'         where created_at is not null',
+'       )',
+' order by task_year desc'))
+,p_lov_display_null=>'YES'
+,p_lov_null_text=>'All Years'
+,p_cHeight=>1
+,p_field_template=>1610598304472262251
+,p_item_template_options=>'#DEFAULT#'
+,p_is_persistent=>'Y'
+,p_lov_display_extra=>'NO'
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'execute_validations', 'N',
+  'page_action_on_selection', 'SUBMIT')).to_clob
+);
+wwv_flow_imp_page.create_page_plug(
  p_id=>wwv_flow_imp.id(17104470511658143)
 ,p_plug_name=>'Task Aging'
 ,p_static_id=>'task-aging'
@@ -146,6 +186,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 ' where s.status_code in (''NOT_STARTED'', ''IN_PROGRESS'')',
 '   and t.updated_at < add_months(systimestamp, -1)',
 '   and t.updated_at >= add_months(systimestamp, -3)',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by nvl(u.display_name, ''Unassigned'')',
 ' order by nvl(u.display_name, ''Unassigned'')'))
 ,p_series_type=>'bar'
@@ -184,6 +225,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '    on u.user_id = tm.user_id',
 ' where s.status_code in (''NOT_STARTED'', ''IN_PROGRESS'')',
 '   and t.updated_at < add_months(systimestamp, -3)',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by nvl(u.display_name, ''Unassigned'')',
 ' order by nvl(u.display_name, ''Unassigned'')'))
 ,p_series_type=>'bar'
@@ -222,6 +264,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '    on u.user_id = tm.user_id',
 ' where s.status_code in (''NOT_STARTED'', ''IN_PROGRESS'')',
 '   and t.updated_at >= add_months(systimestamp, -1)',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by nvl(u.display_name, ''Unassigned'')',
 ' order by nvl(u.display_name, ''Unassigned'')'))
 ,p_series_type=>'bar'
@@ -296,7 +339,8 @@ wwv_flow_imp_page.create_report_region(
 '       apex_page.get_url(p_page => 10, p_clear_cache => ''10'', p_items => ''P10_STATUS'', p_values => ''Backlog'') as backlog_tasks_url,',
 '       sum(case when status_code = ''ARCHIVE'' then 1 else 0 end) as archive_tasks,',
 '       apex_page.get_url(p_page => 10, p_clear_cache => ''10'', p_items => ''P10_STATUS'', p_values => ''Archive'') as archive_tasks_url',
-'  from tsk_v_task_list'))
+'  from tsk_v_task_list',
+' where (:P1_YEAR is null or to_char(created_at, ''YYYY'') = :P1_YEAR)'))
 ,p_ajax_enabled=>'Y'
 ,p_lazy_loading=>false
 ,p_query_row_template=>2540130677583398057
@@ -532,16 +576,17 @@ wwv_flow_imp_page.create_jet_chart_series(
 ,p_data_source_type=>'SQL'
 ,p_data_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
 'select application_name as LABEL,',
-'       sum(task_count) as VALUE,',
+'       count(*) as VALUE,',
 '       apex_page.get_url(',
 '           p_page => 10,',
 '           p_clear_cache => ''10'',',
 '           p_items => ''P10_APPLICATION'',',
 '           p_values => application_name',
 '       ) as LINK',
-'  from tsk_v_tasks_by_application',
+'  from tsk_v_task_list',
+' where (:P1_YEAR is null or to_char(created_at, ''YYYY'') = :P1_YEAR)',
 ' group by application_name',
-' order by sum(task_count) desc, application_name'))
+' order by count(*) desc, application_name'))
 ,p_series_type=>'bar'
 ,p_items_value_column_name=>'VALUE'
 ,p_items_label_column_name=>'LABEL'
@@ -640,6 +685,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '           p_values => status_name',
 '       ) as LINK',
 '  from tsk_v_task_list',
+' where (:P1_YEAR is null or to_char(created_at, ''YYYY'') = :P1_YEAR)',
 ' group by status_name',
 ' order by status_name'))
 ,p_series_type=>'donut'
@@ -710,6 +756,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '           p_values => type_name',
 '       ) as LINK',
 '  from tsk_v_task_list',
+' where (:P1_YEAR is null or to_char(created_at, ''YYYY'') = :P1_YEAR)',
 ' group by type_name',
 ' order by type_name'))
 ,p_series_type=>'donut'
@@ -792,6 +839,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '    on u.user_id = tm.user_id',
 '   and u.active_yn = ''Y''',
 ' where t.priority_code = ''CRITICAL''',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by u.display_name',
 ' order by u.display_name'))
 ,p_series_type=>'bar'
@@ -835,6 +883,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '    on u.user_id = tm.user_id',
 '   and u.active_yn = ''Y''',
 ' where t.priority_code = ''HIGH''',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by u.display_name',
 ' order by u.display_name'))
 ,p_series_type=>'bar'
@@ -878,6 +927,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '    on u.user_id = tm.user_id',
 '   and u.active_yn = ''Y''',
 ' where t.priority_code = ''LOW''',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by u.display_name',
 ' order by u.display_name'))
 ,p_series_type=>'bar'
@@ -921,6 +971,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '    on u.user_id = tm.user_id',
 '   and u.active_yn = ''Y''',
 ' where t.priority_code = ''MEDIUM''',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by u.display_name',
 ' order by u.display_name'))
 ,p_series_type=>'bar'
@@ -1028,6 +1079,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '  left join tsk_users u',
 '    on u.user_id = tm.user_id',
 ' where s.status_code = ''BACKLOG''',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by nvl(u.display_name, ''Unassigned'')',
 ' order by nvl(u.display_name, ''Unassigned'')'))
 ,p_series_type=>'bar'
@@ -1064,6 +1116,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '  left join tsk_users u',
 '    on u.user_id = tm.user_id',
 ' where s.status_code = ''BLOCKED''',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by nvl(u.display_name, ''Unassigned'')',
 ' order by nvl(u.display_name, ''Unassigned'')'))
 ,p_series_type=>'bar'
@@ -1100,6 +1153,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '  left join tsk_users u',
 '    on u.user_id = tm.user_id',
 ' where s.status_code = ''COMPLETED''',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by nvl(u.display_name, ''Unassigned'')',
 ' order by nvl(u.display_name, ''Unassigned'')'))
 ,p_series_type=>'bar'
@@ -1136,6 +1190,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '  left join tsk_users u',
 '    on u.user_id = tm.user_id',
 ' where s.status_code = ''IN_PROGRESS''',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by nvl(u.display_name, ''Unassigned'')',
 ' order by nvl(u.display_name, ''Unassigned'')'))
 ,p_series_type=>'bar'
@@ -1172,6 +1227,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '  left join tsk_users u',
 '    on u.user_id = tm.user_id',
 ' where s.status_code = ''IN_REVIEW''',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by nvl(u.display_name, ''Unassigned'')',
 ' order by nvl(u.display_name, ''Unassigned'')'))
 ,p_series_type=>'bar'
@@ -1208,6 +1264,7 @@ wwv_flow_imp_page.create_jet_chart_series(
 '  left join tsk_users u',
 '    on u.user_id = tm.user_id',
 ' where s.status_code = ''NOT_STARTED''',
+'   and (:P1_YEAR is null or to_char(t.created_at, ''YYYY'') = :P1_YEAR)',
 ' group by nvl(u.display_name, ''Unassigned'')',
 ' order by nvl(u.display_name, ''Unassigned'')'))
 ,p_series_type=>'bar'
@@ -1277,7 +1334,8 @@ wwv_flow_imp_page.create_report_region(
 '           p_values => task_id',
 '       ) as task_url',
 '  from tsk_v_task_list',
-' where due_date is not null',
+' where (:P1_YEAR is null or to_char(created_at, ''YYYY'') = :P1_YEAR)',
+'   and due_date is not null',
 '   and due_date >= trunc(sysdate)',
 '   and nvl(is_done_yn, ''N'') = ''N''',
 ' order by due_date, priority_code desc, task_key',

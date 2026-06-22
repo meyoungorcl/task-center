@@ -320,7 +320,7 @@ page 11 (
             dataType: number
         }
         help {
-            helpText: You can select an existing topic group of type a new one which will add it to the topic group list for future tasks.
+            helpText: You can select an existing topic group or type a new topic group name. The new topic group will be added to the topic group list for future tasks.
         }
     )
 
@@ -622,11 +622,59 @@ page 11 (
                     l_assignee_names varchar2(32767);
                     l_task_url       varchar2(4000);
                     l_email_count    pls_integer := 0;
-                begin
-                    if :P11_ASSIGNEES is null then
-                        return;
-                    end if;
                 
+                    cursor c_task is
+                        select v.task_key,
+                               v.title,
+                               v.team_name,
+                               v.type_name,
+                               v.application_name,
+                               v.complexity_name,
+                               v.status_name,
+                               v.priority_code,
+                               v.start_date,
+                               v.due_date,
+                               v.estimated_hours,
+                               v.percent_complete,
+                               v.assignees,
+                               tg.topic_name,
+                               dbms_lob.substr(t.description, 4000, 1) as description_text
+                          from tsk_tasks t
+                          join tsk_v_task_list v
+                            on v.task_id = t.task_id
+                          left join tsk_topic_groups tg
+                            on tg.topic_group_id = t.topic_group_id
+                         where t.task_id = :P11_TASK_ID;
+                
+                    l_task c_task%rowtype;
+                
+                    function display_value (
+                        p_value in varchar2
+                    ) return varchar2 is
+                    begin
+                        return coalesce(p_value, 'Not specified');
+                    end display_value;
+                
+                    function text_line (
+                        p_label in varchar2,
+                        p_value in varchar2
+                    ) return varchar2 is
+                    begin
+                        return p_label || ': ' || display_value(p_value) || chr(10);
+                    end text_line;
+                
+                    function html_row (
+                        p_label in varchar2,
+                        p_value in varchar2
+                    ) return varchar2 is
+                    begin
+                        return '<tr><th align="left" style="padding:6px 10px;border-bottom:1px solid #e5e7eb;color:#374151;white-space:nowrap">' ||
+                               apex_escape.html(p_label) ||
+                               '</th><td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">' ||
+                               apex_escape.html(display_value(p_value)) ||
+                               '</td></tr>';
+                    end html_row;
+                begin
                     l_task_url := apex_mail.get_instance_url ||
                                   apex_page.get_url(
                                       p_application => :APP_ID,
@@ -641,7 +689,6 @@ page 11 (
                     for m in (
                         select distinct to_number(s.column_value) as team_member_id,
                                u.display_name,
-                               u.email,
                                tm.role_name
                           from table(apex_string.split(:P11_ASSIGNEES, ':')) s
                           join tsk_team_members tm
@@ -675,20 +722,97 @@ page 11 (
                                 when l_assignee_names is null then m.display_name
                                 else l_assignee_names || ', ' || m.display_name
                             end;
+                    end loop;
                 
+                    open c_task;
+                    fetch c_task into l_task;
+                    close c_task;
+                
+                    for m in (
+                        select max(display_name) as display_name,
+                               max(email) as email
+                          from (
+                                select u.display_name,
+                                       u.email
+                                  from (
+                                        select to_number(s.column_value) as team_member_id
+                                          from table(apex_string.split(:P11_ASSIGNEES, ':')) s
+                                         where regexp_like(s.column_value, '^[0-9]+$')
+                                        union
+                                        select coalesce(t.created_by_member_id, t.owner_member_id)
+                                          from tsk_tasks t
+                                         where t.task_id = :P11_TASK_ID
+                                           and coalesce(t.created_by_member_id, t.owner_member_id) is not null
+                                        union
+                                        select min(tm_current.team_member_id)
+                                          from tsk_team_members tm_current
+                                          join tsk_users u_current
+                                            on u_current.user_id = tm_current.user_id
+                                         where tm_current.active_yn = 'Y'
+                                           and u_current.active_yn = 'Y'
+                                           and (
+                                               lower(u_current.username) = lower(:APP_USER)
+                                               or lower(u_current.email) = lower(:APP_USER)
+                                           )
+                                       ) r
+                                  join tsk_team_members tm
+                                    on tm.team_member_id = r.team_member_id
+                                  join tsk_users u
+                                    on u.user_id = tm.user_id
+                                 where r.team_member_id is not null
+                                   and tm.active_yn = 'Y'
+                                   and u.active_yn = 'Y'
+                                   and u.email is not null
+                               )
+                         group by lower(email)
+                    ) loop
                         if m.email is not null then
                             apex_mail.send(
                                 p_to        => m.email,
                                 p_from      => 'no-reply@oracle.com',
-                                p_subj      => 'Task assigned: ' || :P11_TITLE,
-                                p_body      => 'You have been assigned a task in Task Center.' || chr(10) || chr(10) ||
-                                               'Task: ' || :P11_TITLE || chr(10) ||
-                                               'Due Date: ' || :P11_DUE_DATE || chr(10) ||
+                                p_subj      => 'Task Created: ' || :P11_TITLE,
+                                p_body      => 'A task has been created in the Task Center.' || chr(10) || chr(10) ||
+                                               text_line('Task', l_task.task_key || ' - ' || l_task.title) ||
+                                               text_line('Team', l_task.team_name) ||
+                                               text_line('Assignees', coalesce(l_task.assignees, l_assignee_names, 'Not Assigned')) ||
+                                               text_line('Application', l_task.application_name) ||
+                                               text_line('Status', l_task.status_name) ||
+                                               text_line('Task Type', l_task.type_name) ||
+                                               text_line('Priority', l_task.priority_code) ||
+                                               text_line('Complexity', l_task.complexity_name) ||
+                                               text_line('Topic Group', l_task.topic_name) ||
+                                               text_line('Start Date', case when l_task.start_date is not null then to_char(l_task.start_date, 'DD-MON-YYYY') end) ||
+                                               text_line('Due Date', case when l_task.due_date is not null then to_char(l_task.due_date, 'DD-MON-YYYY') end) ||
+                                               text_line('Estimated Hours', case when l_task.estimated_hours is not null then to_char(l_task.estimated_hours) end) ||
+                                               text_line('Percent Complete', to_char(l_task.percent_complete) || '%') ||
+                                               case when l_task.description_text is not null
+                                                    then chr(10) || 'Description:' || chr(10) || l_task.description_text || chr(10) || chr(10)
+                                               end ||
                                                'Open Task: ' || l_task_url,
-                                p_body_html => '<p>You have been assigned a task in Task Center.</p>' ||
-                                               '<p><strong>Task:</strong> ' || apex_escape.html(:P11_TITLE) || '<br>' ||
-                                               '<strong>Due Date:</strong> ' || apex_escape.html(:P11_DUE_DATE) || '</p>' ||
+                                p_body_html => '<div style="font-family:Arial,sans-serif;color:#172033;line-height:1.45">' ||
+                                               '<p>A task has been created in the Task Center.</p>' ||
+                                               '<table role="presentation" style="border-collapse:collapse;margin:12px 0;width:100%;max-width:720px">' ||
+                                               html_row('Task', l_task.task_key || ' - ' || l_task.title) ||
+                                               html_row('Team', l_task.team_name) ||
+                                               html_row('Assignees', coalesce(l_task.assignees, l_assignee_names, 'Not Assigned')) ||
+                                               html_row('Application', l_task.application_name) ||
+                                               html_row('Status', l_task.status_name) ||
+                                               html_row('Task Type', l_task.type_name) ||
+                                               html_row('Priority', l_task.priority_code) ||
+                                               html_row('Complexity', l_task.complexity_name) ||
+                                               html_row('Topic Group', l_task.topic_name) ||
+                                               html_row('Start Date', case when l_task.start_date is not null then to_char(l_task.start_date, 'DD-MON-YYYY') end) ||
+                                               html_row('Due Date', case when l_task.due_date is not null then to_char(l_task.due_date, 'DD-MON-YYYY') end) ||
+                                               html_row('Estimated Hours', case when l_task.estimated_hours is not null then to_char(l_task.estimated_hours) end) ||
+                                               html_row('Percent Complete', to_char(l_task.percent_complete) || '%') ||
+                                               '</table>' ||
+                                               case when l_task.description_text is not null
+                                                    then '<div style="margin:12px 0"><strong>Description</strong><div style="margin-top:4px;padding:10px;border:1px solid #e5e7eb;background:#f9fafb">' ||
+                                                         apex_escape.html(l_task.description_text) ||
+                                                         '</div></div>'
+                                               end ||
                                                '<p><a href="' || apex_escape.html_attribute(l_task_url) || '">Open Task</a></p>'
+                                               || '</div>'
                             );
                 
                             l_email_count := l_email_count + 1;
@@ -737,30 +861,50 @@ page 11 (
             plsqlCode:
                 ```plsql
                 declare
-                    l_topic_name tsk_topic_groups.topic_name%type := trim(:P11_TOPIC_GROUP_MANUAL);
+                    l_topic_name tsk_topic_groups.topic_name%type;
                 begin
+                    l_topic_name := coalesce(
+                        nullif(trim(:P11_TOPIC_GROUP_MANUAL), ''),
+                        case
+                            when :P11_TOPIC_GROUP_ID is not null
+                             and not regexp_like(:P11_TOPIC_GROUP_ID, '^[0-9]+$')
+                            then trim(:P11_TOPIC_GROUP_ID)
+                        end
+                    );
+                
                     if l_topic_name is not null then
                         begin
-                            insert into tsk_topic_groups (
-                                topic_name,
-                                active_yn
-                            ) values (
-                                l_topic_name,
-                                'Y'
-                            )
-                            returning topic_group_id into :P11_TOPIC_GROUP_ID;
+                            select topic_group_id
+                              into :P11_TOPIC_GROUP_ID
+                              from tsk_topic_groups
+                             where upper(topic_name) = upper(l_topic_name)
+                             fetch first 1 row only;
                         exception
-                            when dup_val_on_index then
-                                select topic_group_id
-                                  into :P11_TOPIC_GROUP_ID
-                                  from tsk_topic_groups
-                                 where upper(topic_name) = upper(l_topic_name)
-                                 fetch first 1 row only;
-                        
-                                update tsk_topic_groups
-                                   set active_yn = 'Y'
-                                 where topic_group_id = :P11_TOPIC_GROUP_ID;
+                            when no_data_found then
+                                begin
+                                    insert into tsk_topic_groups (
+                                        topic_name,
+                                        active_yn
+                                    ) values (
+                                        l_topic_name,
+                                        'Y'
+                                    )
+                                    returning topic_group_id into :P11_TOPIC_GROUP_ID;
+                                exception
+                                    when dup_val_on_index then
+                                        select topic_group_id
+                                          into :P11_TOPIC_GROUP_ID
+                                          from tsk_topic_groups
+                                         where upper(topic_name) = upper(l_topic_name)
+                                         fetch first 1 row only;
+                                end;
                         end;
+                
+                        update tsk_topic_groups
+                           set active_yn = 'Y'
+                         where topic_group_id = :P11_TOPIC_GROUP_ID;
+                
+                        :P11_TOPIC_GROUP_MANUAL := null;
                     end if;
                 end;
                 ```
