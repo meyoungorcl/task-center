@@ -13,90 +13,6 @@ page 12 (
         pageAccessProtection: argumentsMustHaveChecksum
         formAutoComplete: false
     }
-    javaScript {
-        functionAndGlobalVarDeclaration:
-            ```javascript-browser
-            apex.jQuery(() => {
-                const sizeEditUpdateDialog = () => {
-                    const region = apex.jQuery("#edit-update-dialog, #R9990001200000201").first();
-                    const dialog = region.closest(".ui-dialog");
-                    if (dialog.length) {
-                        dialog.css({
-                            width: "min(960px, calc(100vw - 2rem))",
-                            maxWidth: "calc(100vw - 2rem)"
-                        });
-                        region.css("width", "100%");
-                        dialog.position({ my: "center", at: "center", of: window });
-                    }
-                };
-
-                const setEditUpdateText = (value) => {
-                    const item = apex.item("P12_EDIT_UPDATE_TEXT");
-                    if (item && item.setValue) {
-                        item.setValue(value || "", null, true);
-                    } else {
-                        $s("P12_EDIT_UPDATE_TEXT", value || "");
-                    }
-                };
-
-                const showEditUpdateDialog = () => {
-                    const region = apex.jQuery("#edit-update-dialog, #R9990001200000201").first();
-                    try {
-                        apex.theme.openRegion("edit-update-dialog");
-                    } catch (ignore) {
-                        try {
-                            apex.theme.openRegion(region.attr("id"));
-                        } catch (ignoreNested) {
-                            if (region.data("ui-dialog")) {
-                                region.dialog("open");
-                            } else {
-                                region.show();
-                            }
-                        }
-                    }
-                };
-
-                const openEditUpdateDialog = (updateId, updateText) => {
-                    $s("P12_EDIT_UPDATE_ID", updateId);
-                    setEditUpdateText(updateText);
-                    showEditUpdateDialog();
-                    setTimeout(() => {
-                        setEditUpdateText(updateText);
-                        sizeEditUpdateDialog();
-                    }, 0);
-                };
-
-                window.taskCenterEditUpdate = (link) => {
-                    openEditUpdateDialog(
-                        link.getAttribute("data-update-id"),
-                        link.getAttribute("data-update-text") || ""
-                    );
-                    return false;
-                };
-
-                apex.jQuery(document).on("click", "a.js-edit-update", function(event) {
-                    event.preventDefault();
-                    window.taskCenterEditUpdate(this);
-                });
-
-                if ($v("P12_EDIT_UPDATE_ID")) {
-                    const dialog = apex.jQuery("#edit-update-dialog, #R9990001200000201").first();
-                    if (dialog.length) {
-                        showEditUpdateDialog();
-                        dialog.attr("aria-modal", "true");
-                        setTimeout(sizeEditUpdateDialog, 0);
-                    }
-                }
-
-                apex.jQuery(window).on("resize", () => {
-                    if ($v("P12_EDIT_UPDATE_ID")) {
-                        sizeEditUpdateDialog();
-                    }
-                });
-            });
-            ```
-    }
-
     region task-detail-column (
         name: Task Detail Column
         type: staticContent
@@ -249,9 +165,6 @@ page 12 (
             }
             accessibility {
                 valueIdentifiesRow: true
-            }
-            appearance {
-                formatMask: SINCE
             }
         )
 
@@ -507,9 +420,6 @@ page 12 (
             layout {
                 sequence: 80
             }
-            appearance {
-                formatMask: SINCE
-            }
         )
 
         column UPLOADED_BY (
@@ -678,13 +588,6 @@ page 12 (
             layout {
                 sequence: 70
             }
-            source {
-                databaseColumn: COMMENT_DATE
-                dataType: date
-            }
-            appearance {
-                formatMask: SINCE
-            }
         )
 
         column EDIT_TEXT_ATTR (
@@ -702,10 +605,6 @@ page 12 (
             type: hidden
             layout {
                 sequence: 60
-            }
-            source {
-                databaseColumn: COMMENT_TEXT
-                dataType: varchar2
             }
         )
 
@@ -743,10 +642,6 @@ page 12 (
             layout {
                 sequence: 40
             }
-            source {
-                databaseColumn: USER_CSS_CLASS
-                dataType: varchar2
-            }
         )
 
         column USER_INITIALS (
@@ -756,10 +651,6 @@ page 12 (
             layout {
                 sequence: 30
             }
-            source {
-                databaseColumn: USER_INITIALS
-                dataType: varchar2
-            }
         )
 
         column USER_NAME (
@@ -768,10 +659,6 @@ page 12 (
             type: hidden
             layout {
                 sequence: 50
-            }
-            source {
-                databaseColumn: USER_NAME
-                dataType: varchar2
             }
         )
 
@@ -880,6 +767,9 @@ page 12 (
         settings {
             multiSelection: true
             manualEntriesItem: P12_TOPIC_GROUP_MANUAL
+        }
+        multipleValues {
+            type: delimitedList
         }
         layout {
             sequence: 75
@@ -1608,10 +1498,6 @@ page 12 (
         appearance {
             template: @/optional-floating
             templateOptions: #DEFAULT#
-            height: 7
-        }
-        validation {
-            maxLength: 4000
         }
         sessionState {
             storage: request
@@ -1634,10 +1520,6 @@ page 12 (
         appearance {
             template: @/optional-floating
             templateOptions: #DEFAULT#
-            height: 3
-        }
-        validation {
-            maxLength: 4000
         }
         sessionState {
             storage: request

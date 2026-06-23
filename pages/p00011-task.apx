@@ -295,9 +295,6 @@ page 11 (
                     or topic_group_id = :P11_TOPIC_GROUP_ID
                  order by topic_name
                 ```
-            displayExtraValues: false
-            displayNullValue: true
-            nullDisplayValue: "- No topic -"
         }
         settings {
             manualEntriesItem: P11_TOPIC_GROUP_MANUAL
@@ -312,7 +309,6 @@ page 11 (
         appearance {
             template: @/optional-floating
             templateOptions: #DEFAULT#
-            height: 1
         }
         source {
             formRegion: @task-form

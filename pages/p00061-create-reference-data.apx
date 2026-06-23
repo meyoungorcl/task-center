@@ -474,9 +474,6 @@ page 61 (
             sequence: 10
             point: beforeHeader
         }
-        error {
-            displayLocation: inlineInNotification
-        }
     )
 
     process create-reference-data (

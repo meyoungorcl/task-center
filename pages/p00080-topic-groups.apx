@@ -91,9 +91,6 @@ page 80 (
             layout {
                 sequence: 40
             }
-            source {
-                dataType: STRING
-            }
         )
 
         column DESCRIPTION (
@@ -105,9 +102,6 @@ page 80 (
             }
             layout {
                 sequence: 30
-            }
-            source {
-                dataType: STRING
             }
         )
 
@@ -147,9 +141,6 @@ page 80 (
             appearance {
                 formatMask: DD-MON-YYYY
             }
-            source {
-                dataType: DATE
-            }
         )
 
         column TASK_COUNT (
@@ -164,23 +155,14 @@ page 80 (
                 sequence: 50
                 columnAlignment: end
             }
-            source {
-                dataType: NUMBER
-            }
         )
 
         column TOPIC_GROUP_ID (
             reportColumnQueryId: 1
             derivedColumn: N
             type: hidden
-            heading {
-                heading: Topic Group Id
-            }
             layout {
                 sequence: 5
-            }
-            source {
-                dataType: NUMBER
             }
         )
 
@@ -193,9 +175,6 @@ page 80 (
             }
             layout {
                 sequence: 20
-            }
-            source {
-                dataType: STRING
             }
             columnFormatting {
                 htmlExpression: <a href="#SELECT_URL#">#TOPIC_NAME#</a>
@@ -215,9 +194,6 @@ page 80 (
             appearance {
                 formatMask: DD-MON-YYYY HH24:MI
             }
-            source {
-                dataType: DATE
-            }
         )
 
         column UPDATED_BY (
@@ -229,9 +205,6 @@ page 80 (
             }
             layout {
                 sequence: 80
-            }
-            source {
-                dataType: STRING
             }
         )
 

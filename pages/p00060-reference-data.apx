@@ -149,9 +149,6 @@ page 60 (
             source {
                 dataType: STRING
             }
-            columnFormatting {
-                htmlExpression: <a href="#EDIT_URL#" class="t-Button t-Button--noLabel t-Button--icon t-Button--tiny" title="Edit reference data" aria-label="Edit reference data"><span class="fa fa-edit" aria-hidden="true"></span></a>
-            }
             advanced {
                 endUserAlias: H
             }

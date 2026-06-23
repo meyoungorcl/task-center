@@ -16447,11 +16447,13 @@ wwv_flow_imp_page.create_report_region(
 'select null as card_layout,',
 '       count(*) as total_tasks,',
 '       sum(case when nvl(is_done_yn, ''N'') = ''N'' then 1 else 0 end) as open_tasks,',
+'       sum(case when status_code = ''NOT_STARTED'' then 1 else 0 end) as not_started_tasks,',
 '       sum(case when status_code = ''IN_PROGRESS'' then 1 else 0 end) as in_progress_tasks,',
 '       sum(case when status_code = ''COMPLETED'' then 1 else 0 end) as completed_tasks,',
 '       sum(case when status_code = ''ARCHIVE'' then 1 else 0 end) as archive_tasks,',
 '       sum(case when overdue_yn = ''Y'' and nvl(is_done_yn, ''N'') = ''N'' then 1 else 0 end) as overdue_tasks,',
 '       apex_page.get_url(p_page => 70, p_clear_cache => ''70'', p_items => ''P70_SCOPE'', p_values => ''ALL'') as total_tasks_url,',
+'       apex_page.get_url(p_page => 70, p_clear_cache => ''70'', p_items => ''P70_STATUS'', p_values => ''Not Started'') as not_started_tasks_url,',
 '       apex_page.get_url(p_page => 70, p_clear_cache => ''70'', p_items => ''P70_STATUS'', p_values => ''In Progress'') as in_progress_tasks_url,',
 '       apex_page.get_url(p_page => 70, p_clear_cache => ''70'', p_items => ''P70_STATUS'', p_values => ''Completed'') as completed_tasks_url,',
 '       apex_page.get_url(p_page => 70, p_clear_cache => ''70'', p_items => ''P70_STATUS'', p_values => ''Archive'') as archive_tasks_url,',
@@ -16497,6 +16499,8 @@ wwv_flow_imp_page.create_report_columns(
 ||'#</b><br>Total Assigned</a>',
 '  <a href="#OPEN_TASKS_URL#" style="padding:12px;border:1px solid var(--ut-component-border-color);border-radius:8px;text-decoration:none;color:inherit"><span class="fa fa-list-ul u-warning-text"></span> <b style="font-size:1.45rem">#OPEN_TASKS#</b><'
 ||'br>Open Tasks</a>',
+'  <a href="#NOT_STARTED_TASKS_URL#" style="padding:12px;border:1px solid var(--ut-component-border-color);border-radius:8px;text-decoration:none;color:inherit"><span class="fa fa-hourglass-o" style="color:#7c3aed" aria-hidden="true"></span> <b style="'
+||'font-size:1.45rem">#NOT_STARTED_TASKS#</b><br>Not Started</a>',
 '  <a href="#IN_PROGRESS_TASKS_URL#" style="padding:12px;border:1px solid var(--ut-component-border-color);border-radius:8px;text-decoration:none;color:inherit"><span class="fa fa-refresh" style="color:#2563eb" aria-hidden="true"></span> <b style="fon'
 ||'t-size:1.45rem">#IN_PROGRESS_TASKS#</b><br>In Progress</a>',
 '  <a href="#COMPLETED_TASKS_URL#" style="padding:12px;border:1px solid var(--ut-component-border-color);border-radius:8px;text-decoration:none;color:inherit"><span class="fa fa-check-circle u-success-text"></span> <b style="font-size:1.45rem">#COMPLE'
@@ -16556,6 +16560,22 @@ wwv_flow_imp_page.create_report_columns(
 ,p_query_column_id=>11
 ,p_column_alias=>'OPEN_TASKS_URL'
 ,p_column_display_sequence=>110
+,p_hidden_column=>'Y'
+,p_derived_column=>'N'
+);
+wwv_flow_imp_page.create_report_columns(
+ p_id=>wwv_flow_imp.id(40495800000033423)
+,p_query_column_id=>14
+,p_column_alias=>'NOT_STARTED_TASKS'
+,p_column_display_sequence=>35
+,p_hidden_column=>'Y'
+,p_derived_column=>'N'
+);
+wwv_flow_imp_page.create_report_columns(
+ p_id=>wwv_flow_imp.id(40495800000133423)
+,p_query_column_id=>15
+,p_column_alias=>'NOT_STARTED_TASKS_URL'
+,p_column_display_sequence=>75
 ,p_hidden_column=>'Y'
 ,p_derived_column=>'N'
 );

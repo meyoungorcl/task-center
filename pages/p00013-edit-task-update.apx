@@ -100,10 +100,6 @@ page 13 (
         appearance {
             template: @/optional-floating
             templateOptions: #DEFAULT#
-            height: 12
-        }
-        validation {
-            maxLength: 4000
         }
         sessionState {
             storage: request

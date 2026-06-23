@@ -4,7 +4,6 @@ app TASK_CENTER (
     logo {
         type: image
         imageUrl: #APP_FILES#icons/task-center-logo-transparent-32.png
-        text: Task Center
     }
     navigation {
         homeUrl: {

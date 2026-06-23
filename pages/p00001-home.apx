@@ -83,7 +83,7 @@ page 1 (
             height: 1
         }
         settings {
-            pageActionOnSelection: submit
+            pageActionOnSelection: submitPage
         }
         sessionState {
             storage: user

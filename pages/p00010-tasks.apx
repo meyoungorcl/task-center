@@ -381,7 +381,6 @@ page 10 (
         }
         pagination {
             type: nextAndPreviousLinks
-            rows: 20
         }
         messages {
             whenNoDataFound: No tasks found.
