@@ -352,6 +352,15 @@ wwv_flow_imp_shared.create_list_item(
 ,p_list_item_current_type=>'TARGET_PAGE'
 );
 wwv_flow_imp_shared.create_list_item(
+ p_id=>wwv_flow_imp.id(91000000000000001)
+,p_list_item_display_sequence=>15
+,p_list_item_link_text=>'Dashboard'
+,p_static_id=>'dashboard'
+,p_list_item_link_target=>'f?p=&APP_ID.:1:&APP_SESSION.::&DEBUG.:::'
+,p_list_item_icon=>'fa-dashboard'
+,p_list_item_current_type=>'TARGET_PAGE'
+);
+wwv_flow_imp_shared.create_list_item(
  p_id=>wwv_flow_imp.id(39328828835332676)
 ,p_list_item_display_sequence=>50
 ,p_list_item_link_text=>'Reference Data'
@@ -368,15 +377,6 @@ wwv_flow_imp_shared.create_list_item(
 ,p_static_id=>'tasks'
 ,p_list_item_link_target=>'f?p=&APP_ID.:10:&APP_SESSION.::&DEBUG.:::'
 ,p_list_item_icon=>'fa-list-check'
-,p_list_item_current_type=>'TARGET_PAGE'
-);
-wwv_flow_imp_shared.create_list_item(
- p_id=>wwv_flow_imp.id(40493399924733392)
-,p_list_item_display_sequence=>25
-,p_list_item_link_text=>'My Dashboard'
-,p_static_id=>'team-member-dashboard'
-,p_list_item_link_target=>'f?p=&APP_ID.:70:&APP_SESSION.::&DEBUG.:::'
-,p_list_item_icon=>'fa-user-check'
 ,p_list_item_current_type=>'TARGET_PAGE'
 );
 wwv_flow_imp_shared.create_list_item(

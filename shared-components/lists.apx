@@ -188,6 +188,21 @@ list navigation-menu (
         }
     )
 
+    entry dashboard (
+        label: Dashboard
+        icon {
+            imageIconCssClasses: fa-dashboard
+        }
+        layout {
+            sequence: 15
+        }
+        link {
+            target: {
+                page: 1
+            }
+        }
+    )
+
     entry reference-data (
         label: Reference Data
         icon {
@@ -215,21 +230,6 @@ list navigation-menu (
         link {
             target: {
                 page: 10
-            }
-        }
-    )
-
-    entry team-member-dashboard (
-        label: My Dashboard
-        icon {
-            imageIconCssClasses: fa-user-check
-        }
-        layout {
-            sequence: 25
-        }
-        link {
-            target: {
-                page: 70
             }
         }
     )
