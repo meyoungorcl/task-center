@@ -300,7 +300,12 @@ page 10 (
                                        group by u.display_name
                                   )
                        ), 'Not Assigned') as assignee_facet,
-                       v.overdue_yn,
+                       case
+                           when v.overdue_yn = 'Y'
+                            and nvl(upper(v.status_code), '~') not in ('COMPLETED', 'CLOSE', 'CLOSED')
+                           then 'Y'
+                           else 'N'
+                       end as overdue_yn,
                        case
                            when exists (
                                select 1

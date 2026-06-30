@@ -743,7 +743,9 @@ end tsk_daily_email_pkg;
 
                sum(case when t.due_date < trunc(sysdate)
 
-                         and nvl(st.is_done_yn, 'N') = 'N' then 1 else 0 end),
+                         and nvl(st.is_done_yn, 'N') = 'N'
+
+                         and nvl(upper(st.status_code), '~') not in ('COMPLETED', 'CLOSE', 'CLOSED') then 1 else 0 end),
 
                round(avg(t.percent_complete))
 
@@ -869,7 +871,9 @@ end tsk_daily_email_pkg;
 
                    count(distinct case when t.due_date < trunc(sysdate)
 
-                                         and nvl(st.is_done_yn, 'N') = 'N' then t.task_id end) overdue_tasks
+                                         and nvl(st.is_done_yn, 'N') = 'N'
+
+                                         and nvl(upper(st.status_code), '~') not in ('COMPLETED', 'CLOSE', 'CLOSED') then t.task_id end) overdue_tasks
 
               from tsk_team_members tm
 
