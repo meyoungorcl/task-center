@@ -1311,6 +1311,21 @@ page 12 (
         }
     )
 
+    pageItem P12_BREADCRUMB_SOURCE (
+        type: hidden
+        layout {
+            sequence: 5
+            region: @task-details
+            slot: regionBody
+        }
+        sessionState {
+            storage: request
+        }
+        security {
+            sessionStateProtection: checksumRequiredSessionLevel
+        }
+    )
+
     pageItem P12_TASK_ID (
         type: hidden
         layout {

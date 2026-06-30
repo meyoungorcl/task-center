@@ -1258,8 +1258,9 @@ page 1 (
                        assignees,
                        apex_page.get_url(
                            p_page => 12,
-                           p_items => 'P12_TASK_ID',
-                           p_values => task_id
+                           p_clear_cache => '12',
+                           p_items => 'P12_TASK_ID,P12_BREADCRUMB_SOURCE',
+                           p_values => task_id || ',HOME'
                        ) as task_url
                   from tsk_v_task_list
                  where (:P1_YEAR is null or to_char(created_at, 'YYYY') = :P1_YEAR)

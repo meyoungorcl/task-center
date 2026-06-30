@@ -5861,16 +5861,41 @@ wwv_flow_imp_shared.create_menu_option(
 );
 wwv_flow_imp_shared.create_menu_option(
  p_id=>wwv_flow_imp.id(39427106412194195)
-,p_parent_id=>wwv_flow_imp.id(39426955706194195)
+,p_parent_id=>wwv_flow_imp.id(39327793215332675)
 ,p_option_sequence=>30
 ,p_short_name=>'Task Details'
 ,p_static_id=>'task-details'
+,p_link=>'f?p=&APP_ID.:12:&APP_SESSION.::&DEBUG.::P12_TASK_ID,P12_BREADCRUMB_SOURCE:&P12_TASK_ID.,HOME'
+,p_page_id=>12
+,p_condition_type=>'VAL_OF_ITEM_IN_COND_EQ_COND2'
+,p_condition_expression1=>'P12_BREADCRUMB_SOURCE'
+,p_condition_expression2=>'HOME'
+);
+wwv_flow_imp_shared.create_menu_option(
+ p_id=>wwv_flow_imp.id(4200001200000002)
+,p_parent_id=>wwv_flow_imp.id(39426955706194195)
+,p_option_sequence=>30
+,p_short_name=>'Task Details'
+,p_static_id=>'task-details-tasks'
+,p_link=>'f?p=&APP_ID.:12:&APP_SESSION.::&DEBUG.::P12_TASK_ID,P12_BREADCRUMB_SOURCE:&P12_TASK_ID.,TASKS'
+,p_page_id=>12
+,p_condition_type=>'VAL_OF_ITEM_IN_COND_EQ_COND2'
+,p_condition_expression1=>'P12_BREADCRUMB_SOURCE'
+,p_condition_expression2=>'TASKS'
+);
+wwv_flow_imp_shared.create_menu_option(
+ p_id=>wwv_flow_imp.id(4200001200000003)
+,p_parent_id=>wwv_flow_imp.id(39327793215332675)
+,p_option_sequence=>30
+,p_short_name=>'Task Details'
+,p_static_id=>'task-details-default'
 ,p_link=>'f?p=&APP_ID.:12:&APP_SESSION.::&DEBUG.::P12_TASK_ID:&P12_TASK_ID.'
 ,p_page_id=>12
+,p_condition_type=>'ITEM_IS_NULL'
+,p_condition_expression1=>'P12_BREADCRUMB_SOURCE'
 );
 wwv_flow_imp_shared.create_menu_option(
  p_id=>wwv_flow_imp.id(39426955706194195)
-,p_parent_id=>wwv_flow_imp.id(39327793215332675)
 ,p_option_sequence=>20
 ,p_short_name=>'Tasks'
 ,p_static_id=>'tasks'
@@ -7293,8 +7318,9 @@ wwv_flow_imp_page.create_report_region(
 '       assignees,',
 '       apex_page.get_url(',
 '           p_page => 12,',
-'           p_items => ''P12_TASK_ID'',',
-'           p_values => task_id',
+'           p_clear_cache => ''12'',',
+'           p_items => ''P12_TASK_ID,P12_BREADCRUMB_SOURCE'',',
+'           p_values => task_id || '',HOME''',
 '       ) as task_url',
 '  from tsk_v_task_list',
 ' where (:P1_YEAR is null or to_char(created_at, ''YYYY'') = :P1_YEAR)',
@@ -7782,8 +7808,9 @@ wwv_flow_imp_page.create_report_region(
 'select v.task_id,',
 '       apex_page.get_url(',
 '           p_page => 12,',
-'           p_items => ''P12_TASK_ID'',',
-'           p_values => v.task_id',
+'           p_clear_cache => ''12'',',
+'           p_items => ''P12_TASK_ID,P12_BREADCRUMB_SOURCE'',',
+'           p_values => v.task_id || '',TASKS''',
 '       ) as task_url,',
 '       v.task_key,',
 '       v.team_name,',
@@ -10233,6 +10260,17 @@ wwv_flow_imp_page.create_page_item(
   'display_as', 'INLINE',
   'purge_file_at', 'REQUEST',
   'storage_type', 'APEX_APPLICATION_TEMP_FILES')).to_clob
+);
+wwv_flow_imp_page.create_page_item(
+ p_id=>wwv_flow_imp.id(4200001200000001)
+,p_name=>'P12_BREADCRUMB_SOURCE'
+,p_item_sequence=>5
+,p_item_plug_id=>wwv_flow_imp.id(39414927310090019)
+,p_display_as=>'NATIVE_HIDDEN'
+,p_is_persistent=>'N'
+,p_protection_level=>'B'
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'value_protected', 'Y')).to_clob
 );
 wwv_flow_imp_page.create_page_item(
  p_id=>wwv_flow_imp.id(39416988302090022)
@@ -16827,8 +16865,9 @@ wwv_flow_imp_page.create_report_region(
 'select v.task_id,',
 '       apex_page.get_url(',
 '           p_page => 12,',
-'           p_items => ''P12_TASK_ID'',',
-'           p_values => v.task_id',
+'           p_clear_cache => ''12'',',
+'           p_items => ''P12_TASK_ID,P12_BREADCRUMB_SOURCE'',',
+'           p_values => v.task_id || '',HOME''',
 '       ) as task_url,',
 '       v.task_key,',
 '       v.title,',

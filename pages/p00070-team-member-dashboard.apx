@@ -512,8 +512,9 @@ page 70 (
                 select v.task_id,
                        apex_page.get_url(
                            p_page => 12,
-                           p_items => 'P12_TASK_ID',
-                           p_values => v.task_id
+                           p_clear_cache => '12',
+                           p_items => 'P12_TASK_ID,P12_BREADCRUMB_SOURCE',
+                           p_values => v.task_id || ',HOME'
                        ) as task_url,
                        v.task_key,
                        v.title,

@@ -21,7 +21,57 @@ breadcrumb breadcrumb (
             sequence: 30
         }
         appearance {
+            parentEntry: @home
+        }
+        link {
+            target: {
+                page: 12
+                items: {
+                    P12_TASK_ID: &P12_TASK_ID.
+                    P12_BREADCRUMB_SOURCE: HOME
+                }
+            }
+        }
+        serverSideCondition {
+            type: item=value
+            item: P12_BREADCRUMB_SOURCE
+            value: HOME
+        }
+    )
+
+    entry task-details-tasks (
+        name: Task Details
+        pageNumber: 12
+        execution {
+            sequence: 30
+        }
+        appearance {
             parentEntry: @tasks
+        }
+        link {
+            target: {
+                page: 12
+                items: {
+                    P12_TASK_ID: &P12_TASK_ID.
+                    P12_BREADCRUMB_SOURCE: TASKS
+                }
+            }
+        }
+        serverSideCondition {
+            type: item=value
+            item: P12_BREADCRUMB_SOURCE
+            value: TASKS
+        }
+    )
+
+    entry task-details-default (
+        name: Task Details
+        pageNumber: 12
+        execution {
+            sequence: 30
+        }
+        appearance {
+            parentEntry: @home
         }
         link {
             target: {
@@ -31,6 +81,10 @@ breadcrumb breadcrumb (
                 }
             }
         }
+        serverSideCondition {
+            type: itemIsNull
+            item: P12_BREADCRUMB_SOURCE
+        }
     )
 
     entry tasks (
@@ -38,9 +92,6 @@ breadcrumb breadcrumb (
         pageNumber: 10
         execution {
             sequence: 20
-        }
-        appearance {
-            parentEntry: @home
         }
         link {
             target: {
