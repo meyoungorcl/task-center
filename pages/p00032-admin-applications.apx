@@ -66,7 +66,6 @@ page 32 (
             whenNoDataFound: No applications found.
         }
         advanced {
-            savedReportMappingIdentifier: 16545087920674811
         }
 
         column ACTIVE_YN (
@@ -296,4 +295,3 @@ page 32 (
     )
 
 )
-

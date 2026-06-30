@@ -227,7 +227,8 @@ page 14 (
                 declare
                     l_display_name tsk_users.display_name%type;
                 begin
-                    if :P14_TEAM_MEMBER_ID is null then
+                    if
+                        :P14_TEAM_MEMBER_ID is null then
                         raise_application_error(-20001, 'Select an assignee.');
                     end if;
                 

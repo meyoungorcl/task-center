@@ -84,7 +84,6 @@ page 42 (
             whenNoDataFound: No email log entries found.
         }
         advanced {
-            savedReportMappingIdentifier: 4200004200000001
         }
 
         column EMAIL_LOG_ID (

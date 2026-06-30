@@ -200,6 +200,7 @@ page 40 (
         source {
             location: localDatabase
             type: sqlQuery
+            pageItemsToSubmit: P40_EMAIL_SCHEDULE_ID
             sqlQuery:
                 ```sql
                 with selected_schedule as (
@@ -254,7 +255,6 @@ page 40 (
                           end,
                           es.schedule_name
                 ```
-            pageItemsToSubmit: P40_EMAIL_SCHEDULE_ID
         }
         layout {
             sequence: 10

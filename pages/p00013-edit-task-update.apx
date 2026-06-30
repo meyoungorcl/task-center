@@ -169,7 +169,8 @@ page 13 (
                 ```plsql
                 begin
                     select dbms_lob.substr(update_text, 4000, 1)
-                      into :P13_UPDATE_TEXT
+                      into
+                          :P13_UPDATE_TEXT
                       from tsk_task_updates
                      where update_id = :P13_UPDATE_ID
                        and task_id = :P13_TASK_ID;

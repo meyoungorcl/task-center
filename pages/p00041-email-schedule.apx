@@ -561,7 +561,8 @@ page 41 (
                 ```plsql
                 begin
                     select listagg(team_member_id, ':') within group (order by team_member_id)
-                      into :P41_TEAM_MEMBER_IDS
+                      into
+                          :P41_TEAM_MEMBER_IDS
                       from tsk_email_recipients
                      where email_schedule_id = :P41_EMAIL_SCHEDULE_ID
                        and active_yn = 'Y'
@@ -608,7 +609,8 @@ page 41 (
                     ) loop
                         merge into tsk_email_recipients dst
                         using (
-                            select :P41_EMAIL_SCHEDULE_ID as email_schedule_id,
+                            select
+                                :P41_EMAIL_SCHEDULE_ID as email_schedule_id,
                                    r.team_member_id as team_member_id
                               from dual
                         ) src
@@ -676,7 +678,8 @@ page 41 (
             plsqlCode:
                 ```plsql
                 begin
-                    if :P41_SCHEDULE_CODE = 'DAILY_UNASSIGNED_SUBMITTER' then
+                    if
+                        :P41_SCHEDULE_CODE = 'DAILY_UNASSIGNED_SUBMITTER' then
                         tsk_daily_email_pkg.send_unassigned_submitter_reminders(:P41_EMAIL_SCHEDULE_ID);
                     else
                         tsk_daily_email_pkg.send_daily_schedule(:P41_EMAIL_SCHEDULE_ID);

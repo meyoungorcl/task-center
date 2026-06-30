@@ -71,7 +71,6 @@ page 20 (
             whenNoDataFound: No team workload rows found.
         }
         advanced {
-            savedReportMappingIdentifier: 16441116385744658
         }
 
         column ASSIGNED_TASKS (
@@ -430,4 +429,3 @@ page 20 (
     )
 
 )
-

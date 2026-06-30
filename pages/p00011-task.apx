@@ -701,7 +701,8 @@ page 11 (
                             assignment_role,
                             allocated_pct
                         )
-                        select :P11_TASK_ID,
+                        select
+                            :P11_TASK_ID,
                                m.team_member_id,
                                m.role_name,
                                null
@@ -862,7 +863,8 @@ page 11 (
                     l_topic_name := coalesce(
                         nullif(trim(:P11_TOPIC_GROUP_MANUAL), ''),
                         case
-                            when :P11_TOPIC_GROUP_ID is not null
+                            when
+                                :P11_TOPIC_GROUP_ID is not null
                              and not regexp_like(:P11_TOPIC_GROUP_ID, '^[0-9]+$')
                             then trim(:P11_TOPIC_GROUP_ID)
                         end
@@ -871,7 +873,8 @@ page 11 (
                     if l_topic_name is not null then
                         begin
                             select topic_group_id
-                              into :P11_TOPIC_GROUP_ID
+                              into
+                                  :P11_TOPIC_GROUP_ID
                               from tsk_topic_groups
                              where upper(topic_name) = upper(l_topic_name)
                              fetch first 1 row only;
@@ -889,7 +892,8 @@ page 11 (
                                 exception
                                     when dup_val_on_index then
                                         select topic_group_id
-                                          into :P11_TOPIC_GROUP_ID
+                                          into
+                                              :P11_TOPIC_GROUP_ID
                                           from tsk_topic_groups
                                          where upper(topic_name) = upper(l_topic_name)
                                          fetch first 1 row only;
@@ -936,27 +940,33 @@ page 11 (
             plsqlCode:
                 ```plsql
                 begin
-                    if :P11_TEAM_ID is null then
+                    if
+                        :P11_TEAM_ID is null then
                         select team_id
-                          into :P11_TEAM_ID
+                          into
+                              :P11_TEAM_ID
                           from tsk_teams
                          where upper(team_name) = 'APPLICATION DEVELOPMENT'
                            and active_yn = 'Y'
                          fetch first 1 row only;
                     end if;
                 
-                    if :P11_STATUS_ID is null then
+                    if
+                        :P11_STATUS_ID is null then
                         select status_id
-                          into :P11_STATUS_ID
+                          into
+                              :P11_STATUS_ID
                           from tsk_statuses
                          where status_code = 'NOT_STARTED'
                            and active_yn = 'Y'
                          fetch first 1 row only;
                     end if;
                 
-                    if :P11_OWNER_MEMBER_ID is null then
+                    if
+                        :P11_OWNER_MEMBER_ID is null then
                         select min(tm.team_member_id)
-                          into :P11_OWNER_MEMBER_ID
+                          into
+                              :P11_OWNER_MEMBER_ID
                           from tsk_team_members tm
                           join tsk_users u
                             on u.user_id = tm.user_id

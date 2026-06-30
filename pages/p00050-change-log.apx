@@ -55,7 +55,6 @@ page 50 (
             whenNoDataFound: No change log rows found.
         }
         advanced {
-            savedReportMappingIdentifier: 16439834666744657
         }
 
         column CHANGED_AT (
@@ -277,4 +276,3 @@ page 50 (
     )
 
 )
-

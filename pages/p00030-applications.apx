@@ -125,7 +125,6 @@ page 30 (
             whenNoDataFound: No application summary rows found.
         }
         advanced {
-            savedReportMappingIdentifier: 16447731006744664
         }
 
         column APPLICATION_CODE (
@@ -539,4 +538,3 @@ page 30 (
     )
 
 )
-

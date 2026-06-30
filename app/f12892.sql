@@ -16871,7 +16871,6 @@ wwv_flow_imp_page.create_report_region(
 '           lower(u.username) = lower(:APP_USER)',
 '        or lower(u.email) = lower(:APP_USER)',
 '       )',
-'   and v.status_code in (''NOT_STARTED'', ''IN_PROGRESS'')',
 '   and (:P70_STATUS is null or v.status_name = :P70_STATUS)',
 '   and (:P70_PRIORITY is null or v.priority_code = :P70_PRIORITY)',
 '   and (:P70_OVERDUE is null or v.overdue_yn = :P70_OVERDUE)',

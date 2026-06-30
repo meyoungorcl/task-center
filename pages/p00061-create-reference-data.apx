@@ -409,11 +409,13 @@ page 61 (
             plsqlCode:
                 ```plsql
                 begin
-                    if :P61_REF_ID is null then
+                    if
+                        :P61_REF_ID is null then
                         return;
                     end if;
                 
-                    if :P61_REF_TYPE = 'STATUS' then
+                    if
+                        :P61_REF_TYPE = 'STATUS' then
                         select status_name,
                                status_code,
                                display_seq,
@@ -421,7 +423,8 @@ page 61 (
                                is_open_yn,
                                is_done_yn,
                                null
-                          into :P61_NAME,
+                          into
+                              :P61_NAME,
                                :P61_CODE,
                                :P61_DISPLAY_SEQ,
                                :P61_ACTIVE_YN,
@@ -430,7 +433,8 @@ page 61 (
                                :P61_COMPLEXITY_WEIGHT
                           from tsk_statuses
                          where status_id = to_number(:P61_REF_ID);
-                    elsif :P61_REF_TYPE = 'TASK_TYPE' then
+                    elsif
+                        :P61_REF_TYPE = 'TASK_TYPE' then
                         select type_name,
                                type_code,
                                display_seq,
@@ -438,7 +442,8 @@ page 61 (
                                null,
                                null,
                                null
-                          into :P61_NAME,
+                          into
+                              :P61_NAME,
                                :P61_CODE,
                                :P61_DISPLAY_SEQ,
                                :P61_ACTIVE_YN,
@@ -447,7 +452,8 @@ page 61 (
                                :P61_COMPLEXITY_WEIGHT
                           from tsk_task_types
                          where type_id = to_number(:P61_REF_ID);
-                    elsif :P61_REF_TYPE = 'COMPLEXITY' then
+                    elsif
+                        :P61_REF_TYPE = 'COMPLEXITY' then
                         select complexity_name,
                                complexity_code,
                                display_seq,
@@ -455,7 +461,8 @@ page 61 (
                                null,
                                null,
                                complexity_weight
-                          into :P61_NAME,
+                          into
+                              :P61_NAME,
                                :P61_CODE,
                                :P61_DISPLAY_SEQ,
                                :P61_ACTIVE_YN,
@@ -486,7 +493,8 @@ page 61 (
                     l_code varchar2(100) := upper(regexp_replace(trim(:P61_CODE), '[^[:alnum:]]+', '_'));
                     l_name varchar2(255) := trim(:P61_NAME);
                 begin
-                    if :P61_REF_TYPE = 'STATUS' then
+                    if
+                        :P61_REF_TYPE = 'STATUS' then
                         insert into tsk_statuses (
                             status_code,
                             status_name,
@@ -502,7 +510,8 @@ page 61 (
                             to_number(:P61_DISPLAY_SEQ),
                             nvl(:P61_ACTIVE_YN, 'Y')
                         );
-                    elsif :P61_REF_TYPE = 'TASK_TYPE' then
+                    elsif
+                        :P61_REF_TYPE = 'TASK_TYPE' then
                         insert into tsk_task_types (
                             type_code,
                             type_name,
@@ -514,7 +523,8 @@ page 61 (
                             to_number(:P61_DISPLAY_SEQ),
                             nvl(:P61_ACTIVE_YN, 'Y')
                         );
-                    elsif :P61_REF_TYPE = 'COMPLEXITY' then
+                    elsif
+                        :P61_REF_TYPE = 'COMPLEXITY' then
                         insert into tsk_complexities (
                             complexity_code,
                             complexity_name,
@@ -559,7 +569,8 @@ page 61 (
                     l_code varchar2(100) := upper(regexp_replace(trim(:P61_CODE), '[^[:alnum:]]+', '_'));
                     l_name varchar2(255) := trim(:P61_NAME);
                 begin
-                    if :P61_REF_ID is null then
+                    if
+                        :P61_REF_ID is null then
                         raise_application_error(-20000, 'Select a reference data row to update.');
                     end if;
                 
@@ -567,7 +578,8 @@ page 61 (
                         raise_application_error(-20000, 'Name and Code are required.');
                     end if;
                 
-                    if :P61_REF_TYPE = 'STATUS' then
+                    if
+                        :P61_REF_TYPE = 'STATUS' then
                         update tsk_statuses
                            set status_code = l_code,
                                status_name = l_name,
@@ -576,14 +588,16 @@ page 61 (
                                display_seq = to_number(:P61_DISPLAY_SEQ),
                                active_yn = nvl(:P61_ACTIVE_YN, 'Y')
                          where status_id = to_number(:P61_REF_ID);
-                    elsif :P61_REF_TYPE = 'TASK_TYPE' then
+                    elsif
+                        :P61_REF_TYPE = 'TASK_TYPE' then
                         update tsk_task_types
                            set type_code = l_code,
                                type_name = l_name,
                                display_seq = to_number(:P61_DISPLAY_SEQ),
                                active_yn = nvl(:P61_ACTIVE_YN, 'Y')
                          where type_id = to_number(:P61_REF_ID);
-                    elsif :P61_REF_TYPE = 'COMPLEXITY' then
+                    elsif
+                        :P61_REF_TYPE = 'COMPLEXITY' then
                         update tsk_complexities
                            set complexity_code = l_code,
                                complexity_name = l_name,
@@ -623,17 +637,21 @@ page 61 (
             plsqlCode:
                 ```plsql
                 begin
-                    if :P61_REF_ID is null then
+                    if
+                        :P61_REF_ID is null then
                         raise_application_error(-20000, 'Select a reference data row to delete.');
                     end if;
                 
-                    if :P61_REF_TYPE = 'STATUS' then
+                    if
+                        :P61_REF_TYPE = 'STATUS' then
                         delete from tsk_statuses
                          where status_id = to_number(:P61_REF_ID);
-                    elsif :P61_REF_TYPE = 'TASK_TYPE' then
+                    elsif
+                        :P61_REF_TYPE = 'TASK_TYPE' then
                         delete from tsk_task_types
                          where type_id = to_number(:P61_REF_ID);
-                    elsif :P61_REF_TYPE = 'COMPLEXITY' then
+                    elsif
+                        :P61_REF_TYPE = 'COMPLEXITY' then
                         delete from tsk_complexities
                          where complexity_id = to_number(:P61_REF_ID);
                     else

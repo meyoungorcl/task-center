@@ -99,6 +99,7 @@ page 12 (
         source {
             location: localDatabase
             type: sqlQuery
+            pageItemsToSubmit: P12_TASK_ID
             sqlQuery:
                 ```sql
                 select change_id,
@@ -112,7 +113,6 @@ page 12 (
                  where task_id = :P12_TASK_ID
                  order by changed_at desc
                 ```
-            pageItemsToSubmit: P12_TASK_ID
         }
         layout {
             sequence: 20
@@ -267,6 +267,7 @@ page 12 (
         source {
             location: localDatabase
             type: sqlQuery
+            pageItemsToSubmit: P12_TASK_ID
             sqlQuery:
                 ```sql
                 select file_id,
@@ -293,7 +294,6 @@ page 12 (
                  where task_id = :P12_TASK_ID
                  order by uploaded_at desc, file_name
                 ```
-            pageItemsToSubmit: P12_TASK_ID
         }
         layout {
             sequence: 20
@@ -1854,7 +1854,8 @@ page 12 (
                 ```plsql
                 begin
                     select dbms_lob.substr(update_text, 4000, 1)
-                      into :P12_EDIT_UPDATE_TEXT
+                      into
+                          :P12_EDIT_UPDATE_TEXT
                       from tsk_task_updates
                      where update_id = :P12_EDIT_UPDATE_ID
                        and task_id = :P12_TASK_ID;
@@ -2089,7 +2090,8 @@ page 12 (
                           from tsk_task_updates
                          where task_id = :P12_TASK_ID;
                 
-                        if :REQUEST = 'POST_UPDATE'
+                        if
+                            :REQUEST = 'POST_UPDATE'
                            and nullif(trim(:P12_UPDATE_TEXT), '') is not null then
                             l_post_update_yn := 'Y';
                         end if;
@@ -2200,7 +2202,8 @@ page 12 (
                 declare
                     l_update_text varchar2(4000) := trim(:P12_EDIT_UPDATE_TEXT);
                 begin
-                    if :P12_EDIT_UPDATE_ID is null then
+                    if
+                        :P12_EDIT_UPDATE_ID is null then
                         raise_application_error(-20001, 'Select an update to edit.');
                     end if;
                 
@@ -2271,9 +2274,11 @@ page 12 (
             plsqlCode:
                 ```plsql
                 begin
-                    if :P12_STATUS_ID is null then
+                    if
+                        :P12_STATUS_ID is null then
                         select status_id
-                          into :P12_STATUS_ID
+                          into
+                              :P12_STATUS_ID
                           from tsk_statuses
                          where status_code = 'NOT_STARTED'
                            and active_yn = 'Y'
@@ -2299,7 +2304,8 @@ page 12 (
                 ```plsql
                 begin
                     select u.display_name
-                      into :P12_SUBMITTED_BY
+                      into
+                          :P12_SUBMITTED_BY
                       from tsk_team_members tm
                       join tsk_users u
                         on u.user_id = tm.user_id
@@ -2326,7 +2332,8 @@ page 12 (
             plsqlCode:
                 ```plsql
                 select listagg(ta.team_member_id, ':') within group (order by u.display_name)
-                  into :P12_ASSIGNEES
+                  into
+                      :P12_ASSIGNEES
                   from tsk_task_assignees ta
                   join tsk_team_members tm
                     on tm.team_member_id = ta.team_member_id
@@ -2352,7 +2359,8 @@ page 12 (
             plsqlCode:
                 ```plsql
                 select listagg(ttg.topic_group_id, ':') within group (order by tg.topic_name)
-                  into :P12_TOPIC_GROUP_IDS
+                  into
+                      :P12_TOPIC_GROUP_IDS
                   from tsk_task_topic_groups ttg
                   join tsk_topic_groups tg
                     on tg.topic_group_id = ttg.topic_group_id
@@ -2467,7 +2475,8 @@ page 12 (
                                 assignment_role,
                                 allocated_pct
                             )
-                            select :P12_TASK_ID,
+                            select
+                                :P12_TASK_ID,
                                    tm.team_member_id,
                                    tm.role_name,
                                    null
@@ -2594,7 +2603,8 @@ page 12 (
                             task_id,
                             topic_group_id
                         )
-                        select :P12_TASK_ID,
+                        select
+                            :P12_TASK_ID,
                                tg.topic_group_id
                           from dual
                          where not exists (
@@ -2715,7 +2725,8 @@ page 12 (
                     l_file_id    tsk_task_files.file_id%type;
                     l_file_name  tsk_task_files.file_name%type;
                 begin
-                    if :P12_TASK_FILE is null then
+                    if
+                        :P12_TASK_FILE is null then
                         raise_application_error(-20001, 'Choose a file before adding it.');
                     end if;
                 

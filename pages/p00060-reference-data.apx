@@ -135,7 +135,6 @@ page 60 (
             whenNoDataFound: No reference data found.
         }
         advanced {
-            savedReportMappingIdentifier: 16437324696744654
         }
 
         column EDIT_URL (
