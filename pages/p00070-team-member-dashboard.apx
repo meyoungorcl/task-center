@@ -825,6 +825,31 @@ page 70 (
         }
     )
 
+    dynamicAction refresh-recommended-work-after-task-dialog-close (
+        name: Refresh Recommended Work after Task Dialog Close
+        execution {
+            sequence: 10
+        }
+        when {
+            event: apexafterclosedialog
+            selectionType: region
+            region: @recommended-work
+        }
+
+        action refresh-recommended-work (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @recommended-work
+            }
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+    )
+
     pageItem P70_OVERDUE (
         type: hidden
         layout {
