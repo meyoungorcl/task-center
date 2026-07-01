@@ -1413,4 +1413,136 @@ page 1 (
 
     )
 
+    button add-tasks (
+        buttonName: ADD_TASKS
+        label: Add Tasks
+        layout {
+            sequence: 10
+            region: @dashboard-title
+            slot: edit
+        }
+        appearance {
+            buttonTemplate: @/text
+            hot: true
+            templateOptions: #DEFAULT#
+        }
+        behavior {
+            action: redirectThisApp
+            target: {
+                page: 11
+                clearCache: 11
+            }
+            warnOnUnsavedChanges: doNotCheck
+        }
+    )
+
+    dynamicAction refresh-dashboard-after-task-dialog-close (
+        name: Refresh Dashboard after Task Dialog Close
+        execution {
+            sequence: 10
+        }
+        when {
+            event: apexafterclosedialog
+            selectionType: region
+            region: @dashboard-title
+        }
+
+        action refresh-task-aging (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @task-aging
+            }
+            execution {
+                sequence: 10
+                fireOnInit: false
+            }
+        )
+
+        action refresh-task-overview (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @task-overview
+            }
+            execution {
+                sequence: 20
+                fireOnInit: false
+            }
+        )
+
+        action refresh-tasks-by-application (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @tasks-by-application
+            }
+            execution {
+                sequence: 30
+                fireOnInit: false
+            }
+        )
+
+        action refresh-tasks-by-status (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @tasks-by-status
+            }
+            execution {
+                sequence: 40
+                fireOnInit: false
+            }
+        )
+
+        action refresh-tasks-by-type (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @tasks-by-type
+            }
+            execution {
+                sequence: 50
+                fireOnInit: false
+            }
+        )
+
+        action refresh-tasks-priority-by-user (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @tasks-priority-by-user
+            }
+            execution {
+                sequence: 60
+                fireOnInit: false
+            }
+        )
+
+        action refresh-team-member-by-status (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @team-member-by-status
+            }
+            execution {
+                sequence: 70
+                fireOnInit: false
+            }
+        )
+
+        action refresh-upcoming-due-dates (
+            action: refresh
+            affectedElements {
+                selectionType: region
+                region: @upcoming-due-dates
+            }
+            execution {
+                sequence: 80
+                fireOnInit: false
+            }
+        )
+
+    )
+
 )
